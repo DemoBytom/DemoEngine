@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29326.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution items", "{8122B65A-117C-4C95-B6A1-815E3D49A900}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{44B24605-5039-4F0E-916D-88283C58C4DE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{02C42BC8-F6DA-4F33-9E4A-892F09090E9A}"
+EndProject
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C80B1A0E-D692-4DF6-A424-8844B7FB90D3}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <NoWarn>RCS1090</NoWarn>
+    <Authors>Michał Dembski</Authors>
+  </PropertyGroup>
+</Project>
