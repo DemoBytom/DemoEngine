@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -8,9 +9,56 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 {
     internal partial class RenderingForm : Form, IRenderingForm
     {
+        private FormWindowState _previousWindowState;
+        private Point _currentNonFullscreenPosition;
+
         public RenderingForm()
         {
             InitializeComponent();
+
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
+            ResizeRedraw = true;
+
+            _previousWindowState = FormWindowState.Normal;
+            _currentNonFullscreenPosition = DesktopLocation;
+
+            bool fullscreen = false;
+
+            //Current screen
+            var screen = Screen.FromControl(this);
+            var screenBouds = screen.Bounds;
+
+            if (fullscreen)
+            {
+                _currentNonFullscreenPosition = DesktopLocation;
+                TopMost = true;
+                //AllowUserResizing = false;
+                Location = new Point(0, 0);
+
+                ClientSize = new Size(
+                    screenBouds.Width,
+                    screenBouds.Height);
+
+                WindowState = FormWindowState.Maximized;
+                FormBorderStyle = FormBorderStyle.None;
+            }
+            else
+            {
+                TopMost = false;
+                //AllowUserResizing = _graphicsSettings.AllowResizing;
+                DesktopLocation = new Point(
+                    Math.Max(0, _currentNonFullscreenPosition.X),
+                    Math.Max(0, _currentNonFullscreenPosition.Y));
+
+                ClientSize = new Size(
+                    Math.Min(screenBouds.Width, 1024/*_graphicsSettings.Width*/),
+                    Math.Min(screenBouds.Height, 768/* _graphicsSettings.Height*/));
+                WindowState = FormWindowState.Normal;
+                //FormBorderStyle = AllowUserResizing
+                //    ? FormBorderStyle.Sizable
+                //    : FormBorderStyle.FixedToolWindow;
+                FormBorderStyle = FormBorderStyle.Sizable;
+            }
         }
 
         public bool DoEvents()
