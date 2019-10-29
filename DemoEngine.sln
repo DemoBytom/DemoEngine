@@ -7,13 +7,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution 
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		Directory.Build.props = Directory.Build.props
+		global.json = global.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{44B24605-5039-4F0E-916D-88283C58C4DE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{02C42BC8-F6DA-4F33-9E4A-892F09090E9A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Engine.Windows", "src\Demo.Engine.Windows\Demo.Engine.Windows.csproj", "{EF6645AC-5F23-4FD3-9E7B-476A97E92558}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo.Engine.Windows", "src\Demo.Engine.Windows\Demo.Engine.Windows.csproj", "{EF6645AC-5F23-4FD3-9E7B-476A97E92558}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
