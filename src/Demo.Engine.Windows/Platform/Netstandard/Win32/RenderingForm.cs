@@ -9,7 +9,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 {
     internal partial class RenderingForm : Form, IRenderingForm
     {
-        private FormWindowState _previousWindowState;
+        private readonly FormWindowState _previousWindowState;
         private Point _currentNonFullscreenPosition;
 
         public RenderingForm()
@@ -22,7 +22,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             _previousWindowState = FormWindowState.Normal;
             _currentNonFullscreenPosition = DesktopLocation;
 
-            bool fullscreen = false;
+            var fullscreen = false;
 
             //Current screen
             var screen = Screen.FromControl(this);
