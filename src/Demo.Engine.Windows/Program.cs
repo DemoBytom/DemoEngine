@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Demo.Engine.Windows.Models.Options;
+using Demo.Engine.Windows.Platform;
 using Demo.Engine.Windows.Platform.Netstandard.Win32;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -35,6 +37,12 @@ namespace Demo.Engine.Windows
                 {
                     services.AddLogging();
                     services.AddHostedService<EngineService>();
+                    services.Configure<FormSettings>(formSettings =>
+                    {
+                        formSettings.Width = 1024;
+                        formSettings.Height = 768;
+                    });
+                    services.AddTransient<IRenderingFormFactory, RenderingFormFactory>();
                 })
                 //.UseConsoleLifetime()
                 .Build();
@@ -53,13 +61,16 @@ namespace Demo.Engine.Windows
         private readonly IHostApplicationLifetime _applicationLifetime;
         private bool _stopRequested;
         private readonly ILogger<EngineService> _logger;
+        private readonly IRenderingFormFactory _renderFormFactory;
 
         public EngineService(
             IHostApplicationLifetime applicationLifetime,
-            ILogger<EngineService> logger)
+            ILogger<EngineService> logger,
+            IRenderingFormFactory renderFormFactory)
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
+            _renderFormFactory = renderFormFactory;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -74,7 +85,8 @@ namespace Demo.Engine.Windows
 
         private Task DoWorkAsync()
         {
-            var tcs = new TaskCompletionSource<object>();
+            //Starts the work one a new STA thread so that Windows.Forms work correctly
+            var tcs = new TaskCompletionSource<object?>();
             var thread = new Thread(() =>
             {
                 try
@@ -98,20 +110,25 @@ namespace Demo.Engine.Windows
 
             try
             {
-                //TODO create a factory and have that injected instead creating a form here!
-                using var rf = new RenderingForm();
+                using var rf = _renderFormFactory.Create();
                 rf.Show();
 
-                while (rf.DoEvents()
+                //TODO proper main loop instead of simple while
+                while (
+                    rf.DoEvents()
                     && !_stopRequested
-                    && _applicationLifetime.ApplicationStopping.IsCancellationRequested == false)
+                    && !_applicationLifetime.ApplicationStopping.IsCancellationRequested)
                 {
                     //app runs
                 }
             }
             finally
             {
-                _applicationLifetime.StopApplication();
+                //If StopAsync was already called, no reason to call it again
+                if (!_stopRequested)
+                {
+                    _applicationLifetime.StopApplication();
+                }
             }
         }
 
@@ -125,7 +142,9 @@ namespace Demo.Engine.Windows
                 return;
             }
 
-            await Task.WhenAny(_executingTask, Task.Delay(Timeout.Infinite, cancellationToken));
+            await Task.WhenAny(
+                _executingTask,
+                Task.Delay(Timeout.Infinite, cancellationToken));
         }
 
         #region IDisposable Support

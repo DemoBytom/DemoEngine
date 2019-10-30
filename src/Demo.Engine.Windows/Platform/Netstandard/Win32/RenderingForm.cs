@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
+using Demo.Engine.Windows.Models.Options;
 
 namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 {
@@ -12,7 +13,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
         private readonly FormWindowState _previousWindowState;
         private Point _currentNonFullscreenPosition;
 
-        public RenderingForm()
+        public RenderingForm(FormSettings formSettings)
         {
             InitializeComponent();
 
@@ -51,8 +52,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     Math.Max(0, _currentNonFullscreenPosition.Y));
 
                 ClientSize = new Size(
-                    Math.Min(screenBouds.Width, 1024/*_graphicsSettings.Width*/),
-                    Math.Min(screenBouds.Height, 768/* _graphicsSettings.Height*/));
+                    Math.Min(screenBouds.Width, formSettings.Width/*_graphicsSettings.Width*/),
+                    Math.Min(screenBouds.Height, formSettings.Height/* _graphicsSettings.Height*/));
                 WindowState = FormWindowState.Normal;
                 //FormBorderStyle = AllowUserResizing
                 //    ? FormBorderStyle.Sizable
