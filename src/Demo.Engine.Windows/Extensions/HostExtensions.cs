@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace Microsoft.Extensions.Hosting
@@ -20,40 +21,45 @@ namespace Microsoft.Extensions.Hosting
             this IHostBuilder hostBuilder,
             string[] args,
             string appsettingsFile = "appsettings.json") =>
-            hostBuilder
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .ConfigureHostConfiguration((configHost) =>
+        hostBuilder
+            .UseContentRoot(Directory.GetCurrentDirectory())
+            .ConfigureHostConfiguration((configHost) =>
+            {
+                configHost.SetBasePath(Directory.GetCurrentDirectory());
+                if (args != null)
                 {
-                    configHost.SetBasePath(Directory.GetCurrentDirectory());
-                    if (args != null)
-                    {
-                        configHost.AddCommandLine(args);
-                    }
-                })
-                .ConfigureAppConfiguration((hostingContext, configApp) =>
-                {
-                    var env = hostingContext.HostingEnvironment;
-                    configApp.AddJsonFile(appsettingsFile, optional: false, reloadOnChange: true);
+                    configHost.AddCommandLine(args);
+                }
+            })
+            .ConfigureAppConfiguration((hostingContext, configApp) =>
+            {
+                var env = hostingContext.HostingEnvironment;
+                configApp.AddJsonFile(appsettingsFile, optional: false, reloadOnChange: true);
 
-                    if (Debugger.IsAttached)
-                    {
-                        var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
-                        if (appAssembly != null)
-                        {
-                            configApp.AddUserSecrets(appAssembly, optional: true);
-                        }
-                    }
-
-                    if (args != null)
-                    {
-                        configApp.AddCommandLine(args);
-                    }
-                })
-                .UseDefaultServiceProvider((context, options) =>
+                if (Debugger.IsAttached)
                 {
-                    options.ValidateOnBuild = true;
-                    options.ValidateScopes = true;
-                });
+                    var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
+                    if (appAssembly != null)
+                    {
+                        configApp.AddUserSecrets(appAssembly, optional: true);
+                    }
+                }
+
+                if (args != null)
+                {
+                    configApp.AddCommandLine(args);
+                }
+            })
+            .ConfigureServices(services =>
+            {
+                //supresses the default "Application started. Press Ctrl+C to shut down." etc. log messages, that ConsoleLifetime produces
+                services.Configure<ConsoleLifetimeOptions>(options => options.SuppressStatusMessages = true);
+            })
+            .UseDefaultServiceProvider((context, options) =>
+            {
+                options.ValidateOnBuild = true;
+                options.ValidateScopes = true;
+            });
 
         /// <summary>
         /// Creates a default logger that is assigned to <see cref="Log.Logger"/> as well as
