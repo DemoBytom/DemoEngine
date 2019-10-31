@@ -5,7 +5,7 @@ using Demo.Engine.Windows.Platform;
 using Demo.Engine.Windows.Platform.Netstandard.Win32;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Demo.Engine.Windows
 {
@@ -20,13 +20,7 @@ namespace Demo.Engine.Windows
             {
                 var hostBuilder = new HostBuilder()
                     .CreateDefault(args)
-                    //TODO replace with serilog, move to extension "ConfigureSerilog" or somethings
-                    .ConfigureLogging((hostingContext, configLog) =>
-                    {
-                        configLog.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                        configLog.AddConsole();
-                        configLog.AddDebug();
-                    })
+                    .WithSerilog()
                     .ConfigureServices((hostContext, services) =>
                     {
                         services.AddHostedService<EngineService>();
@@ -41,7 +35,12 @@ namespace Demo.Engine.Windows
             catch (Exception ex)
             {
                 //log fatal
+                Log.Fatal(ex, "FATAL ERROR!");
                 return -1;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
             }
 
             return 0;
