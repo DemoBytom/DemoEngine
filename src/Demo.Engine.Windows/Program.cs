@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Demo.Engine.Windows.Models.Options;
 using Demo.Engine.Windows.Platform;
@@ -15,27 +16,33 @@ namespace Demo.Engine.Windows
         /// </summary>
         private static async Task<int> Main(string[] args)
         {
-            var host = Host.CreateDefaultBuilder(args)
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                    logging.AddConsole();
-                    logging.AddDebug();
-                })
-                .ConfigureServices((hostContext, services) =>
-                {
-                    services.AddLogging();
-                    services.AddHostedService<EngineService>();
-                    services.Configure<FormSettings>(formSettings =>
+            try
+            {
+                var hostBuilder = new HostBuilder()
+                    .CreateDefault(args)
+                    //TODO replace with serilog, move to extension "ConfigureSerilog" or somethings
+                    .ConfigureLogging((hostingContext, configLog) =>
                     {
-                        formSettings.Width = 1024;
-                        formSettings.Height = 768;
+                        configLog.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                        configLog.AddConsole();
+                        configLog.AddDebug();
+                    })
+                    .ConfigureServices((hostContext, services) =>
+                    {
+                        services.AddHostedService<EngineService>();
+                        services.Configure<FormSettings>(hostContext.Configuration.GetSection(nameof(FormSettings)));
+                        services.AddTransient<IRenderingFormFactory, RenderingFormFactory>();
                     });
-                    services.AddTransient<IRenderingFormFactory, RenderingFormFactory>();
-                })
-                .Build();
-            //rf.Show();
-            await host.RunAsync();
+
+                var host = hostBuilder.Build();
+
+                await host.RunAsync();
+            }
+            catch (Exception ex)
+            {
+                //log fatal
+                return -1;
+            }
 
             return 0;
         }
