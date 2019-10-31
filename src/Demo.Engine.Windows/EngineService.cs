@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Windows.Platform;
@@ -51,7 +52,12 @@ namespace Demo.Engine.Windows
                     tcs.SetException(ex);
                 }
             });
-            thread.SetApartmentState(ApartmentState.STA);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                //Can only by set on the Windows machine. Doesn't work on Linux/MacOS
+                thread.SetApartmentState(ApartmentState.STA);
+            }
+
             thread.Start();
             return tcs.Task;
         }
