@@ -71,6 +71,7 @@ namespace Microsoft.Extensions.Hosting
             this IHostBuilder hostBuilder)
         {
             Log.Logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
                 .WriteTo.Console()
                 .WriteTo.Debug()
                 .CreateLogger();
