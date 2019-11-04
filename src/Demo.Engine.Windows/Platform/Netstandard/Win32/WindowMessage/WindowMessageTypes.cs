@@ -20,6 +20,19 @@ namespace Demo.Engine.Platform.NetStandard.Win32.WindowMessage
         DisplayChange = 0x007E,
 
         /// <summary>
+        /// WM_KEYDOWN: Posted to the window with the keyboard focus when a nonsystem key is pressed.
+        /// A nonsystem key is a key that is pressed when the ALT key is not pressed.
+        /// </summary>
+        KeyDown = 0x0100,
+
+        /// <summary>
+        /// WM_KEYUP: Posted to the window with the keyboard focus when a nonsystem key is released. A
+        /// nonsystem key is a key that is pressed when the ALT key is not pressed, or a keyboard key
+        /// that is pressed when a window has the keyboard focus.
+        /// </summary>
+        KeyUp = 0x0101,
+
+        /// <summary>
         /// WM_SYSCOMMAND: A window receives this message when the user chooses a command from the
         /// Window menu (formerly known as the system or control menu) or when the user chooses the
         /// maximize button, minimize button, restore button, or close button.

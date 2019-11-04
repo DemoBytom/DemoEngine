@@ -5,17 +5,21 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
 using Demo.Engine.Windows.Models.Options;
+using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 {
-    internal partial class RenderingForm : Form, IRenderingForm
+    public partial class RenderingForm : Form, IRenderingForm
     {
         private readonly FormWindowState _previousWindowState;
         private readonly FormSettings _formSettings;
         private Point _currentNonFullscreenPosition;
         private readonly bool _allowUserResizing;
+        private readonly ILogger<RenderingForm> _logger;
 
-        public RenderingForm(FormSettings formSettings)
+        public RenderingForm(
+            ILogger<RenderingForm> logger,
+            FormSettings formSettings)
         {
             _formSettings = formSettings;
             InitializeComponent();
@@ -62,6 +66,14 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     ? FormBorderStyle.Sizable
                     : FormBorderStyle.FixedToolWindow;
             }
+
+            _logger = logger;
+            KeyDown += RenderingForm_KeyDown;
+        }
+
+        private void RenderingForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            _logger.LogInformation("Key down event {key}", e.KeyCode);
         }
 
         public bool DoEvents()
@@ -101,7 +113,27 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 
         protected override void WndProc(ref Message m)
         {
-            base.WndProc(ref m);
+            var wparam = m.WParam.ToInt64();
+            switch ((WindowMessageTypes)m.Msg)
+            {
+                case WindowMessageTypes.KeyDown:
+                    {
+                        var key = (Keys)wparam;
+                        _logger.LogInformation("Pressed key: {key}", key);
+                        //OnKeyPressed
+                        break;
+                    }
+                case WindowMessageTypes.KeyUp:
+                    {
+                        var key = (Keys)wparam;
+                        _logger.LogInformation("Released key: {key}", key);
+                        //OnKeyDown
+                        break;
+                    }
+                default:
+                    base.WndProc(ref m);
+                    break;
+            }
         }
     }
 }
