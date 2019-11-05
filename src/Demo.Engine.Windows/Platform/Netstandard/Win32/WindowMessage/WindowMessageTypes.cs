@@ -8,6 +8,11 @@ namespace Demo.Engine.Platform.NetStandard.Win32.WindowMessage
         Size = 0x0005,
 
         /// <summary>
+        /// WM_KILLFOCUS: Sent to a window immediately before it loses the keyboard focus.
+        /// </summary>
+        KillFocus = 0x0008,
+
+        /// <summary>
         /// WM_ACTIVATEAPP: Sent when a window belonging to a different application than the active
         /// window is about to be activated. The message is sent to the application whose window is
         /// being activated and to the application whose window is being deactivated.
@@ -20,6 +25,14 @@ namespace Demo.Engine.Platform.NetStandard.Win32.WindowMessage
         DisplayChange = 0x007E,
 
         /// <summary>
+        /// WM_NCDESTROY: Notifies a window that its nonclient area is being destroyed. The DestroyWindow function sends the WM_NCDESTROY message to the window following the WM_DESTROY message.WM_DESTROY is used to free the allocated memory object associated with the window.
+        ///<para>
+        /// The WM_NCDESTROY message is sent after the child windows have been destroyed. In contrast, WM_DESTROY is sent before the child windows are destroyed.
+        ///</para>
+        /// </summary>
+        Destroy = 0x0082,
+
+        /// <summary>
         /// WM_KEYDOWN: Posted to the window with the keyboard focus when a nonsystem key is pressed.
         /// A nonsystem key is a key that is pressed when the ALT key is not pressed.
         /// </summary>
@@ -27,10 +40,17 @@ namespace Demo.Engine.Platform.NetStandard.Win32.WindowMessage
 
         /// <summary>
         /// WM_KEYUP: Posted to the window with the keyboard focus when a nonsystem key is released. A
-        /// nonsystem key is a key that is pressed when the ALT key is not pressed, or a keyboard key
-        /// that is pressed when a window has the keyboard focus.
+        /// nonsystem key is a key that is pressed when the ALT key is not pressed, or a keyboard
+        /// key that is pressed when a window has the keyboard focus.
         /// </summary>
         KeyUp = 0x0101,
+
+        /// <summary>
+        /// WM_CHAR: Posted to the window with the keyboard focus when a WM_KEYDOWN message is
+        /// translated by the TranslateMessage function. The WM_CHAR message contains the character
+        /// code of the key that was pressed.
+        /// </summary>
+        WM_CHAR = 0x0102,
 
         /// <summary>
         /// WM_SYSCOMMAND: A window receives this message when the user chooses a command from the
@@ -49,14 +69,6 @@ namespace Demo.Engine.Platform.NetStandard.Win32.WindowMessage
         /// <summary>
         /// WM_POWERBROADCAST: Notifies applications that a power-management event has occurred.
         /// </summary>
-        PowerBroadcast = 0x0218,
-
-        /// <summary>
-        /// WM_NCDESTROY: Notifies a window that its nonclient area is being destroyed. The DestroyWindow function sends the WM_NCDESTROY message to the window following the WM_DESTROY message.WM_DESTROY is used to free the allocated memory object associated with the window.
-        ///<para>
-        /// The WM_NCDESTROY message is sent after the child windows have been destroyed. In contrast, WM_DESTROY is sent before the child windows are destroyed.
-        ///</para>
-        /// </summary>
-        Destroy = 0x0082
+        PowerBroadcast = 0x0218
     }
 }

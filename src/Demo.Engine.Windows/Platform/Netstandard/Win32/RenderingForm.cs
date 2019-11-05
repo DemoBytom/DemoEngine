@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
+using Demo.Engine.Windows.Common.Helpers;
 using Demo.Engine.Windows.Models.Options;
 using Microsoft.Extensions.Logging;
 
@@ -68,12 +69,6 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             }
 
             _logger = logger;
-            KeyDown += RenderingForm_KeyDown;
-        }
-
-        private void RenderingForm_KeyDown(object sender, KeyEventArgs e)
-        {
-            _logger.LogInformation("Key down event {key}", e.KeyCode);
         }
 
         public bool DoEvents()
@@ -84,7 +79,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                 var localHandle = Handle;
                 if (localHandle != IntPtr.Zero)
                 {
-                    // Previous code not compatible with Application.AddMessageFilter but faster then DoEvents
+                    // Previous code not compatible with Application.AddMessageFilter but faster
+                    // then DoEvents
                     while (User32.PeekMessage(out _, IntPtr.Zero, 0, 0, 0) != 0)
                     {
                         if (User32.GetMessage(out var msg, IntPtr.Zero, 0, 0) == -1)
@@ -116,18 +112,32 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             var wparam = m.WParam.ToInt64();
             switch ((WindowMessageTypes)m.Msg)
             {
+                //Not sure if I need it?
+                //case WindowMessageTypes.KillFocus:
+                //    {
+                //        OnLostFocus(EventArgs.Empty);
+                //        break;
+                //    }
                 case WindowMessageTypes.KeyDown:
                     {
                         var key = (Keys)wparam;
-                        _logger.LogInformation("Pressed key: {key}", key);
-                        //OnKeyPressed
+                        //_logger.LogInformation("Pressed key: {key}", key);
+                        OnKeyDown(new KeyEventArgs(key));
+                        //filter autorepeats
                         break;
                     }
                 case WindowMessageTypes.KeyUp:
                     {
                         var key = (Keys)wparam;
-                        _logger.LogInformation("Released key: {key}", key);
-                        //OnKeyDown
+                        //_logger.LogInformation("Released key: {key}", key);
+                        OnKeyUp(new KeyEventArgs(key));
+                        break;
+                    }
+                case WindowMessageTypes.WM_CHAR:
+                    {
+                        var c = (char)wparam;
+                        OnChar(new EventArgs<char>(c));
+                        //OnChar(c)
                         break;
                     }
                 default:
@@ -135,5 +145,13 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     break;
             }
         }
+
+        #region Events
+
+        public event EventHandler<EventArgs<char>> Char;
+
+        protected virtual void OnChar(EventArgs<char> eventArgs) => Char?.Invoke(this, eventArgs);
+
+        #endregion Events
     }
 }

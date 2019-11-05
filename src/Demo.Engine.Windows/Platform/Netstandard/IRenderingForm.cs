@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using Demo.Engine.Windows.Common.Helpers;
 
 namespace Demo.Engine.Windows.Platform.Netstandard
 {
@@ -21,8 +22,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard
         /// Shows the form with the specified owner to the user.
         /// </summary>
         /// <param name="owner">
-        /// Any object that implements System.Windows.Forms.IWin32Window and represents the top-level
-        /// window that will own this form.
+        /// Any object that implements System.Windows.Forms.IWin32Window and represents the
+        /// top-level window that will own this form.
         /// </param>
         /// <exception cref="InvalidOperationException">
         /// The form being shown is already visible.
@@ -66,5 +67,17 @@ namespace Demo.Engine.Windows.Platform.Netstandard
         /// mode (for more information, see System.Windows.Forms.SystemInformation.UserInteractive).
         /// </exception>
         public DialogResult ShowDialog(IWin32Window owner);
+
+        #region events
+
+        public event EventHandler LostFocus;
+
+        public event KeyEventHandler KeyDown;
+
+        public event KeyEventHandler KeyUp;
+
+        public event EventHandler<EventArgs<char>> Char;
+
+        #endregion events
     }
 }

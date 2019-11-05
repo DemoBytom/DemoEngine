@@ -2,7 +2,9 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Demo.Engine.Windows.Platform;
+using Demo.Engine.Windows.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -16,6 +18,7 @@ namespace Demo.Engine.Windows
         private bool _stopRequested;
         private readonly ILogger<EngineService> _logger;
         private readonly IRenderingFormFactory _renderFormFactory;
+        private Keyboard _keyboard;
 
         public EngineService(
             IHostApplicationLifetime applicationLifetime,
@@ -69,6 +72,8 @@ namespace Demo.Engine.Windows
             try
             {
                 using var rf = _renderFormFactory.Create();
+                //TODO just for testing purposes, neets to be moved out
+                _keyboard = new Keyboard(rf);
                 rf.Show();
 
                 //TODO proper main loop instead of simple while
@@ -78,6 +83,16 @@ namespace Demo.Engine.Windows
                     && !_applicationLifetime.ApplicationStopping.IsCancellationRequested)
                 {
                     //app runs
+                    //_logger.LogInformation("Key A is pressed: {pressed}", _keyboard.KeyPressed((char)Keys.A));
+                    var str = _keyboard.ReadChars();
+                    if (!string.IsNullOrEmpty(str))
+                    {
+                        _logger.LogInformation("Read chars from buffer: {str}", str);
+                    }
+                    if (_keyboard.KeyPressed((char)Keys.Escape))
+                    {
+                        _applicationLifetime.StopApplication();
+                    }
                 }
             }
             finally
