@@ -4,16 +4,20 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
+using Demo.Engine.Windows.Models.Options;
 
 namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 {
     internal partial class RenderingForm : Form, IRenderingForm
     {
-        private FormWindowState _previousWindowState;
+        private readonly FormWindowState _previousWindowState;
+        private readonly FormSettings _formSettings;
         private Point _currentNonFullscreenPosition;
+        private readonly bool _allowUserResizing;
 
-        public RenderingForm()
+        public RenderingForm(FormSettings formSettings)
         {
+            _formSettings = formSettings;
             InitializeComponent();
 
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
@@ -22,7 +26,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             _previousWindowState = FormWindowState.Normal;
             _currentNonFullscreenPosition = DesktopLocation;
 
-            bool fullscreen = false;
+            var fullscreen = _formSettings.Fullscreen;
 
             //Current screen
             var screen = Screen.FromControl(this);
@@ -32,7 +36,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             {
                 _currentNonFullscreenPosition = DesktopLocation;
                 TopMost = true;
-                //AllowUserResizing = false;
+                _allowUserResizing = false;
                 Location = new Point(0, 0);
 
                 ClientSize = new Size(
@@ -45,19 +49,18 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             else
             {
                 TopMost = false;
-                //AllowUserResizing = _graphicsSettings.AllowResizing;
+                _allowUserResizing = _formSettings.AllowResizing;
                 DesktopLocation = new Point(
                     Math.Max(0, _currentNonFullscreenPosition.X),
                     Math.Max(0, _currentNonFullscreenPosition.Y));
 
                 ClientSize = new Size(
-                    Math.Min(screenBouds.Width, 1024/*_graphicsSettings.Width*/),
-                    Math.Min(screenBouds.Height, 768/* _graphicsSettings.Height*/));
+                    Math.Min(screenBouds.Width, formSettings.Width),
+                    Math.Min(screenBouds.Height, formSettings.Height));
                 WindowState = FormWindowState.Normal;
-                //FormBorderStyle = AllowUserResizing
-                //    ? FormBorderStyle.Sizable
-                //    : FormBorderStyle.FixedToolWindow;
-                FormBorderStyle = FormBorderStyle.Sizable;
+                FormBorderStyle = _allowUserResizing
+                    ? FormBorderStyle.Sizable
+                    : FormBorderStyle.FixedToolWindow;
             }
         }
 

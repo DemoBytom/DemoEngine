@@ -1,5 +1,11 @@
 using System;
+using System.Threading.Tasks;
+using Demo.Engine.Windows.Models.Options;
+using Demo.Engine.Windows.Platform;
 using Demo.Engine.Windows.Platform.Netstandard.Win32;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
 
 namespace Demo.Engine.Windows
 {
@@ -8,15 +14,34 @@ namespace Demo.Engine.Windows
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        [STAThread]
-        private static int Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
-            //Application.SetHighDpiMode(HighDpiMode.SystemAware);
-            //Application.EnableVisualStyles();
-            //Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new Form1());
-            using var engine = new Engine(new RenderingForm());
-            engine.Run();
+            try
+            {
+                var hostBuilder = new HostBuilder()
+                    .CreateDefault(args)
+                    .WithSerilog()
+                    .ConfigureServices((hostContext, services) =>
+                    {
+                        services.AddHostedService<EngineService>();
+                        services.Configure<FormSettings>(hostContext.Configuration.GetSection(nameof(FormSettings)));
+                        services.AddTransient<IRenderingFormFactory, RenderingFormFactory>();
+                    });
+
+                var host = hostBuilder.Build();
+
+                await host.RunAsync();
+            }
+            catch (Exception ex)
+            {
+                //log fatal
+                Log.Fatal(ex, "FATAL ERROR!");
+                return -1;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
 
             return 0;
         }
