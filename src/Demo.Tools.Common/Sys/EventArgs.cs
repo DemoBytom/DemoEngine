@@ -1,6 +1,6 @@
 using System;
 
-namespace Demo.Engine.Windows.Common.Helpers
+namespace Demo.Tools.Common.Sys
 {
     public class EventArgs<T> : EventArgs
     {

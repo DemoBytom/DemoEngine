@@ -16,6 +16,9 @@
     <PackageReference Include="Serilog.Sinks.Debug" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Demo.Tools.Common\Demo.Tools.Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

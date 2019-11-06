@@ -84,10 +84,13 @@ namespace Demo.Engine.Windows
                 {
                     //app runs
                     //_logger.LogInformation("Key A is pressed: {pressed}", _keyboard.KeyPressed((char)Keys.A));
-                    var str = _keyboard.ReadChars();
-                    if (!string.IsNullOrEmpty(str))
+                    //if (_keyboard.KeyPressed((char)Keys.D1))
                     {
-                        _logger.LogInformation("Read chars from buffer: {str}", str);
+                        var str = _keyboard.ReadChars();
+                        if (!string.IsNullOrEmpty(str))
+                        {
+                            _logger.LogInformation("Read chars from buffer: {str}", str);
+                        }
                     }
                     if (_keyboard.KeyPressed((char)Keys.Escape))
                     {

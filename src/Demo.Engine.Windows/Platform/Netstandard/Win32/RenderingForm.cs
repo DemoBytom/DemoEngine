@@ -4,8 +4,8 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
-using Demo.Engine.Windows.Common.Helpers;
 using Demo.Engine.Windows.Models.Options;
+using Demo.Tools.Common.Sys;
 using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Windows.Platform.Netstandard.Win32
@@ -79,8 +79,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                 var localHandle = Handle;
                 if (localHandle != IntPtr.Zero)
                 {
-                    // Previous code not compatible with Application.AddMessageFilter but faster
-                    // then DoEvents
+                    // Previous code not compatible with Application.AddMessageFilter but faster then DoEvents
                     while (User32.PeekMessage(out _, IntPtr.Zero, 0, 0, 0) != 0)
                     {
                         if (User32.GetMessage(out var msg, IntPtr.Zero, 0, 0) == -1)

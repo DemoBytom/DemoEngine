@@ -1,14 +1,15 @@
-using System.Collections.Generic;
+using System;
 using System.Text;
-using Demo.Engine.Windows.Common.Helpers;
 using Demo.Engine.Windows.Platform.Netstandard;
+using Demo.Tools.Common.Collections;
+using Demo.Tools.Common.Sys;
 
 namespace Demo.Engine.Windows.Services
 {
     public sealed class Keyboard
     {
         private readonly bool[] _keysPressed = new bool[256];
-        private readonly Queue<char> _chars = new Queue<char>();
+        private readonly CircularQueue<char> _chars = new CircularQueue<char>(16);
         private readonly IRenderingForm _renderingForm;
 
         public bool KeyPressed(char keyCode) => _keysPressed[keyCode];
@@ -22,13 +23,11 @@ namespace Demo.Engine.Windows.Services
             _renderingForm.Char += _renderingForm_Char;
         }
 
-        public void ClearState()
-        {
-            for (var i = 0; i < _keysPressed.Length; ++i)
-            {
-                _keysPressed[i] = false;
-            }
-        }
+        public void ClearState() =>
+            Array.Clear(
+                _keysPressed,
+                0,
+                _keysPressed.Length);
 
         public string ReadChars()
         {
@@ -45,7 +44,7 @@ namespace Demo.Engine.Windows.Services
             _chars.Enqueue(e.Value);
         }
 
-        private void _renderingForm_LostFocus(object? sender, System.EventArgs e)
+        private void _renderingForm_LostFocus(object? sender, EventArgs e)
         {
             ClearState();
         }
