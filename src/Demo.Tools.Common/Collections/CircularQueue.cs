@@ -1,17 +1,18 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Demo.Tools.Common.Collections
 {
     public class CircularQueue<T> : IReadOnlyCollection<T>, ICollection
     {
         private readonly int _capacity;
-        private readonly T[] _buffer;
-        private int _tail;
-        private int _head;
+        private readonly ConcurrentQueue<T> _buffer;
+
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
         public CircularQueue(int capacity)
         {
@@ -21,79 +22,82 @@ namespace Demo.Tools.Common.Collections
             }
 
             _capacity = capacity;
-            _buffer = new T[capacity];
+            _buffer = new ConcurrentQueue<T>();
         }
 
+        /// <summary>
+        /// Enqueues new element onto the queue, removing the oldest one if capacity was reached
+        /// </summary>
+        /// <param name="value"></param>
         public void Enqueue(T value)
         {
-            if (_tail == _head && Count != 0)
+            _lock.EnterWriteLock();
+            try
             {
-                IncreaseAddres(ref _head);
+                if (_buffer.Count == _capacity)
+                {
+                    _buffer.TryDequeue(out var _);
+                }
+
+                _buffer.Enqueue(value);
             }
-            else
+            finally
             {
-                ++Count;
+                _lock.ExitWriteLock();
             }
-
-            _buffer[_tail] = value;
-
-            IncreaseAddres(ref _tail);
         }
 
+        /// <summary>
+        /// Dequeues top element from the queue
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">If can't dequeue</exception>
         public T Dequeue()
         {
-            if (Count == 0)
+            if (!_buffer.TryDequeue(out var retVal))
             {
-                throw new InvalidOperationException("Queue is empty!");
+                throw new InvalidOperationException("Dequeue failed!");
             }
 
-            var item = _buffer[_head];
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-            {
-                _buffer[_head] = default!;
-            }
-            IncreaseAddres(ref _head);
-            --Count;
-            return item;
+            return retVal;
         }
 
-        public bool TryDequeue([MaybeNullWhen(false)] out T result)
-        {
-            if (Count == 0)
-            {
-                result = default!;
-                return false;
-            }
-            result = Dequeue();
-            return true;
-        }
+        /// <summary>
+        /// Tries to dequeue top element from the queue
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public bool TryDequeue([MaybeNullWhen(false)] out T result) =>
+            _buffer.TryDequeue(out result);
 
+        /// <summary>
+        /// Returns top element from the queue without dequeuing it
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">If can't peek</exception>
         public T Peek()
         {
-            if (Count == 0)
+            if (!_buffer.TryPeek(out var retVal))
             {
-                throw new InvalidOperationException("Queue is empty!");
-            }
-            return _buffer[_head];
-        }
-
-        public bool TryPeek([MaybeNullWhen(false)] out T result)
-        {
-            if (Count == 0)
-            {
-                result = default!;
-                return false;
+                throw new InvalidOperationException("Peek failed!");
             }
 
-            result = Peek();
-            return true;
+            return retVal;
         }
+
+        /// <summary>
+        /// Tries to return top element from the queue without dequeuing it
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public bool TryPeek([MaybeNullWhen(false)] out T result) =>
+            _buffer.TryPeek(out result);
 
         /// <summary>
         /// Gets the number of elements in the collection.
         /// </summary>
         /// <returns>The number of elements in the collection.</returns>
-        public int Count { get; private set; }
+        public int Count => _buffer.Count;
 
         /// <summary>
         /// Gets a value indicating whether access to the <see cref="ICollection"></see> is
@@ -135,30 +139,11 @@ namespace Demo.Tools.Common.Collections
         /// <see cref="CircularQueue{T}"></see> cannot be cast automatically to the type of the
         /// destination <paramref name="array">array</paramref>.
         /// </exception>
-        public void CopyTo(T[] array, int index)
-        {
-            var head = _head;
-            for (var i = 0; i < Count;
-                ++i,
-                IncreaseAddres(ref head),
-                ++index)
-            {
-                array[index] = _buffer[head];
-            }
-        }
+        public void CopyTo(T[] array, int index) => _buffer.CopyTo(array, index);
 
-        private IEnumerator<T> GetEnum()
-        {
-            var head = _head;
-            for (var i = 0; i < Count; ++i, IncreaseAddres(ref head))
-            {
-                yield return _buffer[head];
-            }
-        }
+        public IEnumerator<T> GetEnumerator() => _buffer.GetEnumerator();
 
-        public IEnumerator<T> GetEnumerator() => GetEnum();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnum();
+        IEnumerator IEnumerable.GetEnumerator() => _buffer.GetEnumerator();
 
         /// <summary>
         /// Copies the elements of the <see cref="CircularQueue{T}"></see> to an
@@ -186,6 +171,6 @@ namespace Demo.Tools.Common.Collections
         /// </exception>
         void ICollection.CopyTo(Array array, int index) => CopyTo((T[])array, index);
 
-        private void IncreaseAddres(ref int adr) => adr = (adr + 1) % _capacity;
+        ~CircularQueue() => _lock?.Dispose();
     }
 }
