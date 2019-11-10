@@ -1,15 +1,16 @@
 using System;
 using System.Threading.Tasks;
-using Demo.Engine.Windows.Models.Options;
-using Demo.Engine.Windows.Platform;
-using Demo.Engine.Windows.Platform.Netstandard.Win32;
+using Demo.Engine.Core.Models.Options;
+using Demo.Engine.Core.Platform;
+using Demo.Engine.Core.Services;
+using Demo.Engine.Platform.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
-namespace Demo.Engine.Windows
+namespace Demo.Engine
 {
-    internal static class Program
+    internal class Program
     {
         /// <summary>
         /// The main entry point for the application.

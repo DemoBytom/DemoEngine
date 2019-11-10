@@ -3,8 +3,10 @@ using System.Drawing;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Demo.Engine.Core.Models.Options;
+using Demo.Engine.Core.Platform;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
-using Demo.Engine.Windows.Models.Options;
+using Demo.Engine.Platform.Windows;
 using Demo.Tools.Common.Sys;
 using Microsoft.Extensions.Logging;
 
@@ -121,7 +123,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     {
                         var key = (Keys)wparam;
                         //_logger.LogInformation("Pressed key: {key}", key);
-                        OnKeyDown(new KeyEventArgs(key));
+                        OnKeyDown(new EventArgs<char>((char)key));
                         //filter autorepeats
                         break;
                     }
@@ -129,7 +131,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     {
                         var key = (Keys)wparam;
                         //_logger.LogInformation("Released key: {key}", key);
-                        OnKeyUp(new KeyEventArgs(key));
+                        OnKeyUp(new EventArgs<char>((char)key));
                         break;
                     }
                 case WindowMessageTypes.WM_CHAR:
@@ -150,6 +152,12 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
         public event EventHandler<EventArgs<char>> Char;
 
         protected virtual void OnChar(EventArgs<char> eventArgs) => Char?.Invoke(this, eventArgs);
+
+        public new event EventHandler<EventArgs<char>> KeyDown;
+        protected virtual void OnKeyDown(EventArgs<char> eventArgs) => KeyDown?.Invoke(this, eventArgs);
+
+        public new event EventHandler<EventArgs<char>> KeyUp;
+        protected virtual void OnKeyUp(EventArgs<char> eventArgs) => KeyUp?.Invoke(this, eventArgs);
 
         #endregion Events
     }

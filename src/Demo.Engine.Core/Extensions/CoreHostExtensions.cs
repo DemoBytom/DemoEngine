@@ -3,11 +3,10 @@ using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 
 namespace Microsoft.Extensions.Hosting
 {
-    public static class HostExtensions
+    public static class CoreHostExtensions
     {
         /// <summary>
         /// Creates a default (yet different than <see cref="Host.CreateDefaultBuilder(string[])"/>)
@@ -60,27 +59,5 @@ namespace Microsoft.Extensions.Hosting
                 options.ValidateOnBuild = true;
                 options.ValidateScopes = true;
             });
-
-        /// <summary>
-        /// Creates a default logger that is assigned to <see cref="Log.Logger"/> as well as
-        /// registers it in the logging pipeline.
-        /// </summary>
-        /// <param name="hostBuilder"></param>
-        /// <returns></returns>
-        public static IHostBuilder WithSerilog(
-            this IHostBuilder hostBuilder)
-        {
-            Log.Logger = new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .WriteTo.Console()
-                .WriteTo.Debug()
-                .CreateLogger();
-            return hostBuilder
-                .ConfigureLogging((hostingContext, configLog) =>
-                {
-                    //configLog.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                    configLog.AddSerilog(Log.Logger);
-                });
-        }
     }
 }

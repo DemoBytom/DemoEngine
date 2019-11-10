@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Demo.Engine.Windows.Maths.Interop;
 
-namespace Demo.Engine.Windows.Platform.Netstandard.Win32
+namespace Demo.Engine.Platform.Windows
 {
     internal static class User32
     {

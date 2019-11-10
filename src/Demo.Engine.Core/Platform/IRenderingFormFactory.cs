@@ -1,8 +1,7 @@
-using Demo.Engine.Windows.Models.Options;
-using Demo.Engine.Windows.Platform.Netstandard;
+using Demo.Engine.Core.Models.Options;
 using Microsoft.Extensions.Options;
 
-namespace Demo.Engine.Windows.Platform
+namespace Demo.Engine.Core.Platform
 {
     public abstract class IRenderingFormFactory
     {

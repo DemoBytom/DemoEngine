@@ -1,4 +1,4 @@
-namespace Demo.Engine.Windows.Models.Options
+namespace Demo.Engine.Core.Models.Options
 {
     public class FormSettings
     {

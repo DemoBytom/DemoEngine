@@ -1,8 +1,10 @@
-using Demo.Engine.Windows.Models.Options;
+using Demo.Engine.Core.Models.Options;
+using Demo.Engine.Core.Platform;
+using Demo.Engine.Windows.Platform.Netstandard.Win32;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Demo.Engine.Windows.Platform.Netstandard.Win32
+namespace Demo.Engine.Platform.Windows
 {
     public class RenderingFormFactory : IRenderingFormFactory
     {

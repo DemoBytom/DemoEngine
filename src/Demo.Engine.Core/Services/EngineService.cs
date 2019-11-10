@@ -2,13 +2,12 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using Demo.Engine.Windows.Platform;
+using Demo.Engine.Core.Platform;
 using Demo.Engine.Windows.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Demo.Engine.Windows
+namespace Demo.Engine.Core.Services
 {
     public class EngineService : IHostedService, IDisposable
     {
@@ -92,7 +91,8 @@ namespace Demo.Engine.Windows
                             _logger.LogInformation("Read chars from buffer: {str}", str);
                         }
                     }
-                    if (_keyboard.KeyPressed((char)Keys.Escape))
+                    //Esc
+                    if (_keyboard.KeyPressed((char)27))
                     {
                         _applicationLifetime.StopApplication();
                     }

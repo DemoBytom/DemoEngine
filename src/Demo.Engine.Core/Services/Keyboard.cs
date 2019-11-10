@@ -1,6 +1,6 @@
 using System;
 using System.Text;
-using Demo.Engine.Windows.Platform.Netstandard;
+using Demo.Engine.Core.Platform;
 using Demo.Tools.Common.Collections;
 using Demo.Tools.Common.Sys;
 
@@ -49,14 +49,14 @@ namespace Demo.Engine.Windows.Services
             ClearState();
         }
 
-        private void _renderingForm_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
+        private void _renderingForm_KeyUp(object sender, EventArgs<char> e)
         {
-            _keysPressed[(char)e.KeyCode] = false;
+            _keysPressed[e.Value] = false;
         }
 
-        private void _renderingForm_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+        private void _renderingForm_KeyDown(object sender, EventArgs<char> e)
         {
-            _keysPressed[(char)e.KeyCode] = true;
+            _keysPressed[e.Value] = true;
         }
     }
 }
