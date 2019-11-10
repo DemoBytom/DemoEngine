@@ -1,26 +1,24 @@
 using System;
 using System.Text;
-using Demo.Engine.Core.Platform;
+using System.Threading;
+using System.Threading.Tasks;
+using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Tools.Common.Collections;
-using Demo.Tools.Common.Sys;
+using MediatR;
 
 namespace Demo.Engine.Windows.Services
 {
     public sealed class Keyboard
+        : INotificationHandler<KeyNotification>,
+        INotificationHandler<CharNotification>
     {
-        private readonly bool[] _keysPressed = new bool[256];
-        private readonly CircularQueue<char> _chars = new CircularQueue<char>(16);
-        private readonly IRenderingForm _renderingForm;
+        private static readonly bool[] _keysPressed = new bool[256];
+        private static readonly CircularQueue<char> _chars = new CircularQueue<char>(16);
 
         public bool KeyPressed(char keyCode) => _keysPressed[keyCode];
 
-        public Keyboard(in IRenderingForm renderingForm)
+        public Keyboard()
         {
-            _renderingForm = renderingForm;
-            _renderingForm.KeyDown += _renderingForm_KeyDown;
-            _renderingForm.KeyUp += _renderingForm_KeyUp;
-            _renderingForm.LostFocus += _renderingForm_LostFocus;
-            _renderingForm.Char += _renderingForm_Char;
         }
 
         public void ClearState() =>
@@ -39,24 +37,17 @@ namespace Demo.Engine.Windows.Services
             return sb.ToString();
         }
 
-        private void _renderingForm_Char(object? sender, EventArgs<char> e)
+        //KeyDown/KeyUp
+        Task INotificationHandler<KeyNotification>.Handle(KeyNotification notification, CancellationToken cancellationToken)
         {
-            _chars.Enqueue(e.Value);
+            _keysPressed[notification.Key] = notification.Down;
+            return Task.CompletedTask;
         }
 
-        private void _renderingForm_LostFocus(object? sender, EventArgs e)
+        Task INotificationHandler<CharNotification>.Handle(CharNotification notification, CancellationToken cancellationToken)
         {
-            ClearState();
-        }
-
-        private void _renderingForm_KeyUp(object sender, EventArgs<char> e)
-        {
-            _keysPressed[e.Value] = false;
-        }
-
-        private void _renderingForm_KeyDown(object sender, EventArgs<char> e)
-        {
-            _keysPressed[e.Value] = true;
+            _chars.Enqueue(notification.Char);
+            return Task.CompletedTask;
         }
     }
 }

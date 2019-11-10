@@ -4,10 +4,12 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Demo.Engine.Core.Models.Options;
+using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
 using Demo.Engine.Platform.Windows;
 using Demo.Tools.Common.Sys;
+using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Windows.Platform.Netstandard.Win32
@@ -19,10 +21,12 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
         private Point _currentNonFullscreenPosition;
         private readonly bool _allowUserResizing;
         private readonly ILogger<RenderingForm> _logger;
+        private readonly IMediator _mediator;
 
         public RenderingForm(
             ILogger<RenderingForm> logger,
-            FormSettings formSettings)
+            FormSettings formSettings,
+            IMediator mediator)
         {
             _formSettings = formSettings;
             InitializeComponent();
@@ -71,6 +75,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             }
 
             _logger = logger;
+            _mediator = mediator;
         }
 
         public bool DoEvents()
@@ -123,7 +128,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     {
                         var key = (Keys)wparam;
                         //_logger.LogInformation("Pressed key: {key}", key);
-                        OnKeyDown(new EventArgs<char>((char)key));
+                        //OnKeyDown(new EventArgs<char>((char)key));
+                        _mediator.Publish(new KeyNotification((char)key, true));
                         //filter autorepeats
                         break;
                     }
@@ -131,13 +137,13 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     {
                         var key = (Keys)wparam;
                         //_logger.LogInformation("Released key: {key}", key);
-                        OnKeyUp(new EventArgs<char>((char)key));
+                        _mediator.Publish(new KeyNotification((char)key, false));
                         break;
                     }
                 case WindowMessageTypes.WM_CHAR:
                     {
                         var c = (char)wparam;
-                        OnChar(new EventArgs<char>(c));
+                        _mediator.Publish(new CharNotification(c));
                         //OnChar(c)
                         break;
                     }

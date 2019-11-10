@@ -17,16 +17,18 @@ namespace Demo.Engine.Core.Services
         private bool _stopRequested;
         private readonly ILogger<EngineService> _logger;
         private readonly IRenderingFormFactory _renderFormFactory;
-        private Keyboard _keyboard;
+        private readonly Keyboard _keyboard;
 
         public EngineService(
             IHostApplicationLifetime applicationLifetime,
             ILogger<EngineService> logger,
-            IRenderingFormFactory renderFormFactory)
+            IRenderingFormFactory renderFormFactory,
+            Keyboard keyboard)
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
             _renderFormFactory = renderFormFactory;
+            _keyboard = keyboard;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -72,7 +74,6 @@ namespace Demo.Engine.Core.Services
             {
                 using var rf = _renderFormFactory.Create();
                 //TODO just for testing purposes, neets to be moved out
-                _keyboard = new Keyboard(rf);
                 rf.Show();
 
                 //TODO proper main loop instead of simple while
