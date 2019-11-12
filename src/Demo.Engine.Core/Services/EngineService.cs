@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Platform;
-using Demo.Engine.Windows.Services;
+using Demo.Engine.Core.Requests.Keyboard;
+using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -17,18 +19,18 @@ namespace Demo.Engine.Core.Services
         private bool _stopRequested;
         private readonly ILogger<EngineService> _logger;
         private readonly IRenderingFormFactory _renderFormFactory;
-        private readonly Keyboard _keyboard;
+        private readonly IMediator _mediator;
 
         public EngineService(
             IHostApplicationLifetime applicationLifetime,
             ILogger<EngineService> logger,
             IRenderingFormFactory renderFormFactory,
-            Keyboard keyboard)
+            IMediator mediator)
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
             _renderFormFactory = renderFormFactory;
-            _keyboard = keyboard;
+            _mediator = mediator;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -44,11 +46,11 @@ namespace Demo.Engine.Core.Services
         {
             //Starts the work one a new STA thread so that Windows.Forms work correctly
             var tcs = new TaskCompletionSource<object?>();
-            var thread = new Thread(() =>
+            var thread = new Thread(async () =>
             {
                 try
                 {
-                    DoWork();
+                    await DoWork();
                     tcs.SetResult(null);
                 }
                 catch (Exception ex)
@@ -66,7 +68,7 @@ namespace Demo.Engine.Core.Services
             return tcs.Task;
         }
 
-        private void DoWork()
+        private async Task DoWork()
         {
             _logger.LogInformation("Engine working!");
 
@@ -82,18 +84,21 @@ namespace Demo.Engine.Core.Services
                     && !_stopRequested
                     && !_applicationLifetime.ApplicationStopping.IsCancellationRequested)
                 {
-                    //app runs
-                    //_logger.LogInformation("Key A is pressed: {pressed}", _keyboard.KeyPressed((char)Keys.A));
+                    var sb = Stopwatch.StartNew();
+                    var keyboardState = await _mediator.Send(new KeyboardStateRequest());
+                    sb.Stop();
                     //if (_keyboard.KeyPressed((char)Keys.D1))
                     {
-                        var str = _keyboard.ReadChars();
+                        //_mediato
+                        var str = keyboardState.GetString();
+                        _logger.LogInformation("Keyboard query took {elapsed} ns", sb.ElapsedTicks / (double)Stopwatch.Frequency * 1_000_000_000);
                         if (!string.IsNullOrEmpty(str))
                         {
                             _logger.LogInformation("Read chars from buffer: {str}", str);
                         }
                     }
                     //Esc
-                    if (_keyboard.KeyPressed((char)27))
+                    if (keyboardState.GetKeyState((char)27))
                     {
                         _applicationLifetime.StopApplication();
                     }
