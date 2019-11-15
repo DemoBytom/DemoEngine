@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +12,7 @@ namespace Demo.Engine.Windows.Services
     public sealed class Keyboard :
         INotificationHandler<KeyNotification>,
         INotificationHandler<CharNotification>,
+        INotificationHandler<ClearKeysNotification>,
         IRequestHandler<KeyboardStateRequest, KeyboardStateResponse>
     {
         private static readonly bool[] _keysPressed = new bool[256];
@@ -72,15 +72,14 @@ namespace Demo.Engine.Windows.Services
         /// <returns></returns>
         Task<KeyboardStateResponse> IRequestHandler<KeyboardStateRequest, KeyboardStateResponse>.Handle(KeyboardStateRequest request, CancellationToken cancellationToken)
         {
-            //TODO UGLY!
-            var list = new List<char>();
-            while (_chars.TryDequeue(out var c))
-            {
-                list.Add(c);
-            }
-
-            var response = new KeyboardStateResponse(_keysPressed, list.ToArray());
+            var response = new KeyboardStateResponse(_keysPressed);
             return Task.FromResult(response);
+        }
+
+        Task INotificationHandler<ClearKeysNotification>.Handle(ClearKeysNotification notification, CancellationToken cancellationToken)
+        {
+            ClearState();
+            return Task.CompletedTask;
         }
     }
 }

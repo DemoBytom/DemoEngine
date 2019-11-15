@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Requests.Keyboard;
+using Demo.Tools.Common.Extensions;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -90,12 +91,16 @@ namespace Demo.Engine.Core.Services
                     //if (_keyboard.KeyPressed((char)Keys.D1))
                     {
                         //_mediato
-                        var str = keyboardState.GetString();
-                        _logger.LogInformation("Keyboard query took {elapsed} ns", sb.ElapsedTicks / (double)Stopwatch.Frequency * 1_000_000_000);
-                        if (!string.IsNullOrEmpty(str))
-                        {
-                            _logger.LogInformation("Read chars from buffer: {str}", str);
-                        }
+                        //var str = keyboardState.GetString();
+                        _logger.LogTrace(
+                            "Keyboard query took {elapsedNs} ns {elapsedUs} μs {elapsedMs} ms",
+                            sb.ElapsedNanoseconds(),
+                            sb.ElapsedMicroseconds(),
+                            sb.ElapsedMilliseconds());
+                        //if (!string.IsNullOrEmpty(str))
+                        //{
+                        //    _logger.LogInformation("Read chars from buffer: {str}", str);
+                        //}
                     }
                     //Esc
                     if (keyboardState.GetKeyState((char)27))
@@ -137,7 +142,6 @@ namespace Demo.Engine.Core.Services
             {
                 if (disposing)
                 {
-                    //_renderControl?.Dispose();
                     _applicationLifetime.StopApplication();
                 }
 
@@ -145,10 +149,7 @@ namespace Demo.Engine.Core.Services
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-        }
+        public void Dispose() => Dispose(true);
 
         #endregion IDisposable Support
     }

@@ -1,8 +1,6 @@
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Models.Options;
-using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Platform.Windows;
@@ -31,12 +29,9 @@ namespace Demo.Engine
                         services.AddHostedService<EngineService>();
                         services.Configure<FormSettings>(hostContext.Configuration.GetSection(nameof(FormSettings)));
                         services.AddTransient<IRenderingFormFactory, RenderingFormFactory>();
-                        services.AddTransient<Keyboard>();
 
                         services.AddMediatR(
-                            Assembly.GetExecutingAssembly(),
-                            typeof(Keyboard).Assembly,
-                            typeof(KeyNotification).Assembly);
+                            typeof(Keyboard).Assembly);
                     });
 
                 var host = hostBuilder.Build();

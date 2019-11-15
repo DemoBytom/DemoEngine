@@ -8,7 +8,6 @@ using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
 using Demo.Engine.Platform.Windows;
-using Demo.Tools.Common.Sys;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -86,7 +85,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                 var localHandle = Handle;
                 if (localHandle != IntPtr.Zero)
                 {
-                    // Previous code not compatible with Application.AddMessageFilter but faster then DoEvents
+                    // Previous code not compatible with Application.AddMessageFilter but faster
+                    // then DoEvents
                     while (User32.PeekMessage(out _, IntPtr.Zero, 0, 0, 0) != 0)
                     {
                         if (User32.GetMessage(out var msg, IntPtr.Zero, 0, 0) == -1)
@@ -119,11 +119,11 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             switch ((WindowMessageTypes)m.Msg)
             {
                 //Not sure if I need it?
-                //case WindowMessageTypes.KillFocus:
-                //    {
-                //        OnLostFocus(EventArgs.Empty);
-                //        break;
-                //    }
+                case WindowMessageTypes.KillFocus:
+                    {
+                        _mediator.Publish(new ClearKeysNotification());
+                        break;
+                    }
                 case WindowMessageTypes.KeyDown:
                     {
                         var key = (Keys)wparam;
@@ -152,19 +152,5 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     break;
             }
         }
-
-        #region Events
-
-        public event EventHandler<EventArgs<char>> Char;
-
-        protected virtual void OnChar(EventArgs<char> eventArgs) => Char?.Invoke(this, eventArgs);
-
-        public new event EventHandler<EventArgs<char>> KeyDown;
-        protected virtual void OnKeyDown(EventArgs<char> eventArgs) => KeyDown?.Invoke(this, eventArgs);
-
-        public new event EventHandler<EventArgs<char>> KeyUp;
-        protected virtual void OnKeyUp(EventArgs<char> eventArgs) => KeyUp?.Invoke(this, eventArgs);
-
-        #endregion Events
     }
 }

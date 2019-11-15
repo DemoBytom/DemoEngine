@@ -4,8 +4,6 @@ namespace Microsoft.Extensions.Hosting
 {
     public static class HostExtensions
     {
-
-
         /// <summary>
         /// Creates a default logger that is assigned to <see cref="Log.Logger"/> as well as
         /// registers it in the logging pipeline.
@@ -16,6 +14,7 @@ namespace Microsoft.Extensions.Hosting
             this IHostBuilder hostBuilder)
         {
             Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
                 .Enrich.FromLogContext()
                 .WriteTo.Console()
                 .WriteTo.Debug()

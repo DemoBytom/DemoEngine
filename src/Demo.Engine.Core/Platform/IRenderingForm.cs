@@ -1,5 +1,4 @@
 using System;
-using Demo.Tools.Common.Sys;
 
 namespace Demo.Engine.Core.Platform
 {
@@ -16,18 +15,5 @@ namespace Demo.Engine.Core.Platform
         /// Displays the control to the user.
         /// </summary>
         void Show();
-
-
-        #region events
-
-        public event EventHandler LostFocus;
-
-        public event EventHandler<EventArgs<char>> KeyDown;
-
-        public event EventHandler<EventArgs<char>> KeyUp;
-
-        public event EventHandler<EventArgs<char>> Char;
-
-        #endregion events
     }
 }
