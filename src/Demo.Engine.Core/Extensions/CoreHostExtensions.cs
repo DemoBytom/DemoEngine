@@ -54,7 +54,7 @@ namespace Microsoft.Extensions.Hosting
                 //supresses the default "Application started. Press Ctrl+C to shut down." etc. log messages, that ConsoleLifetime produces
                 services.Configure<ConsoleLifetimeOptions>(options => options.SuppressStatusMessages = true);
             })
-            .UseDefaultServiceProvider((context, options) =>
+            .UseDefaultServiceProvider((_, options) =>
             {
                 options.ValidateOnBuild = true;
                 options.ValidateScopes = true;

@@ -1,16 +1,17 @@
+using Demo.Engine.Core.Platform;
 using MediatR;
 
 namespace Demo.Engine.Core.Notifications.Keyboard
 {
     public class KeyNotification : INotification
     {
-        public KeyNotification(char key, bool down)
+        public KeyNotification(VirtualKeys key, bool down)
         {
             Key = key;
             Down = down;
         }
 
-        public char Key { get; }
+        public VirtualKeys Key { get; }
         public bool Down { get; }
     }
 }

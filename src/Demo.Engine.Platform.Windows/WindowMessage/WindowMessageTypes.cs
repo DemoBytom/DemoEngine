@@ -50,7 +50,26 @@ namespace Demo.Engine.Platform.NetStandard.Win32.WindowMessage
         /// translated by the TranslateMessage function. The WM_CHAR message contains the character
         /// code of the key that was pressed.
         /// </summary>
-        WM_CHAR = 0x0102,
+        Char = 0x0102,
+
+        /// <summary>
+        /// WM_SYSKEYDOWN: Posted to the window with the keyboard focus when the user presses the
+        /// F10 key (which activates the menu bar) or holds down the ALT key and then presses
+        /// another key. It also occurs when no window currently has the keyboard focus; in this
+        /// case, the WM_SYSKEYDOWN message is sent to the active window. The window that receives
+        /// the message can distinguish between these two contexts by checking the context code in
+        /// the lParam parameter.
+        /// </summary>
+        SysKeyDown = 0x0104,
+
+        /// <summary>
+        /// WM_SYSKEYUP: Posted to the window with the keyboard focus when the user releases a key
+        /// that was pressed while the ALT key was held down. It also occurs when no window
+        /// currently has the keyboard focus; in this case, the WM_SYSKEYUP message is sent to the
+        /// active window. The window that receives the message can distinguish between these two
+        /// contexts by checking the context code in the lParam parameter.
+        /// </summary>
+        SysKeyUp = 0x0105,
 
         /// <summary>
         /// WM_SYSCOMMAND: A window receives this message when the user chooses a command from the

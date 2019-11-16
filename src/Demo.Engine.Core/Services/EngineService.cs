@@ -1,11 +1,10 @@
 using System;
-using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Requests.Keyboard;
-using Demo.Tools.Common.Extensions;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -85,25 +84,15 @@ namespace Demo.Engine.Core.Services
                     && !_stopRequested
                     && !_applicationLifetime.ApplicationStopping.IsCancellationRequested)
                 {
-                    var sb = Stopwatch.StartNew();
+                    //Query for current keyboard state
                     var keyboardState = await _mediator.Send(new KeyboardStateRequest());
-                    sb.Stop();
-                    //if (_keyboard.KeyPressed((char)Keys.D1))
+
+                    if (keyboardState.GetPressedKeys().Length > 0)
                     {
-                        //_mediato
-                        //var str = keyboardState.GetString();
-                        _logger.LogTrace(
-                            "Keyboard query took {elapsedNs} ns {elapsedUs} μs {elapsedMs} ms",
-                            sb.ElapsedNanoseconds(),
-                            sb.ElapsedMicroseconds(),
-                            sb.ElapsedMilliseconds());
-                        //if (!string.IsNullOrEmpty(str))
-                        //{
-                        //    _logger.LogInformation("Read chars from buffer: {str}", str);
-                        //}
+                        _logger.LogTrace("Currently pressed keys {keysPressed}", keyboardState.GetPressedKeys().ToArray().Select(o => o.ToString()));
                     }
-                    //Esc
-                    if (keyboardState.GetKeyState((char)27))
+                    //Exit the app
+                    if (keyboardState.GetKeyState(VirtualKeys.Escape))
                     {
                         _applicationLifetime.StopApplication();
                     }

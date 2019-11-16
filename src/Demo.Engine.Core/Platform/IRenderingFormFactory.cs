@@ -7,10 +7,7 @@ namespace Demo.Engine.Core.Platform
     {
         protected readonly FormSettings _formSettings;
 
-        protected IRenderingFormFactory(IOptions<FormSettings> formSettings)
-        {
-            _formSettings = formSettings.Value;
-        }
+        protected IRenderingFormFactory(IOptions<FormSettings> formSettings) => _formSettings = formSettings.Value;
 
         public abstract IRenderingForm Create();
     }

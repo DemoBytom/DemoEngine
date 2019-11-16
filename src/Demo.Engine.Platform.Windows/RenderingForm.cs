@@ -118,33 +118,40 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             var wparam = m.WParam.ToInt64();
             switch ((WindowMessageTypes)m.Msg)
             {
-                //Not sure if I need it?
                 case WindowMessageTypes.KillFocus:
                     {
                         _mediator.Publish(new ClearKeysNotification());
                         break;
                     }
+                case WindowMessageTypes.SysKeyDown:
                 case WindowMessageTypes.KeyDown:
                     {
-                        var key = (Keys)wparam;
-                        //_logger.LogInformation("Pressed key: {key}", key);
-                        //OnKeyDown(new EventArgs<char>((char)key));
-                        _mediator.Publish(new KeyNotification((char)key, true));
-                        //filter autorepeats
+                        var lparam = m.LParam.ToInt64();
+                        //_logger.LogInformation("{binary} {value}", Convert.ToString(lparam, 2).PadLeft(64, '0'), lparam);
+                        //_logger.LogInformation("{binary} {value}", Convert.ToString(wparam, 2).PadLeft(64, '0'), wparam);
+
+                        //bit 30
+                        if ((lparam & 0x4000_0000) == 0)
+                        {
+                            var key = (VirtualKeys)wparam;
+
+                            // _logger.LogTrace("Pressed key: {key} wparam {wparam}", key, wparam);
+                            _mediator.Publish(new KeyNotification(key, true));
+                        }
                         break;
                     }
+                case WindowMessageTypes.SysKeyUp:
                 case WindowMessageTypes.KeyUp:
                     {
-                        var key = (Keys)wparam;
-                        //_logger.LogInformation("Released key: {key}", key);
-                        _mediator.Publish(new KeyNotification((char)key, false));
+                        var key = (VirtualKeys)wparam;
+                        //_logger.LogTrace("Released key: {key} wparam {wparam}", key, wparam);
+                        _mediator.Publish(new KeyNotification(key, false));
                         break;
                     }
-                case WindowMessageTypes.WM_CHAR:
+                case WindowMessageTypes.Char:
                     {
                         var c = (char)wparam;
                         _mediator.Publish(new CharNotification(c));
-                        //OnChar(c)
                         break;
                     }
                 default:

@@ -18,8 +18,6 @@ namespace Demo.Engine.Windows.Services
         private static readonly bool[] _keysPressed = new bool[256];
         private static readonly CircularQueue<char> _chars = new CircularQueue<char>(16);
 
-        public bool KeyPressed(char keyCode) => _keysPressed[keyCode];
-
         public Keyboard()
         {
         }
@@ -48,7 +46,7 @@ namespace Demo.Engine.Windows.Services
         /// <returns></returns>
         Task INotificationHandler<KeyNotification>.Handle(KeyNotification notification, CancellationToken cancellationToken)
         {
-            _keysPressed[notification.Key] = notification.Down;
+            _keysPressed[(byte)notification.Key] = notification.Down;
             return Task.CompletedTask;
         }
 
