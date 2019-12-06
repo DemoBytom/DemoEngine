@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -79,20 +78,26 @@ namespace Demo.Engine.Core.Services
                 rf.Show();
 
                 //TODO proper main loop instead of simple while
+                var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
+
                 while (
                     rf.DoEvents()
                     && !_stopRequested
                     && !_applicationLifetime.ApplicationStopping.IsCancellationRequested)
                 {
                     //Query for current keyboard state
-                    var keyboardState = await _mediator.Send(new KeyboardStateRequest());
+                    //var sw2 = Stopwatch.StartNew();
+                    //var aPressed2 = keyboardHandle.GetKeyPressed(VirtualKeys.A);
+                    //sw2.Stop();
 
-                    if (keyboardState.GetPressedKeys().Length > 0)
-                    {
-                        _logger.LogTrace("Currently pressed keys {keysPressed}", keyboardState.GetPressedKeys().ToArray().Select(o => o.ToString()));
-                    }
+                    //_logger.LogTrace("sw1: {elapsed1} | sw2: {elapsed2}", sw1.ElapsedNanoseconds(), sw2.ElapsedNanoseconds());
+                    //_logger.LogTrace("sw1: {elapsed1} | sw2: {elapsed2}", sw1.ElapsedMicroseconds(), sw2.ElapsedMicroseconds());
+                    //if (keyboardState.GetPressedKeys().Length > 0)
+                    //{
+                    //    _logger.LogTrace("Currently pressed keys {keysPressed}", keyboardState.GetPressedKeys().ToArray().Select(o => o.ToString()));
+                    //}
                     //Exit the app
-                    if (keyboardState.GetKeyState(VirtualKeys.Escape))
+                    if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
                     {
                         _applicationLifetime.StopApplication();
                     }

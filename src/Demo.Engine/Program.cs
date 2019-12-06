@@ -1,10 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using Demo.Engine.Core.Components;
+using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Platform.Windows;
-using Demo.Engine.Windows.Services;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,9 +30,10 @@ namespace Demo.Engine
                         services.AddHostedService<EngineService>();
                         services.Configure<FormSettings>(hostContext.Configuration.GetSection(nameof(FormSettings)));
                         services.AddTransient<IRenderingFormFactory, RenderingFormFactory>();
+                        services.AddSingleton<IKeyboardCache, KeyboardCache>();
 
                         services.AddMediatR(
-                            typeof(Keyboard).Assembly);
+                            typeof(KeyboardHandler).Assembly);
                     });
 
                 var host = hostBuilder.Build();
