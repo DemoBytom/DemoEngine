@@ -36,7 +36,7 @@ namespace Demo.Tools.Common.Collections
             {
                 if (_buffer.Count == _capacity)
                 {
-                    _buffer.TryDequeue(out var _);
+                    _buffer.TryDequeue(out _);
                 }
 
                 _buffer.Enqueue(value);
@@ -54,12 +54,20 @@ namespace Demo.Tools.Common.Collections
         /// <exception cref="InvalidOperationException">If can't dequeue</exception>
         public T Dequeue()
         {
-            if (!_buffer.TryDequeue(out var retVal))
+            _lock.EnterWriteLock();
+            try
             {
-                throw new InvalidOperationException("Dequeue failed!");
-            }
+                if (!_buffer.TryDequeue(out var retVal))
+                {
+                    throw new InvalidOperationException("Dequeue failed!");
+                }
 
-            return retVal;
+                return retVal;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         /// <summary>
@@ -77,7 +85,7 @@ namespace Demo.Tools.Common.Collections
         /// <exception cref="InvalidOperationException">If can't peek</exception>
         public T Peek()
         {
-            if (!_buffer.TryPeek(out var retVal))
+            if (!TryPeek(out var retVal))
             {
                 throw new InvalidOperationException("Peek failed!");
             }
@@ -90,8 +98,18 @@ namespace Demo.Tools.Common.Collections
         /// </summary>
         /// <param name="result"></param>
         /// <returns></returns>
-        public bool TryPeek([MaybeNullWhen(false)] out T result) =>
-            _buffer.TryPeek(out result);
+        public bool TryPeek([MaybeNullWhen(false)] out T result)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _buffer.TryPeek(out result);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
 
         /// <summary>
         /// Gets the number of elements in the collection.
@@ -139,7 +157,18 @@ namespace Demo.Tools.Common.Collections
         /// <see cref="CircularQueue{T}"></see> cannot be cast automatically to the type of the
         /// destination <paramref name="array">array</paramref>.
         /// </exception>
-        public void CopyTo(T[] array, int index) => _buffer.CopyTo(array, index);
+        public void CopyTo(T[] array, int index)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                _buffer.CopyTo(array, index);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
 
         public IEnumerator<T> GetEnumerator() => _buffer.GetEnumerator();
 

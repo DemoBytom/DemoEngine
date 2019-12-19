@@ -97,6 +97,11 @@ namespace Demo.Engine.Core.Services
                     //    _logger.LogTrace("Currently pressed keys {keysPressed}", keyboardState.GetPressedKeys().ToArray().Select(o => o.ToString()));
                     //}
                     //Exit the app
+                    if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter))
+                    {
+                        var str = keyboardHandle.GetString();
+                        _logger.LogInformation(str);
+                    }
                     if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
                     {
                         _applicationLifetime.StopApplication();

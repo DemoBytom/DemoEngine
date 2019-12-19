@@ -64,7 +64,8 @@ namespace Demo.Engine.Core.Components
         /// <returns></returns>
         Task<KeyboardHandleResponse> IRequestHandler<KeyboardHandleRequest, KeyboardHandleResponse>.Handle(KeyboardHandleRequest request, CancellationToken cancellationToken)
         {
-            var response = new KeyboardHandleResponse(_keyboardCache.KeysPressed);
+            var response = new KeyboardHandleResponse(
+                _keyboardCache);
             return Task.FromResult(response);
         }
     }
