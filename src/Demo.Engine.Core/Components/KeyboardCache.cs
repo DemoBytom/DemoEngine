@@ -3,6 +3,7 @@ using System.Text;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Platform;
 using Demo.Tools.Common.Collections;
+using Demo.Tools.Common.Sys;
 
 namespace Demo.Engine.Core.Components
 {
@@ -27,10 +28,16 @@ namespace Demo.Engine.Core.Components
             return sb.ToString();
         }
 
-        public void OnKey(VirtualKeys key, bool down) => _keysPressed[(byte)key] = down;
+        public void Key(VirtualKeys key, bool down) => _keysPressed[(byte)key] = down;
 
-        public void OnChar(char c) => _chars.Enqueue(c);
+        public void Char(char c)
+        {
+            _chars.Enqueue(c);
+            OnChar?.Invoke(this, new EventArgs<char>(c));
+        }
 
         public ReadOnlyMemory<bool> KeysPressed => _keysPressed.AsMemory();
+
+        public event EventHandler<EventArgs<char>>? OnChar;
     }
 }

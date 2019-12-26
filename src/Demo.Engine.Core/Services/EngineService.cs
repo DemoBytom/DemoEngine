@@ -79,6 +79,7 @@ namespace Demo.Engine.Core.Services
 
                 //TODO proper main loop instead of simple while
                 var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
+                KeyboardCharResponse? charQueue = null;
 
                 while (
                     rf.DoEvents()
@@ -97,10 +98,25 @@ namespace Demo.Engine.Core.Services
                     //    _logger.LogTrace("Currently pressed keys {keysPressed}", keyboardState.GetPressedKeys().ToArray().Select(o => o.ToString()));
                     //}
                     //Exit the app
-                    if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter))
+                    //if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter))
+                    //{
+                    //    var str = keyboardHandle.GetString();
+                    //    _logger.LogInformation(str);
+                    //}
+                    if (keyboardHandle.GetKeyPressed(VirtualKeys.OemOpenBrackets)
+                        && charQueue is null)
                     {
-                        var str = keyboardHandle.GetString();
-                        _logger.LogInformation(str);
+                        charQueue = await _mediator.Send(new KeyboardCharRequest());
+                    }
+                    if (keyboardHandle.GetKeyPressed(VirtualKeys.OemCloseBrackets))
+                    {
+                        var str = charQueue?.ReadCache();
+                        if (!string.IsNullOrEmpty(str))
+                        {
+                            _logger.LogInformation(str);
+                            charQueue?.Dispose();
+                            charQueue = null;
+                        }
                     }
                     if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
                     {

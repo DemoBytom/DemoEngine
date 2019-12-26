@@ -18,17 +18,17 @@ namespace Demo.Engine.Core.UTs.Components
         public void ReadChars_StateUnderTest_ExpectedBehavior()
         {
             // Arrange
-            _keyboardCache.OnChar('a');
-            _keyboardCache.OnChar('l');
-            _keyboardCache.OnChar('a');
-            _keyboardCache.OnChar(' ');
-            _keyboardCache.OnChar('m');
-            _keyboardCache.OnChar('a');
-            _keyboardCache.OnChar(' ');
-            _keyboardCache.OnChar('k');
-            _keyboardCache.OnChar('o');
-            _keyboardCache.OnChar('t');
-            _keyboardCache.OnChar('a');
+            _keyboardCache.Char('a');
+            _keyboardCache.Char('l');
+            _keyboardCache.Char('a');
+            _keyboardCache.Char(' ');
+            _keyboardCache.Char('m');
+            _keyboardCache.Char('a');
+            _keyboardCache.Char(' ');
+            _keyboardCache.Char('k');
+            _keyboardCache.Char('o');
+            _keyboardCache.Char('t');
+            _keyboardCache.Char('a');
 
             // Act
             var result = _keyboardCache.ReadChars();
@@ -40,9 +40,9 @@ namespace Demo.Engine.Core.UTs.Components
         [Fact]
         public void ReadChars_Dequeues_Properly()
         {
-            _keyboardCache.OnChar('a');
-            _keyboardCache.OnChar('b');
-            _keyboardCache.OnChar('c');
+            _keyboardCache.Char('a');
+            _keyboardCache.Char('b');
+            _keyboardCache.Char('c');
 
             var result1 = _keyboardCache.ReadChars();
             var result2 = _keyboardCache.ReadChars();

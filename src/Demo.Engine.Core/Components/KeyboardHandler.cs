@@ -11,7 +11,8 @@ namespace Demo.Engine.Core.Components
         INotificationHandler<KeyNotification>,
         INotificationHandler<CharNotification>,
         INotificationHandler<ClearKeysNotification>,
-        IRequestHandler<KeyboardHandleRequest, KeyboardHandleResponse>
+        IRequestHandler<KeyboardHandleRequest, KeyboardHandleResponse>,
+        IRequestHandler<KeyboardCharRequest, KeyboardCharResponse>
     {
         private readonly IKeyboardCache _keyboardCache;
 
@@ -28,7 +29,7 @@ namespace Demo.Engine.Core.Components
         /// <returns></returns>
         Task INotificationHandler<KeyNotification>.Handle(KeyNotification notification, CancellationToken cancellationToken)
         {
-            _keyboardCache.OnKey(notification.Key, notification.Down);
+            _keyboardCache.Key(notification.Key, notification.Down);
             return Task.CompletedTask;
         }
 
@@ -40,7 +41,7 @@ namespace Demo.Engine.Core.Components
         /// <returns></returns>
         Task INotificationHandler<CharNotification>.Handle(CharNotification notification, CancellationToken cancellationToken)
         {
-            _keyboardCache.OnChar(notification.Char);
+            _keyboardCache.Char(notification.Char);
             return Task.CompletedTask;
         }
 
@@ -66,6 +67,12 @@ namespace Demo.Engine.Core.Components
         {
             var response = new KeyboardHandleResponse(
                 _keyboardCache);
+            return Task.FromResult(response);
+        }
+
+        Task<KeyboardCharResponse> IRequestHandler<KeyboardCharRequest, KeyboardCharResponse>.Handle(KeyboardCharRequest request, CancellationToken cancellationToken)
+        {
+            var response = new KeyboardCharResponse(_keyboardCache);
             return Task.FromResult(response);
         }
     }
