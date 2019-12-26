@@ -29,7 +29,7 @@ namespace Demo.Engine.Core.Components
         /// <returns></returns>
         Task INotificationHandler<KeyNotification>.Handle(KeyNotification notification, CancellationToken cancellationToken)
         {
-            _keyboardCache.Key(notification.Key, notification.Down);
+            _keyboardCache.OnKey(notification.Key, notification.Down);
             return Task.CompletedTask;
         }
 

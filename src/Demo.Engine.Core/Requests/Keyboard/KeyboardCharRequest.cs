@@ -19,7 +19,7 @@ namespace Demo.Engine.Core.Requests.Keyboard
         public KeyboardCharResponse(IKeyboardCache keyboardCache)
         {
             _keboardCache = keyboardCache;
-            _keboardCache.OnChar += KeyboardCache_OnCharEvent;
+            _keboardCache.OnCharEvent += KeyboardCache_OnCharEvent;
         }
 
         private void KeyboardCache_OnCharEvent(object sender, EventArgs<char> e)
@@ -39,10 +39,7 @@ namespace Demo.Engine.Core.Requests.Keyboard
 
         #region IDisposable Support
 
-        /// <summary>
-        /// To detect redundant calls
-        /// </summary>
-        private bool _disposedValue = false;
+        private bool _disposedValue = false; // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
         {
@@ -50,7 +47,7 @@ namespace Demo.Engine.Core.Requests.Keyboard
             {
                 if (disposing)
                 {
-                    _keboardCache.OnChar -= KeyboardCache_OnCharEvent;
+                    _keboardCache.OnCharEvent -= KeyboardCache_OnCharEvent;
                 }
 
                 _disposedValue = true;

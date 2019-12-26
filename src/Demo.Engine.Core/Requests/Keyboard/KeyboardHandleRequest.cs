@@ -22,7 +22,5 @@ namespace Demo.Engine.Core.Requests.Keyboard
         }
 
         public bool GetKeyPressed(VirtualKeys key) => _keyboardState.Span[(byte)key];
-
-        public string GetString() => _keyboardCache.ReadChars();
     }
 }

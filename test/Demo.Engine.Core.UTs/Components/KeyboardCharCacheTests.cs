@@ -1,17 +1,20 @@
 using Demo.Engine.Core.Components;
 using Demo.Engine.Core.Interfaces.Components;
+using Demo.Engine.Core.Requests.Keyboard;
 using FluentAssertions;
 using Xunit;
 
 namespace Demo.Engine.Core.UTs.Components
 {
-    public class KeyboardCacheTests
+    public class KeyboardCharCacheTests
     {
         private readonly IKeyboardCache _keyboardCache;
+        private readonly KeyboardCharResponse _charResponse;
 
-        public KeyboardCacheTests()
+        public KeyboardCharCacheTests()
         {
             _keyboardCache = new KeyboardCache();
+            _charResponse = new KeyboardCharResponse(_keyboardCache);
         }
 
         [Fact]
@@ -31,7 +34,7 @@ namespace Demo.Engine.Core.UTs.Components
             _keyboardCache.Char('a');
 
             // Act
-            var result = _keyboardCache.ReadChars();
+            var result = _charResponse.ReadCache();
 
             // Assert
             result.Should().Be("ala ma kota");
@@ -44,8 +47,8 @@ namespace Demo.Engine.Core.UTs.Components
             _keyboardCache.Char('b');
             _keyboardCache.Char('c');
 
-            var result1 = _keyboardCache.ReadChars();
-            var result2 = _keyboardCache.ReadChars();
+            var result1 = _charResponse.ReadCache();
+            var result2 = _charResponse.ReadCache();
 
             result1.Should().Be("abc");
             result2.Should().BeEmpty();

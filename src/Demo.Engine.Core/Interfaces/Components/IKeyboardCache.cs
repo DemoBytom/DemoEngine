@@ -6,7 +6,7 @@ namespace Demo.Engine.Core.Interfaces.Components
 {
     public interface IKeyboardCache
     {
-        event EventHandler<EventArgs<char>> OnChar;
+        event EventHandler<EventArgs<char>> OnCharEvent;
 
         ReadOnlyMemory<bool> KeysPressed { get; }
 
@@ -14,8 +14,6 @@ namespace Demo.Engine.Core.Interfaces.Components
 
         void ClearState();
 
-        void Key(VirtualKeys key, bool down);
-
-        string ReadChars();
+        void OnKey(VirtualKeys key, bool down);
     }
 }
