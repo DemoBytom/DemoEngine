@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\Demo.Engine.Core\Demo.Engine.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="RenderingForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+
+</Project>
