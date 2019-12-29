@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,10 @@ namespace Demo.Engine.Core.Services
         private readonly IRenderingFormFactory _renderFormFactory;
         private readonly IMediator _mediator;
 
+        private readonly string _version =
+            //Assembly.GetEntryAssembly().GetName().Version.ToString();
+            Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+
         public EngineService(
             IHostApplicationLifetime applicationLifetime,
             ILogger<EngineService> logger,
@@ -35,7 +40,7 @@ namespace Demo.Engine.Core.Services
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Engine starting!");
+            _logger.LogInformation("Engine starting! v{version}", _version);
             _executingTask = DoWorkAsync();
             return _executingTask.IsCompleted
                 ? _executingTask
@@ -70,7 +75,7 @@ namespace Demo.Engine.Core.Services
 
         private async Task DoWork()
         {
-            _logger.LogInformation("Engine working!");
+            _logger.LogInformation("Engine working! v{version}", _version);
 
             try
             {
