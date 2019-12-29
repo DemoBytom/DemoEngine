@@ -5,14 +5,14 @@ using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Requests.Keyboard;
 using MediatR;
 
-namespace Demo.Engine.Core.Components
+namespace Demo.Engine.Core.Components.Keyboard.Internal
 {
     public sealed class KeyboardHandler :
         INotificationHandler<KeyNotification>,
         INotificationHandler<CharNotification>,
         INotificationHandler<ClearKeysNotification>,
-        IRequestHandler<KeyboardHandleRequest, KeyboardHandleResponse>,
-        IRequestHandler<KeyboardCharRequest, KeyboardCharResponse>
+        IRequestHandler<KeyboardHandleRequest, KeyboardHandle>,
+        IRequestHandler<KeyboardCharCacheRequest, KeyboardCharCache>
     {
         private readonly IKeyboardCache _keyboardCache;
 
@@ -29,7 +29,7 @@ namespace Demo.Engine.Core.Components
         /// <returns></returns>
         Task INotificationHandler<KeyNotification>.Handle(KeyNotification notification, CancellationToken cancellationToken)
         {
-            _keyboardCache.OnKey(notification.Key, notification.Down);
+            _keyboardCache.Key(notification.Key, notification.Down);
             return Task.CompletedTask;
         }
 
@@ -63,16 +63,16 @@ namespace Demo.Engine.Core.Components
         /// <param name="request"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<KeyboardHandleResponse> IRequestHandler<KeyboardHandleRequest, KeyboardHandleResponse>.Handle(KeyboardHandleRequest request, CancellationToken cancellationToken)
+        Task<KeyboardHandle> IRequestHandler<KeyboardHandleRequest, KeyboardHandle>.Handle(KeyboardHandleRequest request, CancellationToken cancellationToken)
         {
-            var response = new KeyboardHandleResponse(
+            var response = new KeyboardHandle(
                 _keyboardCache);
             return Task.FromResult(response);
         }
 
-        Task<KeyboardCharResponse> IRequestHandler<KeyboardCharRequest, KeyboardCharResponse>.Handle(KeyboardCharRequest request, CancellationToken cancellationToken)
+        Task<KeyboardCharCache> IRequestHandler<KeyboardCharCacheRequest, KeyboardCharCache>.Handle(KeyboardCharCacheRequest request, CancellationToken cancellationToken)
         {
-            var response = new KeyboardCharResponse(_keyboardCache);
+            var response = new KeyboardCharCache(_keyboardCache);
             return Task.FromResult(response);
         }
     }

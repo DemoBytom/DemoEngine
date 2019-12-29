@@ -1,9 +1,9 @@
 namespace Demo.Engine.Platform.NetStandard.Win32.WindowMessage
 {
     /// <summary>
-    /// A window receives this message when the user chooses a command from the Window menu (formerly
-    /// known as the system or control menu) or when the user chooses the maximize button, minimize
-    /// button, restore button, or close button.
+    /// A window receives this message when the user chooses a command from the Window menu
+    /// (formerly known as the system or control menu) or when the user chooses the maximize button,
+    /// minimize button, restore button, or close button.
     /// </summary>
     /// <remarks>
     /// In WM_SYSCOMMAND messages, the four low-order bits of the wParam parameter are used

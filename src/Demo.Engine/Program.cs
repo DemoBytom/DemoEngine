@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Demo.Engine.Core.Components;
+using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Platform;

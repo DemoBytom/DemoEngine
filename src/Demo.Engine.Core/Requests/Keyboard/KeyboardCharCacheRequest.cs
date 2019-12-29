@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Demo.Engine.Core.Requests.Keyboard
 {
-    public class KeyboardHandleRequest : IRequest<KeyboardHandle>
+    public class KeyboardCharCacheRequest : IRequest<KeyboardCharCache>
     {
     }
 }

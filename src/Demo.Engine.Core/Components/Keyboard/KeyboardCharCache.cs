@@ -1,25 +1,28 @@
 using System;
 using System.Text;
 using Demo.Engine.Core.Interfaces.Components;
+using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Tools.Common.Collections;
 using Demo.Tools.Common.Sys;
-using MediatR;
 
-namespace Demo.Engine.Core.Requests.Keyboard
+namespace Demo.Engine.Core.Components.Keyboard
 {
-    public class KeyboardCharRequest : IRequest<KeyboardCharResponse>
-    {
-    }
-
-    public class KeyboardCharResponse : IDisposable
+    /// <summary>
+    /// Requested through <see cref="KeyboardCharCacheRequest"/>
+    /// </summary>
+    public class KeyboardCharCache : IDisposable
     {
         private readonly CircularQueue<char> _buffer = new CircularQueue<char>(16);
         private readonly IKeyboardCache _keboardCache;
 
-        public KeyboardCharResponse(IKeyboardCache keyboardCache)
+        /// <summary>
+        /// <see cref="KeyboardCharCache"/> constructor
+        /// </summary>
+        /// <param name="keyboardCache">handle to the keyboard cache</param>
+        public KeyboardCharCache(IKeyboardCache keyboardCache)
         {
             _keboardCache = keyboardCache;
-            _keboardCache.OnCharEvent += KeyboardCache_OnCharEvent;
+            _keboardCache.OnChar += KeyboardCache_OnCharEvent;
         }
 
         private void KeyboardCache_OnCharEvent(object sender, EventArgs<char> e)
@@ -47,7 +50,7 @@ namespace Demo.Engine.Core.Requests.Keyboard
             {
                 if (disposing)
                 {
-                    _keboardCache.OnCharEvent -= KeyboardCache_OnCharEvent;
+                    _keboardCache.OnChar -= KeyboardCache_OnCharEvent;
                 }
 
                 _disposedValue = true;

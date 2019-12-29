@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Requests.Keyboard;
 using MediatR;
@@ -79,7 +80,7 @@ namespace Demo.Engine.Core.Services
 
                 //TODO proper main loop instead of simple while
                 var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
-                KeyboardCharResponse? charQueue = null;
+                KeyboardCharCache? charQueue = null;
 
                 while (
                     rf.DoEvents()
@@ -106,7 +107,7 @@ namespace Demo.Engine.Core.Services
                     if (keyboardHandle.GetKeyPressed(VirtualKeys.OemOpenBrackets)
                         && charQueue is null)
                     {
-                        charQueue = await _mediator.Send(new KeyboardCharRequest());
+                        charQueue = await _mediator.Send(new KeyboardCharCacheRequest());
                     }
                     if (keyboardHandle.GetKeyPressed(VirtualKeys.OemCloseBrackets))
                     {
