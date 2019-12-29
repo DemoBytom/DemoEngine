@@ -26,12 +26,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo.Engine.Core", "src\Dem
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Engine.Core.UTs", "test\Demo.Engine.Core.UTs\Demo.Engine.Core.UTs.csproj", "{238C292C-6F71-4A40-AA36-9CC0E22CF4C9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{64EF9C48-71BC-4412-8CE9-2B15DBCB134C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{64EF9C48-71BC-4412-8CE9-2B15DBCB134C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64EF9C48-71BC-4412-8CE9-2B15DBCB134C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B56900FE-A1D2-473D-8842-3F8481326774}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B56900FE-A1D2-473D-8842-3F8481326774}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B56900FE-A1D2-473D-8842-3F8481326774}.Release|Any CPU.ActiveCfg = Release|Any CPU
