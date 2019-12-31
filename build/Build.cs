@@ -1,18 +1,32 @@
-using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Nuke.Common;
+using Nuke.Common.CI;
+using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Execution;
 using Nuke.Common.Git;
+using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
+using Nuke.Common.Tools.Coverlet;
+using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Tools.InspectCode;
+using Nuke.Common.Tools.ReportGenerator;
+using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using static Nuke.Common.IO.CompressionTasks;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
+using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 
 [CheckBuildProjectConfigurations]
 [UnsetVisualStudioEnvironmentVariables]
+[GitHubActions(
+    "continuous",
+    GitHubActionsImage.WindowsLatest)]
 internal class Build : NukeBuild
 {
     /* Install Global Tool
@@ -46,7 +60,8 @@ internal class Build : NukeBuild
     private AbsolutePath SourceDirectory => RootDirectory / "src";
     private AbsolutePath TestDirectory => RootDirectory / "test";
     private AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
-    private IReadOnlyCollection<AbsolutePath> TestProjects => TestDirectory.GlobFiles("**/*.csproj");
+    private Project[] TestProjects => _solution.GetProjects("*.UTs").ToArray();
+    //TestDirectory.GlobFiles("**/*.csproj");
 
     private Target Clean => _ => _
         .Before(Restore)
@@ -80,21 +95,49 @@ internal class Build : NukeBuild
 
     private Target Test => _ => _
         .DependsOn(Compile)
-        .OnlyWhenDynamic(() => TestProjects.Count > 0)
+        .OnlyWhenDynamic(() => TestProjects.Length > 0)
+        .Produces(ArtifactsDirectory / "*.trx")
+        .Produces(ArtifactsDirectory / "*.xml")
         .Executes(() =>
         {
             DotNetTest(_ => _
                 .SetConfiguration(_configuration)
-                .EnableNoRestore()
-                .EnableNoBuild()
+                    .EnableNoRestore()
+                    .EnableNoBuild()
+                    .SetProperty("CollectCoverage", propertyValue: true)
+                    .SetProperty("CoverletOutputFormat", "teamcity%2ccobertura")
+                //.SetProperty("ExcludeByFile", "*.Generated.cs")
+                .SetResultsDirectory(ArtifactsDirectory)
                 .CombineWith(TestProjects, (oo, testProj) => oo
-                    .SetProjectFile(testProj)),
-                degreeOfParallelism: TestProjects.Count,
+                    .SetProjectFile(testProj)
+                    .SetLogger($"trx;LogFileName={testProj.Name}.trx")
+                    //.SetLogger($"xunit;LogFileName={testProj.Name}.xml")
+                    .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
+                degreeOfParallelism: TestProjects.Length,
                 completeOnFailure: true);
+        });
+
+    private Target Coverage => _ => _
+        .TriggeredBy(Test)
+        .Produces(ArtifactsDirectory / "coverage.zip")
+        .Executes(() =>
+        {
+            ReportGenerator(_ => _
+                .SetFramework("netcoreapp3.0")
+                .SetReports(ArtifactsDirectory / "*.xml")
+                .SetReportTypes(ReportTypes.HtmlInline)
+                .SetTargetDirectory(ArtifactsDirectory / "coverage"));
+
+            Logger.Info("Zipping!");
+            CompressZip(
+                directory: ArtifactsDirectory / "coverage",
+                archiveFile: ArtifactsDirectory / "coverage.zip",
+                fileMode: FileMode.Create);
         });
 
     private Target Publish => _ => _
         .DependsOn(Test)
+        .Produces(ArtifactsDirectory / "Demo.Engine.zip")
         .Executes(() =>
         {
             DotNetPublish(_ => _
@@ -107,6 +150,11 @@ internal class Build : NukeBuild
                 .EnableNoRestore()
                 .EnableNoBuild()
                 .SetOutput(ArtifactsDirectory / "Demo.Engine"));
+
+            CompressZip(
+                directory: ArtifactsDirectory / "Demo.Engine",
+                archiveFile: ArtifactsDirectory / "Demo.Engine.zip",
+                fileMode: FileMode.Create);
         });
 
     private Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish);
