@@ -26,7 +26,19 @@ using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 [UnsetVisualStudioEnvironmentVariables]
 [GitHubActions(
     "continuous",
-    GitHubActionsImage.WindowsLatest)]
+    GitHubActionsImage.WindowsLatest,
+    On = new[]
+    {
+        GitHubActionsTrigger.Push
+    },
+    InvokedTargets = new[]
+    {
+        nameof(Clean),
+        nameof(Compile),
+        nameof(Test),
+        nameof(Publish)
+    },
+    ImportGitHubTokenAs = nameof(GitHubToken))]
 internal class Build : NukeBuild
 {
     /* Install Global Tool
@@ -48,10 +60,13 @@ internal class Build : NukeBuild
      * - Microsoft VSCode https://nuke.build/vscode
      * */
 
-    public static int Main() => Execute<Build>(x => x.Compile);
+    public static int Main() => Execute<Build>(x => x.Full);
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    private readonly Configuration _configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    public readonly Configuration Config = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+
+    [Parameter("GitHub token")]
+    public readonly string GitHubToken = default!;
 
     [Solution] private readonly Solution _solution = default!;
     [GitRepository] private readonly GitRepository _gitRepository = default!;
@@ -76,7 +91,7 @@ internal class Build : NukeBuild
         .Executes(() =>
         {
             DotNetRestore(_ => _
-               .SetProjectFile(_solution));
+                .SetProjectFile(_solution));
         });
 
     private Target Compile => _ => _
@@ -84,28 +99,30 @@ internal class Build : NukeBuild
         .Executes(() =>
         {
             DotNetBuild(_ => _
-               .SetProjectFile(_solution)
-               .SetConfiguration(_configuration)
-               //.SetAssemblyVersion(_gitVersion.AssemblySemVer)
-               //.SetFileVersion(_gitVersion.AssemblySemFileVer)
-               //.SetInformationalVersion(_gitVersion.InformationalVersion)
-               .SetVersion(_gitVersion.SemVer)
-               .EnableNoRestore());
+                .SetProjectFile(_solution)
+                .SetNoRestore(ExecutingTargets.Contains(Restore))
+                .SetConfiguration(Config)
+                //.SetAssemblyVersion(_gitVersion.AssemblySemVer)
+                //.SetFileVersion(_gitVersion.AssemblySemFileVer)
+                //.SetInformationalVersion(_gitVersion.InformationalVersion)
+                .SetVersion(_gitVersion.SemVer)
+                .EnableNoRestore());
         });
 
     private Target Test => _ => _
         .DependsOn(Compile)
         .OnlyWhenDynamic(() => TestProjects.Length > 0)
-        .Produces(ArtifactsDirectory / "*.trx")
-        .Produces(ArtifactsDirectory / "*.xml")
+        .Produces(
+            ArtifactsDirectory / "*.trx",
+            ArtifactsDirectory / "*.xml")
         .Executes(() =>
         {
             DotNetTest(_ => _
-                .SetConfiguration(_configuration)
-                    .EnableNoRestore()
-                    .EnableNoBuild()
+                .SetConfiguration(Config)
+                    .SetNoRestore(ExecutingTargets.Contains(Restore))
+                    .SetNoBuild(ExecutingTargets.Contains(Compile))
                     .SetProperty("CollectCoverage", propertyValue: true)
-                    .SetProperty("CoverletOutputFormat", "teamcity%2ccobertura")
+                    .SetProperty("CoverletOutputFormat", "cobertura")
                 //.SetProperty("ExcludeByFile", "*.Generated.cs")
                 .SetResultsDirectory(ArtifactsDirectory)
                 .CombineWith(TestProjects, (oo, testProj) => oo
@@ -142,7 +159,7 @@ internal class Build : NukeBuild
         {
             DotNetPublish(_ => _
                 .SetProject(_solution.GetProject("Demo.Engine"))
-                .SetConfiguration(_configuration)
+                .SetConfiguration(Config)
                 //.SetAssemblyVersion(_gitVersion.AssemblySemVer)
                 //.SetFileVersion(_gitVersion.AssemblySemFileVer)
                 //.SetInformationalVersion(_gitVersion.InformationalVersion)

@@ -1,0 +1,26 @@
+name: continuous
+
+on: [push]
+
+jobs:
+  windows-latest:
+    name: windows-latest
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Run 'powershell .\build.ps1 Clean Compile Test Publish'
+        run: powershell .\build.ps1 Clean Compile Test Publish
+        env:
+            GitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+      - uses: actions/upload-artifact@v1
+        with:
+          name: coverage.zip
+          path: artifacts\coverage.zip
+      - uses: actions/upload-artifact@v1
+        with:
+          name: Demo.Engine.zip
+          path: artifacts\Demo.Engine.zip
