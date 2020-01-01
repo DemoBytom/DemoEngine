@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using BuildExtensions;
 using Nuke.Common;
 using Nuke.Common.CI;
 using Nuke.Common.CI.GitHubActions;
@@ -11,6 +12,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.Coverlet;
 using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.Git;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.InspectCode;
 using Nuke.Common.Tools.ReportGenerator;
@@ -24,7 +26,7 @@ using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 
 [CheckBuildProjectConfigurations]
 [UnsetVisualStudioEnvironmentVariables]
-[GitHubActions(
+[GitHubActionsV2(
     "continuous",
     GitHubActionsImage.WindowsLatest,
     On = new[]
@@ -85,9 +87,11 @@ internal class Build : NukeBuild
         .Before(Restore, Compile, Publish)
         .Executes(() =>
         {
+            GitTasks.Git("fetch --prune --all");
             _gitVersion = GitVersionTasks
                 .GitVersion(s => s
-                    .SetNoFetch(true)
+                    //.SetNoFetch(true)
+                    .SetNoCache(true)
                     .SetVerbosity(GitVersionVerbosity.debug)
                     .SetFramework("netcoreapp3.0"))
                 .Result;

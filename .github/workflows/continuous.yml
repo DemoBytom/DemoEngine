@@ -7,7 +7,7 @@ jobs:
     name: windows-latest
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Run 'powershell .\build.ps1 Clean Compile Test Publish'
         run: powershell .\build.ps1 Clean Compile Test Publish
         env:
