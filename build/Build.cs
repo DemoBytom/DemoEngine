@@ -70,13 +70,28 @@ internal class Build : NukeBuild
 
     [Solution] private readonly Solution _solution = default!;
     [GitRepository] private readonly GitRepository _gitRepository = default!;
-    [GitVersion] private readonly GitVersion _gitVersion = default!;
+
+    //[GitVersion] private readonly GitVersion _gitVersion = default!;
+    private GitVersion _gitVersion = default!;
 
     private AbsolutePath SourceDirectory => RootDirectory / "src";
     private AbsolutePath TestDirectory => RootDirectory / "test";
     private AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
     private Project[] TestProjects => _solution.GetProjects("*.UTs").ToArray();
     //TestDirectory.GlobFiles("**/*.csproj");
+
+    private Target GenerateGitVersion => _ => _
+        .TriggeredBy(Clean)
+        .Before(Restore, Compile, Publish)
+        .Executes(() =>
+        {
+            _gitVersion = GitVersionTasks
+                .GitVersion(s => s
+                    .SetNoFetch(true)
+                    .SetVerbosity(GitVersionVerbosity.debug)
+                    .SetFramework("netcoreapp3.0"))
+                .Result;
+        });
 
     private Target Clean => _ => _
         .Before(Restore)
