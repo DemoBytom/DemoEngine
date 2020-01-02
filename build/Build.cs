@@ -87,7 +87,7 @@ internal class Build : NukeBuild
         .Before(Restore, Compile, Publish)
         .Executes(() =>
         {
-            GitTasks.Git("fetch --prune --all");
+            GitTasks.Git("fetch --prune --all --verbose");
             _gitVersion = GitVersionTasks
                 .GitVersion(s => s
                     //.SetNoFetch(true)
