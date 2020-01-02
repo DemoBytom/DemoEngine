@@ -12,6 +12,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.Coverlet;
 using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.Git;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.InspectCode;
 using Nuke.Common.Tools.ReportGenerator;
@@ -86,7 +87,7 @@ internal class Build : NukeBuild
         .Before(Restore, Compile, Publish)
         .Executes(() =>
         {
-            //GitTasks.Git("fetch --prune --all --verbose");
+            GitTasks.Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow");
             _gitVersion = GitVersionTasks
                 .GitVersion(s => s
                     //.SetNoFetch(true)
