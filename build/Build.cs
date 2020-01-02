@@ -27,7 +27,7 @@ using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 [CheckBuildProjectConfigurations]
 [UnsetVisualStudioEnvironmentVariables]
 [GitHubActionsV2(
-    "continuous",
+    "CI",
     GitHubActionsImage.WindowsLatest,
     On = new[]
     {
