@@ -87,7 +87,13 @@ internal class Build : NukeBuild
         .Before(Restore, Compile, Publish)
         .Executes(() =>
         {
-            GitTasks.Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow");
+            var resp = GitTasks.Git("rev-parse --is-shallow-repository");
+            if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
+            {
+                Logger.Info("Unshallowing the repository");
+                GitTasks.Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
+            }
+
             _gitVersion = GitVersionTasks
                 .GitVersion(s => s
                     //.SetNoFetch(true)
