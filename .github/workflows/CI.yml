@@ -14,10 +14,6 @@ jobs:
             GitHubToken: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v1
         with:
-          name: artifacts
-          path: artifacts
-      - uses: actions/upload-artifact@v1
-        with:
           name: coverage.zip
           path: artifacts\coverage.zip
       - uses: actions/upload-artifact@v1

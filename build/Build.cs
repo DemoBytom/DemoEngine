@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using BuildExtensions;
@@ -24,9 +26,11 @@ using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 
-[CheckBuildProjectConfigurations]
-[UnsetVisualStudioEnvironmentVariables]
-[GitHubActionsV2(
+namespace BuildScript
+{
+    [CheckBuildProjectConfigurations]
+    [UnsetVisualStudioEnvironmentVariables]
+    [GitHubActionsV2(
     "CI",
     GitHubActionsImage.WindowsLatest,
     On = new[]
@@ -41,52 +45,53 @@ using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
         nameof(Publish)
     },
     ImportGitHubTokenAs = nameof(GitHubToken))]
-internal class Build : NukeBuild
-{
-    /* Install Global Tool
-     * - $ dotnet tool install Nuke.GlobalTool --global
-     *
-     * To run the build using Global Tool
-     * - $ nuke Full
-     *
-     * To run the build using powershell, without Global Tool
-     * - PS> .\build.ps1 Full
-     *
-     * To run the build using shell, without Global Tool
-     * - $ ./build.sh Full
-     *
-     * Support plugins are available for:
-     * - JetBrains ReSharper https://nuke.build/resharper
-     * - JetBrains Rider https://nuke.build/rider
-     * - Microsoft VisualStudio https://nuke.build/visualstudio
-     * - Microsoft VSCode https://nuke.build/vscode
-     * */
+    internal partial class Build : NukeBuild
+    {
+        /* Install Global Tool
+         * - $ dotnet tool install Nuke.GlobalTool --global
+         *
+         * To run the build using Global Tool
+         * - $ nuke Full
+         *
+         * To run the build using powershell, without Global Tool
+         * - PS> .\build.ps1 Full
+         *
+         * To run the build using shell, without Global Tool
+         * - $ ./build.sh Full
+         *
+         * Support plugins are available for:
+         * - JetBrains ReSharper https://nuke.build/resharper
+         * - JetBrains Rider https://nuke.build/rider
+         * - Microsoft VisualStudio https://nuke.build/visualstudio
+         * - Microsoft VSCode https://nuke.build/vscode
+         * */
 
-    public static int Main() => Execute<Build>(x => x.Full);
-
-    [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    public readonly Configuration Config = IsLocalBuild ? Configuration.Debug : Configuration.Release;
-
-    [Parameter("GitHub token")]
-    public readonly string GitHubToken = default!;
-
-    [Solution] private readonly Solution _solution = default!;
-    [GitRepository] private readonly GitRepository _gitRepository = default!;
-
-    //[GitVersion] private readonly GitVersion _gitVersion = default!;
-    private GitVersion _gitVersion = default!;
-
-    private AbsolutePath SourceDirectory => RootDirectory / "src";
-    private AbsolutePath TestDirectory => RootDirectory / "test";
-    private AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
-    private Project[] TestProjects => _solution.GetProjects("*.UTs").ToArray();
-    //TestDirectory.GlobFiles("**/*.csproj");
-
-    private Target GenerateGitVersion => _ => _
-        .TriggeredBy(Clean)
-        .Before(Restore, Compile, Publish)
-        .Executes(() =>
+        public static int Main()
         {
+            return Execute<Build>(x => x.Release);
+        }
+
+        [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
+        public readonly Configuration Config = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+
+        [Parameter("GitHub token")]
+        public readonly string GitHubToken = default!;
+
+        [Solution] private readonly Solution _solution = default!;
+        [GitRepository] private readonly GitRepository _gitRepository = default!;
+
+        //[GitVersion] private readonly GitVersion _gitVersion = default!;
+        private GitVersion _gitVersion = default!;
+
+        private AbsolutePath SourceDirectory => RootDirectory / "src";
+        private AbsolutePath TestDirectory => RootDirectory / "test";
+        private AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+        private Project[] TestProjects => _solution.GetProjects("*.UTs").ToArray();
+        //TestDirectory.GlobFiles("**/*.csproj");
+
+        protected override void OnBuildInitialized()
+        {
+            base.OnBuildInitialized();
             var resp = GitTasks.Git("rev-parse --is-shallow-repository");
             if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
             {
@@ -101,103 +106,105 @@ internal class Build : NukeBuild
                     .SetVerbosity(GitVersionVerbosity.debug)
                     .SetFramework("netcoreapp3.1"))
                 .Result;
-        });
+        }
 
-    private Target Clean => _ => _
-        .Before(Restore)
-        .Executes(() =>
-        {
-            SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-            TestDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-            EnsureCleanDirectory(ArtifactsDirectory);
-        });
+        private Target Clean => _ => _
+            .Before(Restore)
+            .Executes(() =>
+            {
+                if (!Debugger.IsAttached)
+                {
+                    SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
+                    TestDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
+                }
+                EnsureCleanDirectory(ArtifactsDirectory);
+            });
 
-    private Target Restore => _ => _
-        .Executes(() =>
-        {
-            DotNetRestore(_ => _
-                .SetProjectFile(_solution));
-        });
+        private Target Restore => _ => _
+            .Executes(() =>
+            {
+                DotNetRestore(_ => _
+                    .SetProjectFile(_solution));
+            });
 
-    private Target Compile => _ => _
-        .DependsOn(Restore)
-        .Executes(() =>
-        {
-            DotNetBuild(_ => _
-                .SetProjectFile(_solution)
-                .SetNoRestore(ExecutingTargets.Contains(Restore))
-                .SetConfiguration(Config)
-                //.SetAssemblyVersion(_gitVersion.AssemblySemVer)
-                //.SetFileVersion(_gitVersion.AssemblySemFileVer)
-                //.SetInformationalVersion(_gitVersion.InformationalVersion)
-                .SetVersion(_gitVersion.SemVer)
-                .EnableNoRestore());
-        });
+        private Target Compile => _ => _
+            .DependsOn(Restore)
+            .Executes(() =>
+            {
+                DotNetBuild(_ => _
+                    .SetProjectFile(_solution)
+                    .SetNoRestore(ExecutingTargets.Contains(Restore))
+                    .SetConfiguration(Config)
+                    .SetAssemblyVersion(_gitVersion.AssemblySemVer)
+                    .SetFileVersion(_gitVersion.AssemblySemFileVer)
+                    .SetInformationalVersion(_gitVersion.InformationalVersion)
+                    .EnableNoRestore());
+            });
 
-    private Target Test => _ => _
-        .DependsOn(Compile)
-        .OnlyWhenDynamic(() => TestProjects.Length > 0)
-        .Produces(
-            ArtifactsDirectory / "*.trx",
-            ArtifactsDirectory / "*.xml")
-        .Executes(() =>
-        {
-            DotNetTest(_ => _
-                .SetConfiguration(Config)
+        private Target Test => _ => _
+            .DependsOn(Compile)
+            .OnlyWhenDynamic(() => TestProjects.Length > 0)
+            //.Produces(
+            //    ArtifactsDirectory / "*.trx",
+            //    ArtifactsDirectory / "*.xml")
+            .Executes(() =>
+            {
+                DotNetTest(_ => _
+                    .SetConfiguration(Config)
+                        .SetNoRestore(ExecutingTargets.Contains(Restore))
+                        .SetNoBuild(ExecutingTargets.Contains(Compile))
+                        .SetProperty("CollectCoverage", propertyValue: true)
+                        .SetProperty("CoverletOutputFormat", "cobertura")
+                    //.SetProperty("ExcludeByFile", "*.Generated.cs")
+                    .SetResultsDirectory(ArtifactsDirectory)
+                    .CombineWith(TestProjects, (oo, testProj) => oo
+                        .SetProjectFile(testProj)
+                        .SetLogger($"trx;LogFileName={testProj.Name}.trx")
+                        //.SetLogger($"xunit;LogFileName={testProj.Name}.xml")
+                        .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
+                    degreeOfParallelism: TestProjects.Length,
+                    completeOnFailure: true);
+            });
+
+        private Target Coverage => _ => _
+            .TriggeredBy(Test)
+            .DependsOn(Test)
+            .Produces(ArtifactsDirectory / "coverage.zip")
+            .Executes(() =>
+            {
+                ReportGenerator(_ => _
+                    .SetFramework("netcoreapp3.0")
+                    .SetReports(ArtifactsDirectory / "*.xml")
+                    .SetReportTypes(ReportTypes.HtmlInline)
+                    .SetTargetDirectory(ArtifactsDirectory / "coverage"));
+
+                CompressZip(
+                    directory: ArtifactsDirectory / "coverage",
+                    archiveFile: ArtifactsDirectory / "coverage.zip",
+                    fileMode: FileMode.Create);
+            });
+
+        private Target Publish => _ => _
+            .DependsOn(Compile)
+            .Produces(ArtifactsDirectory / "Demo.Engine.zip")
+            .Executes(() =>
+            {
+                DotNetPublish(_ => _
+                    .SetProject(_solution.GetProject("Demo.Engine"))
+                    .SetConfiguration(Config)
+                    .SetAssemblyVersion(_gitVersion.AssemblySemVer)
+                    .SetFileVersion(_gitVersion.AssemblySemFileVer)
+                    .SetInformationalVersion(_gitVersion.InformationalVersion)
                     .SetNoRestore(ExecutingTargets.Contains(Restore))
                     .SetNoBuild(ExecutingTargets.Contains(Compile))
-                    .SetProperty("CollectCoverage", propertyValue: true)
-                    .SetProperty("CoverletOutputFormat", "cobertura")
-                //.SetProperty("ExcludeByFile", "*.Generated.cs")
-                .SetResultsDirectory(ArtifactsDirectory)
-                .CombineWith(TestProjects, (oo, testProj) => oo
-                    .SetProjectFile(testProj)
-                    .SetLogger($"trx;LogFileName={testProj.Name}.trx")
-                    //.SetLogger($"xunit;LogFileName={testProj.Name}.xml")
-                    .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
-                degreeOfParallelism: TestProjects.Length,
-                completeOnFailure: true);
-        });
+                    .SetOutput(ArtifactsDirectory / "Demo.Engine"));
 
-    private Target Coverage => _ => _
-        .TriggeredBy(Test)
-        .Produces(ArtifactsDirectory / "coverage.zip")
-        .Executes(() =>
-        {
-            ReportGenerator(_ => _
-                .SetFramework("netcoreapp3.0")
-                .SetReports(ArtifactsDirectory / "*.xml")
-                .SetReportTypes(ReportTypes.HtmlInline)
-                .SetTargetDirectory(ArtifactsDirectory / "coverage"));
+                CompressZip(
+                    directory: ArtifactsDirectory / "Demo.Engine",
+                    archiveFile: ArtifactsDirectory / "Demo.Engine.zip",
+                    fileMode: FileMode.Create);
+            });
 
-            Logger.Info("Zipping!");
-            CompressZip(
-                directory: ArtifactsDirectory / "coverage",
-                archiveFile: ArtifactsDirectory / "coverage.zip",
-                fileMode: FileMode.Create);
-        });
-
-    private Target Publish => _ => _
-        .DependsOn(Test)
-        .Produces(ArtifactsDirectory / "Demo.Engine.zip")
-        .Executes(() =>
-        {
-            DotNetPublish(_ => _
-                .SetProject(_solution.GetProject("Demo.Engine"))
-                .SetConfiguration(Config)
-                //.SetAssemblyVersion(_gitVersion.AssemblySemVer)
-                //.SetFileVersion(_gitVersion.AssemblySemFileVer)
-                //.SetInformationalVersion(_gitVersion.InformationalVersion)
-                .SetVersion(_gitVersion.SemVer)
-                .EnableNoRestore()
-                .EnableNoBuild()
-                .SetOutput(ArtifactsDirectory / "Demo.Engine"));
-
-            CompressZip(
-                directory: ArtifactsDirectory / "Demo.Engine",
-                archiveFile: ArtifactsDirectory / "Demo.Engine.zip",
-                fileMode: FileMode.Create);
-        });
-
-    private Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish);
+        private Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish);
+    }
 }
