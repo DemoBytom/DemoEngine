@@ -20,3 +20,7 @@ jobs:
         with:
           name: Demo.Engine.zip
           path: artifacts\Demo.Engine.zip
+      - uses: actions/upload-artifact@v1
+        with:
+          name: Demo.Engine.win10-x64.zip
+          path: artifacts\Demo.Engine.win10-x64.zip
