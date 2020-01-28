@@ -105,7 +105,8 @@ namespace BuildScript
                     //.SetNoFetch(true)
                     .SetNoCache(true)
                     .SetVerbosity(GitVersionVerbosity.debug)
-                    .SetFramework("netcoreapp3.1"))
+                    .SetFramework("netcoreapp3.1")
+                    .DisableLogOutput())
                 .Result;
         }
 
