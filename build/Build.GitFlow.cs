@@ -30,15 +30,28 @@ namespace BuildScript
 
         private Target Release => _ => _
             .DependsOn(Changelog)
-            //.Requires(() =>
-            //    !_gitRepository.IsOnReleaseBranch()
-            //    || GitHasCleanWorkingCopy())
-            .Requires(() => false)
+            .Requires(() =>
+                !_gitRepository.IsOnReleaseBranch()
+                || GitHasCleanWorkingCopy())
             .Executes(() =>
             {
                 var isRelease = _gitRepository.IsOnReleaseBranch();
                 var clean = GitHasCleanWorkingCopy();
                 Logger.Info($"isRelease {isRelease}, clean {clean}");
+            });
+
+        private Target FinishFeature => _ => _
+            .DependsOn(Clean, Restore, Compile, Test)
+            .Executes(() =>
+            {
+                var currentBranch = _gitRepository.Branch;
+                if (!GitHasCleanWorkingCopy())
+                {
+                    Git("add .");
+                    Git("commit -m \"automatic commit\"");
+                }
+                Git($"checkout {DEVELOP_BRANCH}");
+                Git($"merge --no-ff --no-edit {currentBranch}");
             });
     }
 }

@@ -88,7 +88,11 @@ namespace BuildScript
         private AbsolutePath TestDirectory => RootDirectory / "test";
         private AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         private Project[] TestProjects => _solution.GetProjects("*.UTs").ToArray();
-        //TestDirectory.GlobFiles("**/*.csproj");
+
+        private const string MASTER_BRANCH = "master";
+        private const string DEVELOP_BRANCH = "develop";
+        private const string RELEASE_BRANCH_PREFIX = "release";
+        private const string HOTFIX_BRANCH_PREFIX = "hotfix";
 
         protected override void OnBuildInitialized()
         {
