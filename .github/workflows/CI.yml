@@ -28,6 +28,7 @@ jobs:
         run: ./build.cmd Clean Compile Test Publish
         env:
             GitHubToken: ${{ secrets.GITHUB_TOKEN }}
+            CoverallsToken: ${{ secrets.CoverallsToken }}
       - uses: actions/upload-artifact@v1
         with:
           name: coverage.zip

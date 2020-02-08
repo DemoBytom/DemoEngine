@@ -13,6 +13,9 @@
     <PackageReference Include="Nuke.Common" Version="0.24.0" />
     <PackageReference Include="ReportGenerator" Version="4.4.6" />
     <PackageDownload Include="GitVersion.Tool" Version="[5.1.3]" />
+    <PackageReference Include="coveralls.net" Version="1.0.0">
+      <ExcludeAssets>all</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
