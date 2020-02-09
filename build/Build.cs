@@ -202,6 +202,15 @@ namespace BuildScript
                     .SetReportTypes(ReportTypes.HtmlInline)
                     .SetTargetDirectory(ArtifactsDirectory / "coverage"));
 
+                if (ExecutingTargets.Contains(UploadCoveralls))
+                {
+                    ReportGenerator(_ => _
+                        .SetFramework("netcoreapp3.0")
+                        .SetReports(ArtifactsDirectory / "*.xml")
+                        .SetReportTypes(ReportTypes.Xml)
+                        .SetTargetDirectory(ArtifactsDirectory / "coveralls"));
+                }
+
                 CompressZip(
                     directory: ArtifactsDirectory / "coverage",
                     archiveFile: ArtifactsDirectory / "coverage.zip",
@@ -229,7 +238,7 @@ namespace BuildScript
 
         private Target UploadCoveralls => _ => _
             .TriggeredBy(Test)
-            .DependsOn(Test)
+            .DependsOn(Test, Coverage)
             .OnlyWhenStatic(() => IsServerBuild || Debugger.IsAttached)
             .OnlyWhenDynamic(() => GitHasCleanWorkingCopy())
             .Requires(() => CoverallsToken)
@@ -251,11 +260,6 @@ namespace BuildScript
                             .Select(o => o.Text))
                     .Trim();
 
-                var reportFiles = string.Join(';',
-                    TestProjects
-                        .Select(oo => "\"opencover=" +
-                            (ArtifactsDirectory / $"{oo.Name}.xml\"")));
-
                 CoverallsNet(toolSettings => toolSettings
                     .SetDryRun(Debugger.IsAttached)
                     .SetRepoToken(CoverallsToken)
@@ -265,12 +269,12 @@ namespace BuildScript
                     .SetCommitAuthor(authorName)
                     .SetCommitEmail(authorMail)
                     .SetCommitMessage(commitBody)
-                    .SetInput(reportFiles)
+                    .SetInput(ArtifactsDirectory / "coveralls")
                     .SetArgumentConfigurator(argumentConfigurator =>
                         argumentConfigurator
-                            .Add("--multiple", true)
                             .Add("--jobId")
-                            .Add(CoverallsJobID))
+                            .Add(CoverallsJobID)
+                            .Add("--reportgenerator"))
                     );
             });
 
