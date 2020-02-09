@@ -10,6 +10,7 @@ using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
 using Demo.Engine.Platform.Windows;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 {
@@ -24,10 +25,10 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 
         public RenderingForm(
             ILogger<RenderingForm> logger,
-            FormSettings formSettings,
+            IOptions<FormSettings> formSettings,
             IMediator mediator)
         {
-            _formSettings = formSettings;
+            _formSettings = formSettings.Value;
             InitializeComponent();
 
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
@@ -65,8 +66,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     Math.Max(0, _currentNonFullscreenPosition.Y));
 
                 ClientSize = new Size(
-                    Math.Min(screenBouds.Width, formSettings.Width),
-                    Math.Min(screenBouds.Height, formSettings.Height));
+                    Math.Min(screenBouds.Width, _formSettings.Width),
+                    Math.Min(screenBouds.Height, _formSettings.Height));
                 WindowState = FormWindowState.Normal;
                 FormBorderStyle = _allowUserResizing
                     ? FormBorderStyle.Sizable

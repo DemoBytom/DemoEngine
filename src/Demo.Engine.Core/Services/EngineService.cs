@@ -4,9 +4,11 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Components.Keyboard;
+using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Requests.Keyboard;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -19,23 +21,24 @@ namespace Demo.Engine.Core.Services
         private readonly IHostApplicationLifetime _applicationLifetime;
         private bool _stopRequested;
         private readonly ILogger<EngineService> _logger;
-        private readonly IRenderingFormFactory _renderFormFactory;
         private readonly IMediator _mediator;
 
         private readonly string _version =
             //Assembly.GetEntryAssembly().GetName().Version.ToString();
             Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
+        private readonly IServiceScopeFactory _scopeFactory;
+
         public EngineService(
             IHostApplicationLifetime applicationLifetime,
             ILogger<EngineService> logger,
-            IRenderingFormFactory renderFormFactory,
-            IMediator mediator)
+            IMediator mediator,
+            IServiceScopeFactory scopeFactory)
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
-            _renderFormFactory = renderFormFactory;
             _mediator = mediator;
+            _scopeFactory = scopeFactory;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -76,19 +79,17 @@ namespace Demo.Engine.Core.Services
         private async Task DoWork()
         {
             _logger.LogInformation("Engine working! v{version}", _version);
-
             try
             {
-                using var rf = _renderFormFactory.Create();
-                //TODO just for testing purposes, neets to be moved out
-                rf.Show();
+                using var scope = _scopeFactory.CreateScope();
+                using var engine = scope.ServiceProvider.GetRequiredService<IRenderingEngine>();
 
                 //TODO proper main loop instead of simple while
                 var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
                 KeyboardCharCache? charQueue = null;
 
                 while (
-                    rf.DoEvents()
+                    engine.DoEvents()
                     && !_stopRequested
                     && !_applicationLifetime.ApplicationStopping.IsCancellationRequested)
                 {
