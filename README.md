@@ -1,5 +1,5 @@
 # DemoEngine
-[![GitHub](https://img.shields.io/github/license/DemoBytom/DemoEngine?style=for-the-badge)](https://github.com/DemoBytom/DemoEngine/blob/master/LICENSE)
+[![GitHub](https://img.shields.io/github/license/DemoBytom/DemoEngine?style=for-the-badge)](https://github.com/DemoBytom/DemoEngine/blob/master/LICENSE) [![Coveralls github](https://img.shields.io/coveralls/github/DemoBytom/DemoEngine?style=for-the-badge&logo=coveralls)](https://coveralls.io/github/DemoBytom/DemoEngine)
 
 **DemoEngine** is a simple game engine written in C#, .NET Core 3.1 and DirectX.
 
@@ -8,11 +8,11 @@ Engine is currently developed for Windows 10 platform, with references to `Windo
 Project is using [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows) as a DirectX wrapper, with parts of the main form handling based on [SharpDX](https://github.com/sharpdx/SharpDX/blob/master/Source/SharpDX.Desktop/RenderForm.cs)
 
 ## Build status:
-|Branch|Status|
-|---:|:---|
-|master|![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/DemoBytom/DemoEngine/CI/master?logo=Github&logoColor=white&style=flat-square)|
-|develop|![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/DemoBytom/DemoEngine/CI/develop?logo=Github&logoColor=white&style=flat-square)|
-|most recent|![GitHub Workflow Status](https://img.shields.io/github/workflow/status/DemoBytom/DemoEngine/CI?logo=github&logoColor=white&style=flat-square)|
+|Branch|Status|Code coverage|
+|---:|:---|:---|
+|master|![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/DemoBytom/DemoEngine/CI/master?logo=Github&logoColor=white&style=flat-square)|[![Coveralls github branch](https://img.shields.io/coveralls/github/DemoBytom/DemoEngine/master?logo=coveralls&style=flat-square)](https://coveralls.io/github/DemoBytom/DemoEngine?branch=master)|
+|develop|![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/DemoBytom/DemoEngine/CI/develop?logo=Github&logoColor=white&style=flat-square)|[![Coveralls github branch](https://img.shields.io/coveralls/github/DemoBytom/DemoEngine/develop?logo=coveralls&style=flat-square)](https://coveralls.io/github/DemoBytom/DemoEngine?branch=develop)|
+|most recent|![GitHub Workflow Status](https://img.shields.io/github/workflow/status/DemoBytom/DemoEngine/CI?logo=github&logoColor=white&style=flat-square)|[![Coveralls github branch](https://img.shields.io/coveralls/github/DemoBytom/DemoEngine?logo=coveralls&style=flat-square)](https://coveralls.io/github/DemoBytom/DemoEngine)|
 
 ## Build
 In order to compile, you need **Visual Studio 2019, or newer** with the following workloads and components:
