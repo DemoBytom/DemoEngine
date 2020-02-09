@@ -16,7 +16,6 @@ using Nuke.Common.Tools.CoverallsNet;
 using Nuke.Common.Tools.Coverlet;
 using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Tools.Git;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.InspectCode;
 using Nuke.Common.Tools.ReportGenerator;
@@ -89,6 +88,14 @@ namespace BuildScript
         [Parameter("Coveralls token")]
         public readonly string? CoverallsToken = null;
 
+        [Parameter("Coveralls jobId")]
+        public readonly string? CoverallsJobID = EnvironmentInfo.Variables switch
+        {
+            var gh when gh.TryGetValue("GITHUB_RUN_ID", out var ghid) => ghid,
+            var nuke when nuke.TryGetValue("NUKE_RUN_ID", out var nukeid) => nukeid,
+            _ => null
+        };
+
         [Solution] private readonly Solution _solution = default!;
         [GitRepository] private readonly GitRepository _gitRepository = default!;
 
@@ -108,11 +115,11 @@ namespace BuildScript
         protected override void OnBuildInitialized()
         {
             base.OnBuildInitialized();
-            var resp = GitTasks.Git("rev-parse --is-shallow-repository");
+            var resp = Git("rev-parse --is-shallow-repository");
             if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
             {
                 Logger.Info("Unshallowing the repository");
-                GitTasks.Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
+                Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
             }
 
             _gitVersion = GitVersionTasks
@@ -226,6 +233,7 @@ namespace BuildScript
             .OnlyWhenStatic(() => IsServerBuild || Debugger.IsAttached)
             .OnlyWhenDynamic(() => GitHasCleanWorkingCopy())
             .Requires(() => CoverallsToken)
+            .Requires(() => CoverallsJobID)
             .Executes(() =>
             {
                 var gitShow = Git("show -s --format=%H%n%cN%n%ce%n%B");
@@ -235,11 +243,13 @@ namespace BuildScript
                 var authorName = gitShow.ElementAt(1).Text;
                 var authorMail = gitShow.ElementAt(2).Text;
 
-                var commitBody = string.Join(
-                    Environment.NewLine,
-                    gitShow
-                        .ToArray()[3..]
-                        .Select(o => o.Text));
+                var commitBody = string
+                    .Join(
+                        Environment.NewLine,
+                        gitShow
+                            .ToArray()[3..]
+                            .Select(o => o.Text))
+                    .Trim();
 
                 var reportFiles = string.Join(';',
                     TestProjects
@@ -258,7 +268,9 @@ namespace BuildScript
                     .SetInput(reportFiles)
                     .SetArgumentConfigurator(argumentConfigurator =>
                         argumentConfigurator
-                            .Add("--multiple", true))
+                            .Add("--multiple", true)
+                            .Add("--jobId")
+                            .Add(CoverallsJobID))
                     );
             });
 
