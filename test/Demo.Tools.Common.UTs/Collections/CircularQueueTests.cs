@@ -100,6 +100,22 @@ namespace Demo.Tools.Common.UTs.Collections
         }
 
         [Fact]
+        public void Dequeue_TryDequeue_On_Empty_Should_Not_Throw_Error()
+        {
+            var circQueue = new CircularQueue<int>(2);
+            var peeked = circQueue.TryDequeue(out var result);
+
+            peeked.Should().BeFalse();
+            result.Should().Be(default);
+
+            circQueue.Count.Should().Be(0);
+            var buffer = new int[2];
+            circQueue.CopyTo(buffer, 0);
+            buffer[0].Should().Be(0);
+            buffer[1].Should().Be(0);
+        }
+
+        [Fact]
         public void Enqueue2_Peek()
         {
             var circQueue = new CircularQueue<int>(2);
@@ -141,6 +157,37 @@ namespace Demo.Tools.Common.UTs.Collections
         {
             Action circQueue = () => new CircularQueue<int>(-2);
             circQueue.Should().Throw<InvalidOperationException>();
+        }
+
+        [Fact]
+        public void Queue_Peek_On_Emplty_Throws_Error()
+        {
+            var circQueue = new CircularQueue<int>(2);
+            Action peek = () => circQueue.Peek();
+
+            peek.Should().Throw<InvalidOperationException>();
+
+            circQueue.Count.Should().Be(0);
+            var buffer = new int[2];
+            circQueue.CopyTo(buffer, 0);
+            buffer[0].Should().Be(0);
+            buffer[1].Should().Be(0);
+        }
+
+        [Fact]
+        public void Queue_TryPeek_On_Empty_Should_Not_Throw_Error()
+        {
+            var circQueue = new CircularQueue<int>(2);
+            var peeked = circQueue.TryPeek(out var result);
+
+            peeked.Should().BeFalse();
+            result.Should().Be(default);
+
+            circQueue.Count.Should().Be(0);
+            var buffer = new int[2];
+            circQueue.CopyTo(buffer, 0);
+            buffer[0].Should().Be(0);
+            buffer[1].Should().Be(0);
         }
     }
 }
