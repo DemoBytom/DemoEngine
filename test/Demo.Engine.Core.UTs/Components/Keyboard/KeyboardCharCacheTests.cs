@@ -4,7 +4,7 @@ using Demo.Engine.Core.Interfaces.Components;
 using FluentAssertions;
 using Xunit;
 
-namespace Demo.Engine.Core.UTs.Components
+namespace Demo.Engine.Core.UTs.Components.Keyboard
 {
     public class KeyboardCharCacheTests
     {

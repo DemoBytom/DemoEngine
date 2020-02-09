@@ -12,19 +12,22 @@ using Nuke.Common.Git;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
+using Nuke.Common.Tools.CoverallsNet;
 using Nuke.Common.Tools.Coverlet;
 using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Tools.Git;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.InspectCode;
 using Nuke.Common.Tools.ReportGenerator;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using static Nuke.Common.ControlFlow;
 using static Nuke.Common.IO.CompressionTasks;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
+using static Nuke.Common.Tools.CoverallsNet.CoverallsNetTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
+using static Nuke.Common.Tools.Git.GitTasks;
 using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 
 namespace BuildScript
@@ -45,7 +48,11 @@ namespace BuildScript
         nameof(Test),
         nameof(Publish)
     },
-    ImportGitHubTokenAs = nameof(GitHubToken))]
+    ImportGitHubTokenAs = nameof(GitHubToken),
+    ImportSecrets = new[]
+    {
+        nameof(CoverallsToken)
+    })]
     internal partial class Build : NukeBuild
     {
         /* Install Global Tool
@@ -73,10 +80,21 @@ namespace BuildScript
         public readonly Configuration Config = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
         [Parameter("GitHub token")]
-        public readonly string GitHubToken = default!;
+        public readonly string GitHubToken = string.Empty;
 
         [Parameter("Self contained application rids")]
         public readonly string[] RIDs = Array.Empty<string>();
+
+        [Parameter("Coveralls token")]
+        public readonly string? CoverallsToken = null;
+
+        [Parameter("Coveralls jobId")]
+        public readonly string? CoverallsJobID = EnvironmentInfo.Variables switch
+        {
+            var gh when gh.TryGetValue("GITHUB_RUN_ID", out var ghid) => ghid,
+            var nuke when nuke.TryGetValue("NUKE_RUN_ID", out var nukeid) => nukeid,
+            _ => null
+        };
 
         [Solution] private readonly Solution _solution = default!;
         [GitRepository] private readonly GitRepository _gitRepository = default!;
@@ -97,11 +115,11 @@ namespace BuildScript
         protected override void OnBuildInitialized()
         {
             base.OnBuildInitialized();
-            var resp = GitTasks.Git("rev-parse --is-shallow-repository");
+            var resp = Git("rev-parse --is-shallow-repository");
             if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
             {
                 Logger.Info("Unshallowing the repository");
-                GitTasks.Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
+                Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
             }
 
             _gitVersion = GitVersionTasks
@@ -160,7 +178,7 @@ namespace BuildScript
                         .SetNoRestore(ExecutingTargets.Contains(Restore))
                         .SetNoBuild(ExecutingTargets.Contains(Compile))
                         .SetProperty("CollectCoverage", propertyValue: true)
-                        .SetProperty("CoverletOutputFormat", "cobertura")
+                        .SetProperty("CoverletOutputFormat", "opencover")
                     //.SetProperty("ExcludeByFile", "*.Generated.cs")
                     .SetResultsDirectory(ArtifactsDirectory)
                     .CombineWith(TestProjects, (oo, testProj) => oo
@@ -183,6 +201,15 @@ namespace BuildScript
                     .SetReports(ArtifactsDirectory / "*.xml")
                     .SetReportTypes(ReportTypes.HtmlInline)
                     .SetTargetDirectory(ArtifactsDirectory / "coverage"));
+
+                if (ExecutingTargets.Contains(UploadCoveralls))
+                {
+                    ReportGenerator(_ => _
+                        .SetFramework("netcoreapp3.0")
+                        .SetReports(ArtifactsDirectory / "*.xml")
+                        .SetReportTypes(ReportTypes.Xml)
+                        .SetTargetDirectory(ArtifactsDirectory / "coveralls"));
+                }
 
                 CompressZip(
                     directory: ArtifactsDirectory / "coverage",
@@ -207,6 +234,48 @@ namespace BuildScript
                 {
                     PublishApp("Demo.Engine", rid);
                 }
+            });
+
+        private Target UploadCoveralls => _ => _
+            .TriggeredBy(Test)
+            .DependsOn(Test, Coverage)
+            .OnlyWhenStatic(() => IsServerBuild || Debugger.IsAttached)
+            .OnlyWhenDynamic(() => GitHasCleanWorkingCopy())
+            .Requires(() => CoverallsToken)
+            .Requires(() => CoverallsJobID)
+            .Executes(() =>
+            {
+                var gitShow = Git("show -s --format=%H%n%cN%n%ce%n%B");
+                Assert(gitShow.Count >= 4, "wrong GIT show return!");
+
+                var commitID = gitShow.ElementAt(0).Text;
+                var authorName = gitShow.ElementAt(1).Text;
+                var authorMail = gitShow.ElementAt(2).Text;
+
+                var commitBody = string
+                    .Join(
+                        Environment.NewLine,
+                        gitShow
+                            .ToArray()[3..]
+                            .Select(o => o.Text))
+                    .Trim();
+
+                CoverallsNet(toolSettings => toolSettings
+                    .SetDryRun(Debugger.IsAttached)
+                    .SetRepoToken(CoverallsToken)
+                    .SetUserRelativePaths(true)
+                    .SetCommitBranch(_gitRepository.Branch)
+                    .SetCommitId(commitID)
+                    .SetCommitAuthor(authorName)
+                    .SetCommitEmail(authorMail)
+                    .SetCommitMessage(commitBody)
+                    .SetInput(ArtifactsDirectory / "coveralls")
+                    .SetArgumentConfigurator(argumentConfigurator =>
+                        argumentConfigurator
+                            .Add("--jobId")
+                            .Add(CoverallsJobID)
+                            .Add("--reportgenerator"))
+                    );
             });
 
         private void PublishApp(string projectName, string? rid = null)
