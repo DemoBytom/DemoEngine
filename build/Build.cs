@@ -124,7 +124,7 @@ namespace BuildScript
 
             _gitVersion = GitVersionTasks
                 .GitVersion(s => s
-                    //.SetNoFetch(true)
+                    .SetNoFetch(true)
                     .SetNoCache(true)
                     .SetVerbosity(GitVersionVerbosity.debug)
                     .SetFramework("netcoreapp3.1")
