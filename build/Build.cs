@@ -35,24 +35,24 @@ namespace BuildScript
     [CheckBuildProjectConfigurations]
     [UnsetVisualStudioEnvironmentVariables]
     [GitHubActionsV2(
-    "CI",
-    GitHubActionsImage.WindowsLatest,
-    On = new[]
-    {
-        GitHubActionsTrigger.Push
-    },
-    InvokedTargets = new[]
-    {
-        nameof(Clean),
-        nameof(Compile),
-        nameof(Test),
-        nameof(Publish)
-    },
-    ImportGitHubTokenAs = nameof(GitHubToken),
-    ImportSecrets = new[]
-    {
-        nameof(CoverallsToken)
-    })]
+        "CI",
+        GitHubActionsImage.WindowsLatest,
+        On = new[]
+        {
+            GitHubActionsTrigger.Push
+        },
+        InvokedTargets = new[]
+        {
+            nameof(Clean),
+            nameof(Compile),
+            nameof(Test),
+            nameof(Publish)
+        },
+        ImportGitHubTokenAs = nameof(GitHubToken),
+        ImportSecrets = new[]
+        {
+            nameof(CoverallsToken)
+        })]
     internal partial class Build : NukeBuild
     {
         /* Install Global Tool
