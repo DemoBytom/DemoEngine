@@ -24,6 +24,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          lfs: true
       - name: Run './build.cmd Clean Compile Test Publish'
         run: ./build.cmd Clean Compile Test Publish
         env:
