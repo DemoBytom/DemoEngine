@@ -33,7 +33,7 @@ namespace Demo.Engine
                         services.Configure<FormSettings>(hostContext.Configuration.GetSection(nameof(FormSettings)));
                         services.AddSingleton<IKeyboardCache, KeyboardCache>();
                         services.AddScoped<IRenderingEngine, RenderingEngine>();
-                        services.AddTransient<IRenderingForm, RenderingForm>();
+                        services.AddTransient<IRenderingControl, RenderingForm>();
 
                         services.AddMediatR(
                             typeof(KeyboardHandler).Assembly);

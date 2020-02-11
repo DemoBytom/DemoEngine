@@ -2,7 +2,7 @@ using System;
 
 namespace Demo.Engine.Core.Platform
 {
-    public interface IRenderingForm : IDisposable
+    public interface IRenderingControl : IDisposable
     {
         /// <summary>
         /// Call this on each tick of the main loop to process all Windows messages in the queue

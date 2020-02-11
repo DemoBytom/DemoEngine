@@ -6,16 +6,16 @@ namespace Demo.Engine.DirectX
 {
     public class RenderingEngine : IRenderingEngine
     {
-        private readonly IRenderingForm _renderingForm;
+        private readonly IRenderingControl _renderingForm;
 
         public RenderingEngine(
-            IRenderingForm renderingForm)
+            IRenderingControl renderingForm)
         {
             _renderingForm = renderingForm;
             _renderingForm.Show();
         }
 
-        public bool DoEvents() => _renderingForm.DoEvents();
+        public IRenderingControl Control => _renderingForm;
 
         #region IDisposable Support
 
@@ -28,6 +28,7 @@ namespace Demo.Engine.DirectX
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
+                    Control?.Dispose();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

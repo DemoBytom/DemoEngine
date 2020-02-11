@@ -82,14 +82,14 @@ namespace Demo.Engine.Core.Services
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-                using var engine = scope.ServiceProvider.GetRequiredService<IRenderingEngine>();
+                using var renderingEngine = scope.ServiceProvider.GetRequiredService<IRenderingEngine>();
 
                 //TODO proper main loop instead of simple while
                 var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
                 KeyboardCharCache? charQueue = null;
 
                 while (
-                    engine.DoEvents()
+                    renderingEngine.Control.DoEvents()
                     && !_stopRequested
                     && !_applicationLifetime.ApplicationStopping.IsCancellationRequested)
                 {

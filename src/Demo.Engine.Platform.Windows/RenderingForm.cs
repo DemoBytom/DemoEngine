@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 {
-    public partial class RenderingForm : Form, IRenderingForm
+    public partial class RenderingForm : Form, IRenderingControl
     {
         private readonly FormWindowState _previousWindowState;
         private readonly FormSettings _formSettings;
@@ -97,9 +97,49 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                                 Marshal.GetLastWin32Error()));
                         }
 
-                        if (msg.Msg == (int)WindowMessageTypes.Destroy)
+                        var wparam = msg.WParam.ToInt64();
+                        switch ((WindowMessageTypes)msg.Msg)
                         {
-                            isControlAlive = false;
+                            case WindowMessageTypes.Destroy:
+                                {
+                                    isControlAlive = false;
+                                    break;
+                                }
+                            case WindowMessageTypes.KillFocus:
+                                {
+                                    _mediator.Publish(new ClearKeysNotification());
+                                    break;
+                                }
+                            case WindowMessageTypes.SysKeyDown:
+                            case WindowMessageTypes.KeyDown:
+                                {
+                                    var lparam = msg.LParam.ToInt64();
+
+                                    //bit 30
+                                    if ((lparam & 0x4000_0000) == 0)
+                                    {
+                                        var key = (VirtualKeys)wparam;
+
+                                        // _logger.LogTrace("Pressed key: {key} wparam {wparam}",
+                                        // key, wparam);
+                                        _mediator.Publish(new KeyNotification(key, true));
+                                    }
+                                    break;
+                                }
+                            case WindowMessageTypes.SysKeyUp:
+                            case WindowMessageTypes.KeyUp:
+                                {
+                                    var key = (VirtualKeys)wparam;
+                                    //_logger.LogTrace("Released key: {key} wparam {wparam}", key, wparam);
+                                    _mediator.Publish(new KeyNotification(key, false));
+                                    break;
+                                }
+                            case WindowMessageTypes.Char:
+                                {
+                                    var c = (char)wparam;
+                                    _mediator.Publish(new CharNotification(c));
+                                    break;
+                                }
                         }
 
                         var message = new Message() { HWnd = msg.HWnd, LParam = msg.LParam, Msg = msg.Msg, WParam = msg.WParam };
@@ -119,42 +159,39 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             var wparam = m.WParam.ToInt64();
             switch ((WindowMessageTypes)m.Msg)
             {
-                case WindowMessageTypes.KillFocus:
-                    {
-                        _mediator.Publish(new ClearKeysNotification());
-                        break;
-                    }
-                case WindowMessageTypes.SysKeyDown:
-                case WindowMessageTypes.KeyDown:
-                    {
-                        var lparam = m.LParam.ToInt64();
-                        //_logger.LogInformation("{binary} {value}", Convert.ToString(lparam, 2).PadLeft(64, '0'), lparam);
-                        //_logger.LogInformation("{binary} {value}", Convert.ToString(wparam, 2).PadLeft(64, '0'), wparam);
+                //case WindowMessageTypes.KillFocus:
+                //    {
+                //        _mediator.Publish(new ClearKeysNotification());
+                //        break;
+                //    }
+                //case WindowMessageTypes.SysKeyDown:
+                //case WindowMessageTypes.KeyDown:
+                //    {
+                //        var lparam = m.LParam.ToInt64();
+                //        //_logger.LogInformation("{binary} {value}", Convert.ToString(lparam, 2).PadLeft(64, '0'), lparam);
+                //        //_logger.LogInformation("{binary} {value}", Convert.ToString(wparam, 2).PadLeft(64, '0'), wparam);
 
-                        //bit 30
-                        if ((lparam & 0x4000_0000) == 0)
-                        {
-                            var key = (VirtualKeys)wparam;
+                // //bit 30 if ((lparam & 0x4000_0000) == 0) { var key = (VirtualKeys)wparam;
 
-                            // _logger.LogTrace("Pressed key: {key} wparam {wparam}", key, wparam);
-                            _mediator.Publish(new KeyNotification(key, true));
-                        }
-                        break;
-                    }
-                case WindowMessageTypes.SysKeyUp:
-                case WindowMessageTypes.KeyUp:
-                    {
-                        var key = (VirtualKeys)wparam;
-                        //_logger.LogTrace("Released key: {key} wparam {wparam}", key, wparam);
-                        _mediator.Publish(new KeyNotification(key, false));
-                        break;
-                    }
-                case WindowMessageTypes.Char:
-                    {
-                        var c = (char)wparam;
-                        _mediator.Publish(new CharNotification(c));
-                        break;
-                    }
+                //            // _logger.LogTrace("Pressed key: {key} wparam {wparam}", key, wparam);
+                //            _mediator.Publish(new KeyNotification(key, true));
+                //        }
+                //        break;
+                //    }
+                //case WindowMessageTypes.SysKeyUp:
+                //case WindowMessageTypes.KeyUp:
+                //    {
+                //        var key = (VirtualKeys)wparam;
+                //        //_logger.LogTrace("Released key: {key} wparam {wparam}", key, wparam);
+                //        _mediator.Publish(new KeyNotification(key, false));
+                //        break;
+                //    }
+                //case WindowMessageTypes.Char:
+                //    {
+                //        var c = (char)wparam;
+                //        _mediator.Publish(new CharNotification(c));
+                //        break;
+                //    }
                 default:
                     base.WndProc(ref m);
                     break;

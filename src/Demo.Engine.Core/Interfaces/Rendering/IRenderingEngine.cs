@@ -1,9 +1,10 @@
 using System;
+using Demo.Engine.Core.Platform;
 
 namespace Demo.Engine.Core.Interfaces.Rendering
 {
     public interface IRenderingEngine : IDisposable
     {
-        public bool DoEvents();
+        IRenderingControl Control { get; }
     }
 }
