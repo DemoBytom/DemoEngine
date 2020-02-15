@@ -1,40 +1,41 @@
 using System;
+using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Engine.Core.Platform;
 
 namespace Demo.Engine.DirectX
 {
     public class RenderingEngine : IRenderingEngine
     {
-        private readonly IRenderingControl _renderingForm;
-
         public RenderingEngine(
             IRenderingControl renderingForm)
         {
-            _renderingForm = renderingForm;
-            _renderingForm.Show();
+            Control = renderingForm;
+            Control.Show();
         }
 
-        public IRenderingControl Control => _renderingForm;
+        public IRenderingControl Control { get; }
 
         #region IDisposable Support
 
-        private bool disposedValue = false; // To detect redundant calls
+        /// <summary>
+        /// To detect redundant calls
+        /// </summary>
+        private bool _disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
-                    Control?.Dispose();
+                    //Control?.Dispose();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
                 // TODO: set large fields to null.
 
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 

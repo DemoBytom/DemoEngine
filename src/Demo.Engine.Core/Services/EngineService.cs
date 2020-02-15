@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Components.Keyboard;
-using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Requests.Keyboard;
 using MediatR;
@@ -24,7 +24,6 @@ namespace Demo.Engine.Core.Services
         private readonly IMediator _mediator;
 
         private readonly string _version =
-            //Assembly.GetEntryAssembly().GetName().Version.ToString();
             Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
         private readonly IServiceScopeFactory _scopeFactory;
@@ -76,60 +75,24 @@ namespace Demo.Engine.Core.Services
             return tcs.Task;
         }
 
+        private KeyboardCharCache? _charQueue;
+        private KeyboardHandle? _keyboardHandle;
+        private IMainLoopService? _mainLoop;
+
         private async Task DoWork()
         {
             _logger.LogInformation("Engine working! v{version}", _version);
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-                using var renderingEngine = scope.ServiceProvider.GetRequiredService<IRenderingEngine>();
 
-                //TODO proper main loop instead of simple while
-                var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
-                KeyboardCharCache? charQueue = null;
+                _mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
 
-                while (
-                    renderingEngine.Control.DoEvents()
-                    && !_stopRequested
-                    && !_applicationLifetime.ApplicationStopping.IsCancellationRequested)
-                {
-                    //Query for current keyboard state
-                    //var sw2 = Stopwatch.StartNew();
-                    //var aPressed2 = keyboardHandle.GetKeyPressed(VirtualKeys.A);
-                    //sw2.Stop();
+                _keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
 
-                    //_logger.LogTrace("sw1: {elapsed1} | sw2: {elapsed2}", sw1.ElapsedNanoseconds(), sw2.ElapsedNanoseconds());
-                    //_logger.LogTrace("sw1: {elapsed1} | sw2: {elapsed2}", sw1.ElapsedMicroseconds(), sw2.ElapsedMicroseconds());
-                    //if (keyboardState.GetPressedKeys().Length > 0)
-                    //{
-                    //    _logger.LogTrace("Currently pressed keys {keysPressed}", keyboardState.GetPressedKeys().ToArray().Select(o => o.ToString()));
-                    //}
-                    //Exit the app
-                    //if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter))
-                    //{
-                    //    var str = keyboardHandle.GetString();
-                    //    _logger.LogInformation(str);
-                    //}
-                    if (keyboardHandle.GetKeyPressed(VirtualKeys.OemOpenBrackets)
-                        && charQueue is null)
-                    {
-                        charQueue = await _mediator.Send(new KeyboardCharCacheRequest());
-                    }
-                    if (keyboardHandle.GetKeyPressed(VirtualKeys.OemCloseBrackets))
-                    {
-                        var str = charQueue?.ReadCache();
-                        if (!string.IsNullOrEmpty(str))
-                        {
-                            _logger.LogInformation(str);
-                            charQueue?.Dispose();
-                            charQueue = null;
-                        }
-                    }
-                    if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
-                    {
-                        _applicationLifetime.StopApplication();
-                    }
-                }
+                await _mainLoop.RunAsync(
+                    Update,
+                    Render);
             }
             finally
             {
@@ -139,6 +102,34 @@ namespace Demo.Engine.Core.Services
                     _applicationLifetime.StopApplication();
                 }
             }
+        }
+
+        private async Task Update()
+        {
+            if (_keyboardHandle?.GetKeyPressed(VirtualKeys.OemOpenBrackets) == true
+                        && _charQueue is null)
+            {
+                _charQueue = await _mediator.Send(new KeyboardCharCacheRequest());
+            }
+            if (_keyboardHandle?.GetKeyPressed(VirtualKeys.OemCloseBrackets) == true)
+            {
+                var str = _charQueue?.ReadCache();
+                if (!string.IsNullOrEmpty(str))
+                {
+                    _logger.LogInformation(str);
+                    _charQueue?.Dispose();
+                    _charQueue = null;
+                }
+            }
+            if (_keyboardHandle?.GetKeyPressed(VirtualKeys.Escape) == true)
+            {
+                _mainLoop?.Stop();
+            }
+        }
+
+        private Task Render()
+        {
+            return Task.CompletedTask;
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)

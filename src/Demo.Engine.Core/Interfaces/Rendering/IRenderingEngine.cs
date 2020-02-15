@@ -1,5 +1,5 @@
 using System;
-using Demo.Engine.Core.Platform;
+using Demo.Engine.Core.Interfaces.Platform;
 
 namespace Demo.Engine.Core.Interfaces.Rendering
 {

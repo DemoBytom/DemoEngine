@@ -1,12 +1,14 @@
 using System;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Components.Keyboard.Internal;
+using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
+using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
-using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Services;
 using Demo.Engine.DirectX;
+using Demo.Engine.Platform.Windows;
 using Demo.Engine.Windows.Platform.Netstandard.Win32;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,8 +35,11 @@ namespace Demo.Engine
                         services.Configure<FormSettings>(hostContext.Configuration.GetSection(nameof(FormSettings)));
                         services.AddSingleton<IKeyboardCache, KeyboardCache>();
                         services.AddScoped<IRenderingEngine, RenderingEngine>();
+                        services.AddScoped<IMainLoopService, MainLoopService>();
+                        /*** Windows Only ***/
                         services.AddTransient<IRenderingControl, RenderingForm>();
-
+                        services.AddScoped<IOSMessageHandler, WindowsMessagesHandler>();
+                        /*** End Windows Only ***/
                         services.AddMediatR(
                             typeof(KeyboardHandler).Assembly);
                     });
