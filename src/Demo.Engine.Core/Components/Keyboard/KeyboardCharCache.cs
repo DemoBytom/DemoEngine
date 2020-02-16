@@ -40,6 +40,12 @@ namespace Demo.Engine.Core.Components.Keyboard
             return sb.ToString();
         }
 
+        public void Clear()
+        {
+            while (_buffer.TryDequeue(out _))
+            { }
+        }
+
         #region IDisposable Support
 
         private bool _disposedValue = false; // To detect redundant calls

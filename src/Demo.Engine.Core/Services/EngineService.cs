@@ -5,9 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces;
+using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Platform;
-using Demo.Engine.Core.Requests.Keyboard;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -21,7 +20,6 @@ namespace Demo.Engine.Core.Services
         private readonly IHostApplicationLifetime _applicationLifetime;
         private bool _stopRequested;
         private readonly ILogger<EngineService> _logger;
-        private readonly IMediator _mediator;
 
         private readonly string _version =
             Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
@@ -31,12 +29,10 @@ namespace Demo.Engine.Core.Services
         public EngineService(
             IHostApplicationLifetime applicationLifetime,
             ILogger<EngineService> logger,
-            IMediator mediator,
             IServiceScopeFactory scopeFactory)
         {
             _applicationLifetime = applicationLifetime;
             _logger = logger;
-            _mediator = mediator;
             _scopeFactory = scopeFactory;
         }
 
@@ -75,9 +71,8 @@ namespace Demo.Engine.Core.Services
             return tcs.Task;
         }
 
-        private KeyboardCharCache? _charQueue;
-        private KeyboardHandle? _keyboardHandle;
         private IMainLoopService? _mainLoop;
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
         private async Task DoWork()
         {
@@ -88,11 +83,10 @@ namespace Demo.Engine.Core.Services
 
                 _mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
 
-                _keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
-
                 await _mainLoop.RunAsync(
                     Update,
-                    Render);
+                    Render,
+                    _cts.Token);
             }
             finally
             {
@@ -104,33 +98,31 @@ namespace Demo.Engine.Core.Services
             }
         }
 
-        private async Task Update()
+        private Task Update(
+            KeyboardHandle keyboardHandle,
+            KeyboardCharCache keyboardCharCache)
         {
-            if (_keyboardHandle?.GetKeyPressed(VirtualKeys.OemOpenBrackets) == true
-                        && _charQueue is null)
+            if (keyboardHandle?.GetKeyPressed(VirtualKeys.OemOpenBrackets) == true)
             {
-                _charQueue = await _mediator.Send(new KeyboardCharCacheRequest());
+                keyboardCharCache.Clear();
             }
-            if (_keyboardHandle?.GetKeyPressed(VirtualKeys.OemCloseBrackets) == true)
+            if (keyboardHandle?.GetKeyPressed(VirtualKeys.OemCloseBrackets) == true)
             {
-                var str = _charQueue?.ReadCache();
+                var str = keyboardCharCache?.ReadCache();
                 if (!string.IsNullOrEmpty(str))
                 {
                     _logger.LogInformation(str);
-                    _charQueue?.Dispose();
-                    _charQueue = null;
                 }
             }
-            if (_keyboardHandle?.GetKeyPressed(VirtualKeys.Escape) == true)
+            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Escape) == true)
             {
-                _mainLoop?.Stop();
+                _cts.Cancel();
             }
-        }
 
-        private Task Render()
-        {
             return Task.CompletedTask;
         }
+
+        private Task Render(IRenderingEngine renderingEngine) => Task.CompletedTask;
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
@@ -156,6 +148,7 @@ namespace Demo.Engine.Core.Services
                 if (disposing)
                 {
                     _applicationLifetime.StopApplication();
+                    _cts.Dispose();
                 }
 
                 _disposedValue = true;

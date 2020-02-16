@@ -26,7 +26,11 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             IOptions<FormSettings> formSettings,
             IMediator mediator)
         {
+            _logger = logger;
+            _mediator = mediator;
             _formSettings = formSettings.Value;
+            _logger.LogInformation("Rendering form initialization {state}", "started");
+
             InitializeComponent();
 
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
@@ -72,8 +76,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     : FormBorderStyle.FixedToolWindow;
             }
 
-            _logger = logger;
-            _mediator = mediator;
+            _logger.LogInformation("Rendering form initialization {state}", "completed");
         }
 
         protected override void WndProc(ref Message m)
@@ -119,11 +122,6 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             }
 
             base.WndProc(ref m);
-        }
-
-        public new void Dispose()
-        {
-            base.Dispose();
         }
     }
 }
