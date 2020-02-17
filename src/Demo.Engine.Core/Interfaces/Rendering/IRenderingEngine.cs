@@ -11,5 +11,7 @@ namespace Demo.Engine.Core.Interfaces.Rendering
         void BeginScene(Color4 color);
 
         bool EndScene();
+
+        void BeginScene();
     }
 }

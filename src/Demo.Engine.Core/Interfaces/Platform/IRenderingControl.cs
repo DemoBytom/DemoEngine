@@ -12,5 +12,15 @@ namespace Demo.Engine.Core.Interfaces.Platform
         IntPtr Handle { get; }
 
         bool IsDisposed { get; }
+
+        /// <summary>
+        /// Width of the drawable area
+        /// </summary>
+        int DrawWidth { get; }
+
+        /// <summary>
+        /// Height of the drawable area
+        /// </summary>
+        int DrawHeight { get; }
     }
 }

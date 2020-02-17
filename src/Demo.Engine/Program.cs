@@ -32,7 +32,7 @@ namespace Demo.Engine
                     .ConfigureServices((hostContext, services) =>
                     {
                         services.AddHostedService<EngineService>();
-                        services.Configure<FormSettings>(hostContext.Configuration.GetSection(nameof(FormSettings)));
+                        services.Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)));
                         services.AddSingleton<IKeyboardCache, KeyboardCache>();
                         services.AddScoped<IRenderingEngine, RenderingEngine>();
                         services.AddScoped<IMainLoopService, MainLoopService>();

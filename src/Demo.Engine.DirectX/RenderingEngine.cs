@@ -1,7 +1,10 @@
 using System;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Models.Options;
+using Demo.Tools.Common.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
@@ -11,20 +14,25 @@ namespace Demo.Engine.DirectX
 {
     public class RenderingEngine : IRenderingEngine
     {
-        private readonly IDXGIFactory1 _factory;
-        private readonly ID3D11Device _device;
-        private readonly FeatureLevel _featureLevel;
-        private readonly ID3D11DeviceContext _deviceContext;
-        private readonly IDXGISwapChain _swapChain;
         private readonly ID3D11Texture2D _backBuffer;
+        private readonly ID3D11Device _device;
+        private readonly ID3D11DeviceContext _deviceContext;
+        private readonly IDXGIFactory1 _factory;
+        private readonly FeatureLevel _featureLevel;
+        private readonly ILogger<RenderingEngine> _logger;
         private readonly ID3D11RenderTargetView _renderTargetView;
+        private readonly IDXGISwapChain _swapChain;
+        private readonly IOptionsMonitor<RenderSettings> _formSettings;
 
         public RenderingEngine(
             ILogger<RenderingEngine> logger,
-            IRenderingControl renderingForm)
+            IRenderingControl renderingForm,
+            IOptionsMonitor<RenderSettings> renderSettings)
         {
+            using var loggingContext = logger.LogScopeInitialization();
+
             _logger = logger;
-            _logger.LogDebug("{class} initialization {state}", nameof(RenderingEngine), "started");
+            _formSettings = renderSettings;
 
             Control = renderingForm;
 
@@ -47,10 +55,15 @@ namespace Demo.Engine.DirectX
                 out _deviceContext
                 );
 
+            _logger.LogDebug("Initiated device with {featureLeve}", _featureLevel);
+
             var swapChainDescription = new SwapChainDescription
             {
                 BufferCount = 2,
-                BufferDescription = new ModeDescription(1024, 768, Format.B8G8R8A8_UNorm),
+                BufferDescription = new ModeDescription(
+                    _formSettings.CurrentValue.Width,
+                    _formSettings.CurrentValue.Height,
+                    Format.B8G8R8A8_UNorm),
                 IsWindowed = true,
                 OutputWindow = Control.Handle,
                 SampleDescription = new SampleDescription(1, 0),
@@ -65,11 +78,11 @@ namespace Demo.Engine.DirectX
             _renderTargetView = _device.CreateRenderTargetView(_backBuffer);
 
             Control.Show();
-
-            _logger.LogDebug("{class} initialization {state}", nameof(RenderingEngine), "completed");
         }
 
         public IRenderingControl Control { get; }
+
+        public void BeginScene() => BeginScene(new Color4(0, 0, 0, 1));
 
         public void BeginScene(Color4 color)
         {
@@ -78,9 +91,8 @@ namespace Demo.Engine.DirectX
 
         public bool EndScene()
         {
-            var vSync = true;
             var result = _swapChain.Present(
-                vSync ? 1 : 0,
+                _formSettings.CurrentValue.VSync ? 1 : 0,
                 PresentFlags.None
                 );
 
@@ -95,7 +107,18 @@ namespace Demo.Engine.DirectX
         /// </summary>
         private bool _disposedValue = false;
 
-        private readonly ILogger<RenderingEngine> _logger;
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting
+        /// unmanaged resources.
+        /// </summary>
+        /// <remarks>
+        /// Uncomment the following line if the finalizer is overridden above. GC.SuppressFinalize(this);
+        /// <para/>
+        /// Override a finalizer only if Dispose(bool disposing) above has code to free unmanaged
+        /// resources. ~RenderingEngine() { // Do not change this code. Put cleanup code in Dispose(bool
+        /// disposing) above. Dispose(false);
+        /// </remarks>
+        void IDisposable.Dispose() => Dispose(true);
 
         protected virtual void Dispose(bool disposing)
         {
@@ -120,19 +143,7 @@ namespace Demo.Engine.DirectX
                 _disposedValue = true;
             }
         }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~RenderingEngine() { // Do not change this code. Put cleanup code in Dispose(bool
-        // disposing) above. Dispose(false); }
-
-        // This code added to correctly implement the disposable pattern.
-        void IDisposable.Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above. GC.SuppressFinalize(this);
-        }
-
-        #endregion IDisposable Support
     }
+
+    #endregion IDisposable Support
 }
