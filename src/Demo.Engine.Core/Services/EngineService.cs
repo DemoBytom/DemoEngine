@@ -10,6 +10,7 @@ using Demo.Engine.Core.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Vortice.Mathematics;
 
 namespace Demo.Engine.Core.Services
 {
@@ -98,6 +99,10 @@ namespace Demo.Engine.Core.Services
             }
         }
 
+        private float _r, _g, _b = 0.0f;
+
+        private float _sin = 0.0f;
+
         private Task Update(
             KeyboardHandle keyboardHandle,
             KeyboardCharCache keyboardCharCache)
@@ -119,10 +124,32 @@ namespace Demo.Engine.Core.Services
                 _cts.Cancel();
             }
 
+            //Share the rainbow
+            _r = (float)Math.Sin((_sin + 0) * Math.PI / 180);
+            _g = (float)Math.Sin((_sin + 120) * Math.PI / 180);
+            _b = (float)Math.Sin((_sin + 240) * Math.PI / 180);
+
+            //Taste the rainbow
+            if (++_sin > 360)
+            {
+                _sin = 0;
+            }
+
             return Task.CompletedTask;
         }
 
-        private Task Render(IRenderingEngine renderingEngine) => Task.CompletedTask;
+        /// <summary>
+        /// https://bitbucket.org/snippets/DemoBytom/aejA59/maps-value-between-from-one-min-max-range
+        /// </summary>
+        public static float Map(float value, float inMin, float inMax, float outMin, float outMax) =>
+            ((value - inMin) * (outMax - outMin) / (inMax - inMin)) + outMin;
+
+        private Task Render(IRenderingEngine renderingEngine)
+        {
+            renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
+            renderingEngine.EndScene();
+            return Task.CompletedTask;
+        }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {

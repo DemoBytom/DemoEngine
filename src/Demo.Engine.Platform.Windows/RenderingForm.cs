@@ -29,7 +29,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             _logger = logger;
             _mediator = mediator;
             _formSettings = formSettings.Value;
-            _logger.LogInformation("Rendering form initialization {state}", "started");
+            _logger.LogDebug("{class} initialization {state}", nameof(RenderingForm), "started");
 
             InitializeComponent();
 
@@ -76,7 +76,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                     : FormBorderStyle.FixedToolWindow;
             }
 
-            _logger.LogInformation("Rendering form initialization {state}", "completed");
+            _logger.LogDebug("{class} initialization {state}", nameof(RenderingForm), "completed");
         }
 
         protected override void WndProc(ref Message m)
