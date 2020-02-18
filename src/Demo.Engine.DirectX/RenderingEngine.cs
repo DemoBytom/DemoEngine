@@ -5,6 +5,7 @@ using Demo.Engine.Core.Models.Options;
 using Demo.Tools.Common.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SharpGen.Runtime.Win32;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
@@ -59,7 +60,7 @@ namespace Demo.Engine.DirectX
 
             var swapChainDescription = new SwapChainDescription
             {
-                BufferCount = 2,
+                BufferCount = 1,
                 BufferDescription = new ModeDescription(
                     _formSettings.CurrentValue.Width,
                     _formSettings.CurrentValue.Height,
@@ -127,14 +128,21 @@ namespace Demo.Engine.DirectX
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
-                    _renderTargetView.Dispose();
-                    _backBuffer.Dispose();
-                    _deviceContext.ClearState();
-                    _deviceContext.Flush();
-                    _deviceContext.Dispose();
-                    _device.Dispose();
-                    _swapChain.Dispose();
-                    _factory.Dispose();
+                    _renderTargetView?.Dispose();
+                    _backBuffer?.Dispose();
+                    _deviceContext?.ClearState();
+                    _deviceContext?.Flush();
+                    _deviceContext?.Dispose();
+                    _device?.Dispose();
+                    RawBool fullscreen = false;
+                    _swapChain?.GetFullscreenState(out fullscreen);
+                    if (fullscreen == true)
+                    {
+                        _swapChain?.SetFullscreenState(false);
+                    }
+
+                    _swapChain?.Dispose();
+                    _factory?.Dispose();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
