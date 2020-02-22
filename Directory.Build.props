@@ -4,5 +4,6 @@
     <Nullable>enable</Nullable>
     <NoWarn>RCS1090</NoWarn>
     <Authors>Michał Dembski</Authors>
+    <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
   </PropertyGroup>
 </Project>

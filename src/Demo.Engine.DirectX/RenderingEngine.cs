@@ -10,7 +10,6 @@ using Microsoft.Extensions.Options;
 using SharpGen.Runtime.Win32;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
-using Vortice.Dxc;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
@@ -36,8 +35,8 @@ namespace Demo.Engine.DirectX
             IOptionsMonitor<RenderSettings> renderSettings)
         {
             using var loggingContext = logger.LogScopeInitialization();
-            _triangleVertexShader = RenderShader("Shaders/Triangle/TriangleVS.hlsl", DxcShaderStage.VertexShader);
-            _trianglePixelShader = RenderShader("Shaders/Triangle/TrianglePS.hlsl", DxcShaderStage.PixelShader);
+            _triangleVertexShader = RenderShader("Shaders/Triangle/TriangleVS.hlsl", ShaderStage.VertexShader);
+            _trianglePixelShader = RenderShader("Shaders/Triangle/TrianglePS.hlsl", ShaderStage.PixelShader);
             _logger = logger;
             _formSettings = renderSettings;
 
@@ -177,60 +176,50 @@ namespace Demo.Engine.DirectX
             _deviceContext.Draw(3, 0);
         }
 
-        private byte[] RenderShader(string path, DxcShaderStage shaderStage)
+        private byte[] RenderShader(string path, ShaderStage shaderStage)
         {
             var shader = File.ReadAllText(path);
-            const bool IS_DXIL = false; //only for DX12.. I think?
-            if (IS_DXIL)
-            {
-                var compileResult = DxcCompiler.Compile(
-                    shaderStage,
-                    shader,
-                    "main",
-                    string.Empty,
-                    new DxcCompilerOptions
-                    {
-                        //ShaderModel = new DxcShaderModel(6, 0)
-                    });
 
-                return compileResult.GetStatus() >= 0
-                    ? Dxc.GetBytesFromBlob(compileResult.GetResult())
-                    //: throw new Exception(GetStringFromBlob(compileResult.GetResult()));
-                    : Array.Empty<byte>();
+            var shaderProfile = $"{GetShaderProfile(shaderStage)}_5_0";
+            var compileResult = Vortice.D3DCompiler.Compiler.Compile(
+                shader,
+                "main",
+                "TriangleVS.hlsl",
+                shaderProfile,
+                out var blob,
+                out var errorBlob
+                );
+
+            if (compileResult.Failure)
+            {
+                throw new Exception(errorBlob?.ConvertToString());
             }
             else
             {
-                var shaderProfile = $"{GetShaderProfile(shaderStage)}_5_0";
-                var compileResult = Vortice.D3DCompiler.Compiler.Compile(
-                    shader,
-                    "main",
-                    "TriangleVS.hlsl",
-                    shaderProfile,
-                    out var blob,
-                    out var errorBlob
-                    );
-
-                if (compileResult.Failure)
-                {
-                    throw new Exception(errorBlob?.ConvertToString());
-                }
-                else
-                {
-                    return blob.GetBytes();
-                }
+                return blob.GetBytes();
             }
         }
 
-        private static string GetShaderProfile(DxcShaderStage stage) => stage switch
+        private static string GetShaderProfile(ShaderStage stage) => stage switch
         {
-            DxcShaderStage.VertexShader => "vs",
-            DxcShaderStage.HullShader => "hs",
-            DxcShaderStage.DomainShader => "ds",
-            DxcShaderStage.GeometryShader => "gs",
-            DxcShaderStage.PixelShader => "ps",
-            DxcShaderStage.ComputeShader => "cs",
+            ShaderStage.VertexShader => "vs",
+            ShaderStage.HullShader => "hs",
+            ShaderStage.DomainShader => "ds",
+            ShaderStage.GeometryShader => "gs",
+            ShaderStage.PixelShader => "ps",
+            ShaderStage.ComputeShader => "cs",
             _ => string.Empty,
         };
+
+        public enum ShaderStage : uint
+        {
+            VertexShader,
+            HullShader,
+            DomainShader,
+            GeometryShader,
+            PixelShader,
+            ComputeShader,
+        }
 
         #region IDisposable Support
 
