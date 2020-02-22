@@ -89,6 +89,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
         /// </summary>
         public int DrawHeight => ClientRectangle.Height;
 
+        public RectangleF DrawingArea => ClientRectangle;
+
         protected override void WndProc(ref Message m)
         {
             if (!IsDisposed && !Disposing)

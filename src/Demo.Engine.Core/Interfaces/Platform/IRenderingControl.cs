@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 
 namespace Demo.Engine.Core.Interfaces.Platform
 {
@@ -22,5 +23,7 @@ namespace Demo.Engine.Core.Interfaces.Platform
         /// Height of the drawable area
         /// </summary>
         int DrawHeight { get; }
+
+        RectangleF DrawingArea { get; }
     }
 }

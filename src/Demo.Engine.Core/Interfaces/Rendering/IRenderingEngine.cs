@@ -13,5 +13,6 @@ namespace Demo.Engine.Core.Interfaces.Rendering
         bool EndScene();
 
         void BeginScene();
+        void DrawTriangle();
     }
 }

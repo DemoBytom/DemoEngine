@@ -147,6 +147,7 @@ namespace Demo.Engine.Core.Services
         private Task Render(IRenderingEngine renderingEngine)
         {
             renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
+            renderingEngine.DrawTriangle();
             renderingEngine.EndScene();
             return Task.CompletedTask;
         }

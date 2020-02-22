@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Runtime.InteropServices;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
@@ -8,6 +10,7 @@ using Microsoft.Extensions.Options;
 using SharpGen.Runtime.Win32;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
+using Vortice.Dxc;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
@@ -20,6 +23,8 @@ namespace Demo.Engine.DirectX
         private readonly ID3D11DeviceContext _deviceContext;
         private readonly IDXGIFactory1 _factory;
         private readonly FeatureLevel _featureLevel;
+        private readonly byte[] _triangleVertexShader;
+        private readonly byte[] _trianglePixelShader;
         private readonly ILogger<RenderingEngine> _logger;
         private readonly ID3D11RenderTargetView _renderTargetView;
         private readonly IDXGISwapChain _swapChain;
@@ -31,7 +36,8 @@ namespace Demo.Engine.DirectX
             IOptionsMonitor<RenderSettings> renderSettings)
         {
             using var loggingContext = logger.LogScopeInitialization();
-
+            _triangleVertexShader = RenderShader("Shaders/Triangle/TriangleVS.hlsl", DxcShaderStage.VertexShader);
+            _trianglePixelShader = RenderShader("Shaders/Triangle/TrianglePS.hlsl", DxcShaderStage.PixelShader);
             _logger = logger;
             _formSettings = renderSettings;
 
@@ -45,7 +51,7 @@ namespace Demo.Engine.DirectX
             D3D11.D3D11CreateDevice(
                 null,
                 DriverType.Hardware,
-                DeviceCreationFlags.BgraSupport,
+                DeviceCreationFlags.BgraSupport | DeviceCreationFlags.Debug,
                 new[]
                 {
                     FeatureLevel.Level_11_1,
@@ -100,6 +106,131 @@ namespace Demo.Engine.DirectX
             return !result.Failure
                 || result.Code != Vortice.DXGI.ResultCode.DeviceRemoved.Code;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Vertex
+        {
+            public float X { get; set; }
+            public float Y { get; set; }
+
+            public static readonly int SizeInBytes = Marshal.SizeOf<Vertex>();
+        }
+
+        public void DrawTriangle()
+        {
+            var vertices = new Vertex[]
+            {
+                new Vertex{ X=0.0f,  Y=0.5f },
+                new Vertex{ X=0.5f,  Y=-0.5f },
+                new Vertex{ X=-0.5f, Y=-0.5f }
+            };
+
+            var vertexBuffer = _device.CreateBuffer<Vertex>(
+                vertices,
+                new BufferDescription
+                {
+                    Usage = Vortice.Direct3D11.Usage.Default,
+                    BindFlags = BindFlags.VertexBuffer,
+                    OptionFlags = ResourceOptionFlags.None,
+                    CpuAccessFlags = CpuAccessFlags.None,
+                    StructureByteStride = Vertex.SizeInBytes,
+                    SizeInBytes = vertices.Length * Vertex.SizeInBytes
+                }
+                );
+
+            //set Vertex buffer
+            _deviceContext.IASetVertexBuffers(0, new VertexBufferView(vertexBuffer, Vertex.SizeInBytes));
+
+            var vertexShader = _device.CreateVertexShader(_triangleVertexShader);
+            var pixelShader = _device.CreatePixelShader(_trianglePixelShader);
+
+            _deviceContext.VSSetShader(vertexShader);
+            _deviceContext.PSSetShader(pixelShader);
+
+            //set input (vertex) layout
+            var inputElementDesc = new[]
+            {
+                new InputElementDescription(
+                    "position",
+                    0,
+                    Format.R32G32_Float,
+                    0,
+                    0,
+                    InputClassification.PerVertexData,
+                    0)
+            };
+            var inputLayout = _device.CreateInputLayout(inputElementDesc, _triangleVertexShader);
+            _deviceContext.IASetInputLayout(inputLayout);
+
+            //bind render target
+            _deviceContext.OMSetRenderTargets(_renderTargetView);
+
+            _deviceContext.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
+
+            //viewport
+            _deviceContext.RSSetViewport(new Viewport(Control.DrawingArea)
+            {
+                MinDepth = 0,
+                MaxDepth = 1
+            });
+
+            _deviceContext.Draw(3, 0);
+        }
+
+        private byte[] RenderShader(string path, DxcShaderStage shaderStage)
+        {
+            var shader = File.ReadAllText(path);
+            const bool IS_DXIL = false; //only for DX12.. I think?
+            if (IS_DXIL)
+            {
+                var compileResult = DxcCompiler.Compile(
+                    shaderStage,
+                    shader,
+                    "main",
+                    string.Empty,
+                    new DxcCompilerOptions
+                    {
+                        //ShaderModel = new DxcShaderModel(6, 0)
+                    });
+
+                return compileResult.GetStatus() >= 0
+                    ? Dxc.GetBytesFromBlob(compileResult.GetResult())
+                    //: throw new Exception(GetStringFromBlob(compileResult.GetResult()));
+                    : Array.Empty<byte>();
+            }
+            else
+            {
+                var shaderProfile = $"{GetShaderProfile(shaderStage)}_5_0";
+                var compileResult = Vortice.D3DCompiler.Compiler.Compile(
+                    shader,
+                    "main",
+                    "TriangleVS.hlsl",
+                    shaderProfile,
+                    out var blob,
+                    out var errorBlob
+                    );
+
+                if (compileResult.Failure)
+                {
+                    throw new Exception(errorBlob?.ConvertToString());
+                }
+                else
+                {
+                    return blob.GetBytes();
+                }
+            }
+        }
+
+        private static string GetShaderProfile(DxcShaderStage stage) => stage switch
+        {
+            DxcShaderStage.VertexShader => "vs",
+            DxcShaderStage.HullShader => "hs",
+            DxcShaderStage.DomainShader => "ds",
+            DxcShaderStage.GeometryShader => "gs",
+            DxcShaderStage.PixelShader => "ps",
+            DxcShaderStage.ComputeShader => "cs",
+            _ => string.Empty,
+        };
 
         #region IDisposable Support
 

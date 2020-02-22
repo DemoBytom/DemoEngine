@@ -5,10 +5,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Vortice.D3DCompiler" Version="1.5.0" />
     <PackageReference Include="Vortice.Direct3D11" Version="1.5.0" />
+    <PackageReference Include="Vortice.Dxc" Version="1.5.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Demo.Engine.Core\Demo.Engine.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Shaders\Triangle\TrianglePS.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\Triangle\TriangleVS.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
