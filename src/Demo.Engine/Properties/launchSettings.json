@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Demo.Engine": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

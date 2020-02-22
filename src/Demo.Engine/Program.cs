@@ -5,9 +5,11 @@ using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Services;
 using Demo.Engine.DirectX;
+using Demo.Engine.DirectX.Shaders;
 using Demo.Engine.Platform.Windows;
 using Demo.Engine.Windows.Platform.Netstandard.Win32;
 using MediatR;
@@ -39,6 +41,7 @@ namespace Demo.Engine
                         /*** Windows Only ***/
                         services.AddTransient<IRenderingControl, RenderingForm>();
                         services.AddScoped<IOSMessageHandler, WindowsMessagesHandler>();
+                        services.AddTransient<IShaderCompiler, ShaderCompiler>();
                         /*** End Windows Only ***/
                         services.AddMediatR(
                             typeof(KeyboardHandler).Assembly);

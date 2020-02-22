@@ -1,8 +1,9 @@
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Interfaces.Rendering.Shaders;
+using Demo.Engine.Core.Models.Enums;
 using Demo.Engine.Core.Models.Options;
 using Demo.Tools.Common.Logging;
 using Microsoft.Extensions.Logging;
@@ -22,8 +23,8 @@ namespace Demo.Engine.DirectX
         private readonly ID3D11DeviceContext _deviceContext;
         private readonly IDXGIFactory1 _factory;
         private readonly FeatureLevel _featureLevel;
-        private readonly byte[] _triangleVertexShader;
-        private readonly byte[] _trianglePixelShader;
+        private readonly ReadOnlyMemory<byte> _triangleVertexShader;
+        private readonly ReadOnlyMemory<byte> _trianglePixelShader;
         private readonly ILogger<RenderingEngine> _logger;
         private readonly ID3D11RenderTargetView _renderTargetView;
         private readonly IDXGISwapChain _swapChain;
@@ -32,11 +33,12 @@ namespace Demo.Engine.DirectX
         public RenderingEngine(
             ILogger<RenderingEngine> logger,
             IRenderingControl renderingForm,
-            IOptionsMonitor<RenderSettings> renderSettings)
+            IOptionsMonitor<RenderSettings> renderSettings,
+            IShaderCompiler shaderCompiler)
         {
             using var loggingContext = logger.LogScopeInitialization();
-            _triangleVertexShader = RenderShader("Shaders/Triangle/TriangleVS.hlsl", ShaderStage.VertexShader);
-            _trianglePixelShader = RenderShader("Shaders/Triangle/TrianglePS.hlsl", ShaderStage.PixelShader);
+            _triangleVertexShader = shaderCompiler.CompileShader("Shaders/Triangle/TriangleVS.hlsl", ShaderStage.VertexShader);
+            _trianglePixelShader = shaderCompiler.CompileShader("Shaders/Triangle/TrianglePS.hlsl", ShaderStage.PixelShader);
             _logger = logger;
             _formSettings = renderSettings;
 
@@ -102,6 +104,12 @@ namespace Demo.Engine.DirectX
                 PresentFlags.None
                 );
 
+            //temporary fix for a memory leak when creating them each frame
+            _vertexBuffer?.Dispose();
+            _vertexShader?.Dispose();
+            _pixelShader?.Dispose();
+            _inputLayout?.Dispose();
+
             return !result.Failure
                 || result.Code != Vortice.DXGI.ResultCode.DeviceRemoved.Code;
         }
@@ -115,17 +123,22 @@ namespace Demo.Engine.DirectX
             public static readonly int SizeInBytes = Marshal.SizeOf<Vertex>();
         }
 
-        public void DrawTriangle()
-        {
-            var vertices = new Vertex[]
+        private ID3D11Buffer? _vertexBuffer;
+        private ID3D11VertexShader? _vertexShader;
+        private ID3D11PixelShader? _pixelShader;
+        private ID3D11InputLayout? _inputLayout;
+
+        private readonly Vertex[] _triangleVertices = new Vertex[]
             {
                 new Vertex{ X=0.0f,  Y=0.5f },
                 new Vertex{ X=0.5f,  Y=-0.5f },
                 new Vertex{ X=-0.5f, Y=-0.5f }
             };
 
-            var vertexBuffer = _device.CreateBuffer<Vertex>(
-                vertices,
+        public void DrawTriangle()
+        {
+            _vertexBuffer = _device.CreateBuffer(
+                _triangleVertices,
                 new BufferDescription
                 {
                     Usage = Vortice.Direct3D11.Usage.Default,
@@ -133,21 +146,29 @@ namespace Demo.Engine.DirectX
                     OptionFlags = ResourceOptionFlags.None,
                     CpuAccessFlags = CpuAccessFlags.None,
                     StructureByteStride = Vertex.SizeInBytes,
-                    SizeInBytes = vertices.Length * Vertex.SizeInBytes
-                }
-                );
+                    SizeInBytes = _triangleVertices.Length * Vertex.SizeInBytes
+                });
 
             //set Vertex buffer
-            _deviceContext.IASetVertexBuffers(0, new VertexBufferView(vertexBuffer, Vertex.SizeInBytes));
+            _deviceContext.IASetVertexBuffers(0, new VertexBufferView(_vertexBuffer, Vertex.SizeInBytes));
 
-            var vertexShader = _device.CreateVertexShader(_triangleVertexShader);
-            var pixelShader = _device.CreatePixelShader(_trianglePixelShader);
+            unsafe
+            {
+                fixed (byte* ptr = &MemoryMarshal.GetReference(_triangleVertexShader.Span))
+                {
+                    _vertexShader = _device.CreateVertexShader((IntPtr)ptr, _triangleVertexShader.Length);
+                }
 
-            _deviceContext.VSSetShader(vertexShader);
-            _deviceContext.PSSetShader(pixelShader);
+                fixed (byte* ptr = &MemoryMarshal.GetReference(_trianglePixelShader.Span))
+                {
+                    _pixelShader = _device.CreatePixelShader((IntPtr)ptr, _trianglePixelShader.Length);
+                }
+            }
 
-            //set input (vertex) layout
-            var inputElementDesc = new[]
+            _deviceContext.VSSetShader(_vertexShader);
+            _deviceContext.PSSetShader(_pixelShader);
+
+            _inputLayout = _device.CreateInputLayout(new[]
             {
                 new InputElementDescription(
                     "position",
@@ -157,9 +178,9 @@ namespace Demo.Engine.DirectX
                     0,
                     InputClassification.PerVertexData,
                     0)
-            };
-            var inputLayout = _device.CreateInputLayout(inputElementDesc, _triangleVertexShader);
-            _deviceContext.IASetInputLayout(inputLayout);
+            }, _triangleVertexShader.ToArray());
+
+            _deviceContext.IASetInputLayout(_inputLayout);
 
             //bind render target
             _deviceContext.OMSetRenderTargets(_renderTargetView);
@@ -174,51 +195,6 @@ namespace Demo.Engine.DirectX
             });
 
             _deviceContext.Draw(3, 0);
-        }
-
-        private byte[] RenderShader(string path, ShaderStage shaderStage)
-        {
-            var shader = File.ReadAllText(path);
-
-            var shaderProfile = $"{GetShaderProfile(shaderStage)}_5_0";
-            var compileResult = Vortice.D3DCompiler.Compiler.Compile(
-                shader,
-                "main",
-                "TriangleVS.hlsl",
-                shaderProfile,
-                out var blob,
-                out var errorBlob
-                );
-
-            if (compileResult.Failure)
-            {
-                throw new Exception(errorBlob?.ConvertToString());
-            }
-            else
-            {
-                return blob.GetBytes();
-            }
-        }
-
-        private static string GetShaderProfile(ShaderStage stage) => stage switch
-        {
-            ShaderStage.VertexShader => "vs",
-            ShaderStage.HullShader => "hs",
-            ShaderStage.DomainShader => "ds",
-            ShaderStage.GeometryShader => "gs",
-            ShaderStage.PixelShader => "ps",
-            ShaderStage.ComputeShader => "cs",
-            _ => string.Empty,
-        };
-
-        public enum ShaderStage : uint
-        {
-            VertexShader,
-            HullShader,
-            DomainShader,
-            GeometryShader,
-            PixelShader,
-            ComputeShader,
         }
 
         #region IDisposable Support
