@@ -16,9 +16,11 @@
   <ItemGroup>
     <None Update="Shaders\Triangle\TrianglePS.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
     <None Update="Shaders\Triangle\TriangleVS.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
   </ItemGroup>
 </Project>
