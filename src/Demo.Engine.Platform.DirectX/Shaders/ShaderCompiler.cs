@@ -4,7 +4,7 @@ using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Enums;
 using Microsoft.Extensions.Logging;
 
-namespace Demo.Engine.DirectX.Shaders
+namespace Demo.Engine.Platform.DirectX.Shaders
 {
     public class ShaderCompiler : IShaderCompiler
     {

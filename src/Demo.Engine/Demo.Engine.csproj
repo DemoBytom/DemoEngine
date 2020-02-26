@@ -14,7 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Demo.Engine.Core\Demo.Engine.Core.csproj" />
-    <ProjectReference Include="..\Demo.Engine.DirectX\Demo.Engine.DirectX.csproj" />
+    <ProjectReference Include="..\Demo.Engine.Platform.DirectX\Demo.Engine.Platform.DirectX.csproj" />
     <ProjectReference Include="..\Demo.Engine.Platform.Windows\Demo.Engine.Platform.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>

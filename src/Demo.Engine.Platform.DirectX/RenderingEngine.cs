@@ -14,7 +14,7 @@ using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
-namespace Demo.Engine.DirectX
+namespace Demo.Engine.Platform.DirectX
 {
     public class RenderingEngine : IRenderingEngine
     {
@@ -154,12 +154,12 @@ namespace Demo.Engine.DirectX
 
             unsafe
             {
-                fixed (byte* ptr = &MemoryMarshal.GetReference(_triangleVertexShader.Span))
+                fixed (byte* ptr = _triangleVertexShader.Span)
                 {
                     _vertexShader = _device.CreateVertexShader((IntPtr)ptr, _triangleVertexShader.Length);
                 }
 
-                fixed (byte* ptr = &MemoryMarshal.GetReference(_trianglePixelShader.Span))
+                fixed (byte* ptr = _trianglePixelShader.Span)
                 {
                     _pixelShader = _device.CreatePixelShader((IntPtr)ptr, _trianglePixelShader.Length);
                 }
