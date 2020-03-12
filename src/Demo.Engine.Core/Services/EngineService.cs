@@ -60,6 +60,7 @@ namespace Demo.Engine.Core.Services
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogCritical(ex, "Engine failed with error! {errorMessage}", ex.Message);
                     tcs.SetException(ex);
                 }
             });

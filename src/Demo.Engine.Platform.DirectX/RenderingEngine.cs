@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
@@ -117,14 +118,16 @@ namespace Demo.Engine.Platform.DirectX
         [StructLayout(LayoutKind.Sequential)]
         private readonly struct Vertex
         {
-            public Vertex(float x, float y)
-            {
-                X = x;
-                Y = y;
-            }
+            public Vertex(
+                float x, float y,
+                byte r, byte g, byte b, byte a) =>
+                (Position, Color) = (new Vector2(x, y), new Color(r, g, b, a));
 
-            public float X { get; }
-            public float Y { get; }
+            public Vertex(Vector2 position, Color color) =>
+                (Position, Color) = (position, color);
+
+            public Vector2 Position { get; }
+            public Color Color { get; }
 
             public static readonly int SizeInBytes = Marshal.SizeOf<Vertex>();
         }
@@ -136,9 +139,9 @@ namespace Demo.Engine.Platform.DirectX
 
         private readonly Vertex[] _triangleVertices = new Vertex[]
         {
-            new Vertex(0.0f, 0.5f),
-            new Vertex(0.5f, -0.5f),
-            new Vertex(-0.5f, -0.5f)
+            new Vertex( 0.0f,  0.5f, 255, 000, 000, 255),
+            new Vertex( 0.5f, -0.5f, 000, 255, 000, 255),
+            new Vertex(-0.5f, -0.5f, 000, 000, 255, 255),
         };
 
         public void DrawTriangle()
@@ -181,6 +184,14 @@ namespace Demo.Engine.Platform.DirectX
                     0,
                     Format.R32G32_Float,
                     0,
+                    0,
+                    InputClassification.PerVertexData,
+                    0),
+                new InputElementDescription(
+                    "color",
+                    0,
+                    Format.R8G8B8A8_UNorm,
+                    sizeof(float) * 2, //X, Y
                     0,
                     InputClassification.PerVertexData,
                     0)
