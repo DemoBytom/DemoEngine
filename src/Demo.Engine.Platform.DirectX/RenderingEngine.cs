@@ -115,10 +115,16 @@ namespace Demo.Engine.Platform.DirectX
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct Vertex
+        private readonly struct Vertex
         {
-            public float X { get; set; }
-            public float Y { get; set; }
+            public Vertex(float x, float y)
+            {
+                X = x;
+                Y = y;
+            }
+
+            public float X { get; }
+            public float Y { get; }
 
             public static readonly int SizeInBytes = Marshal.SizeOf<Vertex>();
         }
@@ -129,11 +135,11 @@ namespace Demo.Engine.Platform.DirectX
         private ID3D11InputLayout? _inputLayout;
 
         private readonly Vertex[] _triangleVertices = new Vertex[]
-            {
-                new Vertex{ X=0.0f,  Y=0.5f },
-                new Vertex{ X=0.5f,  Y=-0.5f },
-                new Vertex{ X=-0.5f, Y=-0.5f }
-            };
+        {
+            new Vertex(0.0f, 0.5f),
+            new Vertex(0.5f, -0.5f),
+            new Vertex(-0.5f, -0.5f)
+        };
 
         public void DrawTriangle()
         {

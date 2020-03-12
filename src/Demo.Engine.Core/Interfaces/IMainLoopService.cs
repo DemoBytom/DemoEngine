@@ -1,6 +1,8 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Demo.Engine.Core.Services;
+using Demo.Engine.Core.Components.Keyboard;
+using Demo.Engine.Core.Interfaces.Rendering;
 using Microsoft.Extensions.Hosting;
 
 namespace Demo.Engine.Core.Interfaces
@@ -25,8 +27,8 @@ namespace Demo.Engine.Core.Interfaces
         /// finish the loop and exit the Run method
         /// </remarks>
         Task RunAsync(
-            MainLoopService.UpdateCallback updateCallback,
-            MainLoopService.RenderCallback renderCallback,
+            Func<KeyboardHandle, KeyboardCharCache, Task> updateCallback,
+            Func<IRenderingEngine, Task> renderCallback,
             CancellationToken cancellationToken = default);
 
         /// <summary>

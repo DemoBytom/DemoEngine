@@ -33,8 +33,8 @@ namespace Demo.Engine.Core.Services
         }
 
         public async Task RunAsync(
-            UpdateCallback updateCallback,
-            RenderCallback renderCallback,
+            Func<KeyboardHandle, KeyboardCharCache, Task> updateCallback,
+            Func<IRenderingEngine, Task> renderCallback,
             CancellationToken cancellationToken = default)
         {
             if (updateCallback is null)
@@ -63,12 +63,5 @@ namespace Demo.Engine.Core.Services
             }
             IsRunning = false;
         }
-
-        public delegate Task RenderCallback(
-            IRenderingEngine renderingEngine);
-
-        public delegate Task UpdateCallback(
-            KeyboardHandle keyboardHandle,
-            KeyboardCharCache keyboardCharCache);
     }
 }

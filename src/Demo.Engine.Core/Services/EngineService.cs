@@ -21,6 +21,7 @@ namespace Demo.Engine.Core.Services
         private readonly IHostApplicationLifetime _applicationLifetime;
         private bool _stopRequested;
         private readonly ILogger<EngineService> _logger;
+        private readonly CancellationTokenSource _loopCancellationTokenSource = new CancellationTokenSource();
 
         private readonly string _version =
             Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
@@ -72,9 +73,6 @@ namespace Demo.Engine.Core.Services
             return tcs.Task;
         }
 
-        private IMainLoopService? _mainLoop;
-        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-
         private async Task DoWork()
         {
             _logger.LogInformation("Engine working! v{version}", _version);
@@ -82,12 +80,12 @@ namespace Demo.Engine.Core.Services
             {
                 using var scope = _scopeFactory.CreateScope();
 
-                _mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
+                var mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
 
-                await _mainLoop.RunAsync(
+                await mainLoop.RunAsync(
                     Update,
                     Render,
-                    _cts.Token);
+                    _loopCancellationTokenSource.Token);
             }
             finally
             {
@@ -121,13 +119,13 @@ namespace Demo.Engine.Core.Services
             }
             if (keyboardHandle?.GetKeyPressed(VirtualKeys.Escape) == true)
             {
-                _cts.Cancel();
+                _loopCancellationTokenSource.Cancel();
             }
 
             //Share the rainbow
-            _r = (float)Math.Sin((_sin + 0) * Math.PI / 180);
-            _g = (float)Math.Sin((_sin + 120) * Math.PI / 180);
-            _b = (float)Math.Sin((_sin + 240) * Math.PI / 180);
+            _r = MathF.Sin((_sin + 0) * MathF.PI / 180);
+            _g = MathF.Sin((_sin + 120) * MathF.PI / 180);
+            _b = MathF.Sin((_sin + 240) * MathF.PI / 180);
 
             //Taste the rainbow
             if (++_sin > 360)
@@ -149,6 +147,7 @@ namespace Demo.Engine.Core.Services
             renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
             renderingEngine.DrawTriangle();
             renderingEngine.EndScene();
+
             return Task.CompletedTask;
         }
 
@@ -176,7 +175,7 @@ namespace Demo.Engine.Core.Services
                 if (disposing)
                 {
                     _applicationLifetime.StopApplication();
-                    _cts.Dispose();
+                    _loopCancellationTokenSource.Dispose();
                 }
 
                 _disposedValue = true;
