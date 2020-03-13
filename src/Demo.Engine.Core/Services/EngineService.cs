@@ -143,10 +143,16 @@ namespace Demo.Engine.Core.Services
         public static float Map(float value, float inMin, float inMax, float outMin, float outMax) =>
             ((value - inMin) * (outMax - outMin) / (inMax - inMin)) + outMin;
 
+        private float angleInRadians = 0.0f;
+
         private Task Render(IRenderingEngine renderingEngine)
+
         {
+            angleInRadians = (angleInRadians + 0.01f) % (2 * MathF.PI);
+
             renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
-            renderingEngine.DrawTriangle();
+            renderingEngine.DrawTriangle(angleInRadians);
+            _logger.LogTrace("Current angle {angle}", angleInRadians);
             renderingEngine.EndScene();
 
             return Task.CompletedTask;

@@ -153,7 +153,7 @@ namespace Demo.Engine.Platform.DirectX
             2, 1, 3
         };
 
-        public void DrawTriangle()
+        public void DrawTriangle(float angleInRadians)
         {
             _vertexBuffer = _device.CreateBuffer(
                 _triangleVertices,
@@ -179,11 +179,35 @@ namespace Demo.Engine.Platform.DirectX
                     SizeInBytes = sizeof(ushort) * _triangleIndices.Length,
                 });
 
+            //rotationMatrix
+            //Rotation
+            var rotationMatrix = Matrix4x4.Transpose(new Matrix4x4(
+                MathF.Cos(angleInRadians), MathF.Sin(angleInRadians), 0.0f, 0.0f,
+                -MathF.Sin(angleInRadians), MathF.Cos(angleInRadians), 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f,
+                0.0f, 0.0f, 0.0f, 1.0f));
+
+            //var rotationMatrix = Matrix4x4.Transpose(Matrix4x4.CreateRotationZ(angleInRadians));
+
+            //constant buffer
+            var constantBuffer = _device.CreateBuffer(
+                ref rotationMatrix,
+                new BufferDescription
+                {
+                    Usage = Vortice.Direct3D11.Usage.Dynamic,
+                    BindFlags = BindFlags.ConstantBuffer,
+                    OptionFlags = ResourceOptionFlags.None,
+                    CpuAccessFlags = CpuAccessFlags.Write,
+                    StructureByteStride = 0,
+                    SizeInBytes = Marshal.SizeOf(rotationMatrix),
+                });
+
             //set Vertex buffer
             _deviceContext.IASetVertexBuffers(0, new VertexBufferView(_vertexBuffer, Vertex.SizeInBytes));
             //set Index buffer
             _deviceContext.IASetIndexBuffer(_indexBuffer, Format.R16_UInt, 0);
-
+            //set Constant buffer
+            _deviceContext.VSSetConstantBuffers(0, constantBuffer);
             unsafe
             {
                 fixed (byte* ptr = _triangleVertexShader.Span)
