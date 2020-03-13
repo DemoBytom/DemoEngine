@@ -107,6 +107,7 @@ namespace Demo.Engine.Platform.DirectX
 
             //temporary fix for a memory leak when creating them each frame
             _vertexBuffer?.Dispose();
+            _indexBuffer?.Dispose();
             _vertexShader?.Dispose();
             _pixelShader?.Dispose();
             _inputLayout?.Dispose();
@@ -133,15 +134,23 @@ namespace Demo.Engine.Platform.DirectX
         }
 
         private ID3D11Buffer? _vertexBuffer;
+        private ID3D11Buffer? _indexBuffer;
         private ID3D11VertexShader? _vertexShader;
         private ID3D11PixelShader? _pixelShader;
         private ID3D11InputLayout? _inputLayout;
 
         private readonly Vertex[] _triangleVertices = new Vertex[]
         {
-            new Vertex( 0.0f,  0.5f, 255, 000, 000, 255),
-            new Vertex( 0.5f, -0.5f, 000, 255, 000, 255),
-            new Vertex(-0.5f, -0.5f, 000, 000, 255, 255),
+            new Vertex( 0.0f,  0.75f, 255, 000, 000, 255),
+            new Vertex( 0.5f,  0.0f,  000, 255, 000, 255),
+            new Vertex(-0.5f,  0.0f,  000, 000, 255, 255),
+            new Vertex( 0.0f, -0.75f, 255, 000, 000, 255),
+        };
+
+        private readonly ushort[] _triangleIndices = new ushort[]
+        {
+            0, 1, 2,
+            2, 1, 3
         };
 
         public void DrawTriangle()
@@ -158,8 +167,22 @@ namespace Demo.Engine.Platform.DirectX
                     SizeInBytes = _triangleVertices.Length * Vertex.SizeInBytes
                 });
 
+            _indexBuffer = _device.CreateBuffer(
+                _triangleIndices,
+                new BufferDescription
+                {
+                    Usage = Vortice.Direct3D11.Usage.Default,
+                    BindFlags = BindFlags.IndexBuffer,
+                    OptionFlags = ResourceOptionFlags.None,
+                    CpuAccessFlags = CpuAccessFlags.None,
+                    StructureByteStride = sizeof(ushort),
+                    SizeInBytes = sizeof(ushort) * _triangleIndices.Length,
+                });
+
             //set Vertex buffer
             _deviceContext.IASetVertexBuffers(0, new VertexBufferView(_vertexBuffer, Vertex.SizeInBytes));
+            //set Index buffer
+            _deviceContext.IASetIndexBuffer(_indexBuffer, Format.R16_UInt, 0);
 
             unsafe
             {
@@ -211,7 +234,7 @@ namespace Demo.Engine.Platform.DirectX
                 MaxDepth = 1
             });
 
-            _deviceContext.Draw(3, 0);
+            _deviceContext.DrawIndexed(_triangleIndices.Length, 0, 0);
         }
 
         #region IDisposable Support
@@ -241,6 +264,12 @@ namespace Demo.Engine.Platform.DirectX
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
+                    _vertexBuffer?.Dispose();
+                    _indexBuffer?.Dispose();
+                    _vertexShader?.Dispose();
+                    _pixelShader?.Dispose();
+                    _inputLayout?.Dispose();
+
                     _renderTargetView?.Dispose();
                     _backBuffer?.Dispose();
                     _deviceContext?.ClearState();
