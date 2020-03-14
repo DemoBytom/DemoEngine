@@ -86,6 +86,22 @@ namespace Demo.Engine.Platform.DirectX
             _backBuffer = _swapChain.GetBuffer<ID3D11Texture2D>(0);
             _renderTargetView = _device.CreateRenderTargetView(_backBuffer);
 
+            var rd = new Vortice.Direct3D11.RasterizerDescription
+            {
+                FillMode = FillMode.Solid,
+                CullMode = CullMode.Back,
+                FrontCounterClockwise = true,
+                DepthBias = 0,
+                SlopeScaledDepthBias = 0.0f,
+                DepthBiasClamp = 0.0f,
+                DepthClipEnable = true,
+                ScissorEnable = false,
+                MultisampleEnable = false,
+                AntialiasedLineEnable = false,
+            };
+
+            _deviceContext.RSSetState(_device.CreateRasterizerState(rd));
+
             Control.Show();
         }
 
@@ -108,6 +124,8 @@ namespace Demo.Engine.Platform.DirectX
             //temporary fix for a memory leak when creating them each frame
             _vertexBuffer?.Dispose();
             _indexBuffer?.Dispose();
+            _worldMatrixBuffer?.Dispose();
+            _vpBuffer?.Dispose();
             _vertexShader?.Dispose();
             _pixelShader?.Dispose();
             _inputLayout?.Dispose();
@@ -120,14 +138,14 @@ namespace Demo.Engine.Platform.DirectX
         private readonly struct Vertex
         {
             public Vertex(
-                float x, float y,
+                float x, float y, float z,
                 byte r, byte g, byte b, byte a) =>
-                (Position, Color) = (new Vector2(x, y), new Color(r, g, b, a));
+                (Position, Color) = (new Vector3(x, y, z), new Color(r, g, b, a));
 
-            public Vertex(Vector2 position, Color color) =>
+            public Vertex(Vector3 position, Color color) =>
                 (Position, Color) = (position, color);
 
-            public Vector2 Position { get; }
+            public Vector3 Position { get; }
             public Color Color { get; }
 
             public static readonly int SizeInBytes = Marshal.SizeOf<Vertex>();
@@ -135,25 +153,48 @@ namespace Demo.Engine.Platform.DirectX
 
         private ID3D11Buffer? _vertexBuffer;
         private ID3D11Buffer? _indexBuffer;
+        private ID3D11Buffer? _worldMatrixBuffer;
+        private ID3D11Buffer? _vpBuffer;
         private ID3D11VertexShader? _vertexShader;
         private ID3D11PixelShader? _pixelShader;
         private ID3D11InputLayout? _inputLayout;
 
         private readonly Vertex[] _triangleVertices = new Vertex[]
         {
-            new Vertex( 0.0f,  0.75f, 255, 000, 000, 255),
-            new Vertex( 0.5f,  0.0f,  000, 255, 000, 255),
-            new Vertex(-0.5f,  0.0f,  000, 000, 255, 255),
-            new Vertex( 0.0f, -0.75f, 255, 000, 000, 255),
+            //Triangles
+            //new Vertex( 0.0f,  0.75f, -0.1f, 255, 000, 000, 255),
+            //new Vertex( 0.5f,  0.0f,  -0.1f, 255, 255, 255, 255),
+            //new Vertex(-0.5f,  0.0f,  -0.1f, 255, 255, 255, 255),
+            //new Vertex( 0.0f, -0.75f, -0.1f, 000, 000, 255, 255),
+
+            //Cube
+            new Vertex( -1.0f, -1.0f, -1.0f, 255, 000, 000, 255  ),
+            new Vertex(  1.0f, -1.0f, -1.0f, 125, 125, 000, 255  ),
+            new Vertex( -1.0f,  1.0f, -1.0f, 000, 125, 125, 255  ),
+            new Vertex(  1.0f,  1.0f, -1.0f, 000, 000, 255, 255  ),
+            new Vertex( -1.0f, -1.0f,  1.0f, 125, 000, 125, 255  ),
+            new Vertex(  1.0f, -1.0f,  1.0f, 000, 255, 000, 255  ),
+            new Vertex( -1.0f,  1.0f,  1.0f, 000, 000, 000, 255  ),
+            new Vertex(  1.0f,  1.0f,  1.0f, 000, 000, 255, 255  ),
         };
 
         private readonly ushort[] _triangleIndices = new ushort[]
         {
-            0, 1, 2,
-            2, 1, 3
+            //Trianlges
+            //0, 1, 2,
+            //2, 1, 3,
+            //0, 2, 1,
+            //1, 2, 3,
+            //Cube
+            4,5,6, 6,5,7,
+            5,1,7, 7,1,3,
+            1,0,3, 3,0,2,
+            0,4,2, 2,4,6,
+            6,7,2, 2,7,3,
+            5,4,1, 1,4,0
         };
 
-        public void DrawTriangle(float angleInRadians)
+        public void DrawCube(float angleInRadians)
         {
             _vertexBuffer = _device.CreateBuffer(
                 _triangleVertices,
@@ -179,19 +220,28 @@ namespace Demo.Engine.Platform.DirectX
                     SizeInBytes = sizeof(ushort) * _triangleIndices.Length,
                 });
 
-            //rotationMatrix
-            //Rotation
-            var rotationMatrix = Matrix4x4.Transpose(new Matrix4x4(
-                MathF.Cos(angleInRadians), MathF.Sin(angleInRadians), 0.0f, 0.0f,
-                -MathF.Sin(angleInRadians), MathF.Cos(angleInRadians), 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, 1.0f));
+            //Model to world transformation(s)
+            var worldMatrix = Matrix4x4.Transpose(
+                Matrix4x4.Identity
+                * Matrix4x4.CreateRotationZ(angleInRadians)
+                * Matrix4x4.CreateRotationY(angleInRadians)
+                * Matrix4x4.CreateRotationY(angleInRadians)
+                * Matrix4x4.CreateTranslation(0f, 0f, -0.0f)
 
-            //var rotationMatrix = Matrix4x4.Transpose(Matrix4x4.CreateRotationZ(angleInRadians));
+                );
+            const int FOV = 90;
+            var fovRad = FOV * (MathF.PI / 180);
+
+            var viewProjectionMatrix = Matrix4x4.Transpose(
+                // View matrix - Camera
+                Matrix4x4.CreateLookAt(new Vector3(0.0f, 0.0f, 4.0f), new Vector3(0.0f, 0.0f, 0.0f), Vector3.UnitY)
+                // Projection matrix - perspective
+                //* Matrix4x4.CreatePerspective(1, Control.DrawHeight / (float)Control.DrawWidth, 0.1f, 10f));
+                * Matrix4x4.CreatePerspectiveFieldOfView(fovRad, (float)Control.DrawWidth / Control.DrawHeight, 0.1f, 10f));
 
             //constant buffer
-            var constantBuffer = _device.CreateBuffer(
-                ref rotationMatrix,
+            _worldMatrixBuffer = _device.CreateBuffer(
+                ref worldMatrix,
                 new BufferDescription
                 {
                     Usage = Vortice.Direct3D11.Usage.Dynamic,
@@ -199,7 +249,19 @@ namespace Demo.Engine.Platform.DirectX
                     OptionFlags = ResourceOptionFlags.None,
                     CpuAccessFlags = CpuAccessFlags.Write,
                     StructureByteStride = 0,
-                    SizeInBytes = Marshal.SizeOf(rotationMatrix),
+                    SizeInBytes = Marshal.SizeOf(worldMatrix),
+                });
+
+            _vpBuffer = _device.CreateBuffer(
+                ref viewProjectionMatrix,
+                new BufferDescription
+                {
+                    Usage = Vortice.Direct3D11.Usage.Dynamic,
+                    BindFlags = BindFlags.ConstantBuffer,
+                    OptionFlags = ResourceOptionFlags.None,
+                    CpuAccessFlags = CpuAccessFlags.Write,
+                    StructureByteStride = 0,
+                    SizeInBytes = Marshal.SizeOf(viewProjectionMatrix),
                 });
 
             //set Vertex buffer
@@ -207,7 +269,7 @@ namespace Demo.Engine.Platform.DirectX
             //set Index buffer
             _deviceContext.IASetIndexBuffer(_indexBuffer, Format.R16_UInt, 0);
             //set Constant buffer
-            _deviceContext.VSSetConstantBuffers(0, constantBuffer);
+            _deviceContext.VSSetConstantBuffers(0, _worldMatrixBuffer, _vpBuffer);
             unsafe
             {
                 fixed (byte* ptr = _triangleVertexShader.Span)
@@ -229,7 +291,7 @@ namespace Demo.Engine.Platform.DirectX
                 new InputElementDescription(
                     "position",
                     0,
-                    Format.R32G32_Float,
+                    Format.R32G32B32_Float,
                     0,
                     0,
                     InputClassification.PerVertexData,
@@ -238,7 +300,7 @@ namespace Demo.Engine.Platform.DirectX
                     "color",
                     0,
                     Format.R8G8B8A8_UNorm,
-                    sizeof(float) * 2, //X, Y
+                    sizeof(float) * 3, //X, Y, Z
                     0,
                     InputClassification.PerVertexData,
                     0)
@@ -290,6 +352,8 @@ namespace Demo.Engine.Platform.DirectX
                     // TODO: dispose managed state (managed objects).
                     _vertexBuffer?.Dispose();
                     _indexBuffer?.Dispose();
+                    _worldMatrixBuffer?.Dispose();
+                    _vpBuffer?.Dispose();
                     _vertexShader?.Dispose();
                     _pixelShader?.Dispose();
                     _inputLayout?.Dispose();

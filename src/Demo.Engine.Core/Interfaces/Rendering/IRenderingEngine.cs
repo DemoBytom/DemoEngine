@@ -14,6 +14,6 @@ namespace Demo.Engine.Core.Interfaces.Rendering
 
         void BeginScene();
 
-        void DrawTriangle(float angleInRadians);
+        void DrawCube(float angleInRadians);
     }
 }

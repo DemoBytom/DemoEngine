@@ -4,15 +4,22 @@ struct VSOut
     float4 pos : SV_Position;
 };
 
-cbuffer constatnBuffer
+cbuffer constatnBuffer : register(b0)
 {
     matrix transform;
 };
 
-VSOut main(float2 pos : position, float4 color : color)
+cbuffer wvpBuffer : register(b1)
+{
+    matrix worldViewProjection;
+};
+
+VSOut main(float3 pos : position, float4 color : color)
 {
     VSOut vsout;
-    vsout.pos = mul(float4(pos.x, pos.y, 0.0f, 1.0f), transform);
+    vsout.pos = float4(pos, 1.0f);
+    vsout.pos = mul(vsout.pos, transform);
+    vsout.pos = mul(vsout.pos, worldViewProjection);
     vsout.col = color;
     return vsout;
 }

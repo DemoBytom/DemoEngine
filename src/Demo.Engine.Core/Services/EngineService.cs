@@ -144,15 +144,15 @@ namespace Demo.Engine.Core.Services
             ((value - inMin) * (outMax - outMin) / (inMax - inMin)) + outMin;
 
         private float angleInRadians = 0.0f;
+        private const float TWO_PI = MathHelper.TwoPi;
 
         private Task Render(IRenderingEngine renderingEngine)
 
         {
-            angleInRadians = (angleInRadians + 0.01f) % (2 * MathF.PI);
+            angleInRadians = (angleInRadians + 0.01f) % TWO_PI;
 
             renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
-            renderingEngine.DrawTriangle(angleInRadians);
-            _logger.LogTrace("Current angle {angle}", angleInRadians);
+            renderingEngine.DrawCube(angleInRadians);
             renderingEngine.EndScene();
 
             return Task.CompletedTask;
