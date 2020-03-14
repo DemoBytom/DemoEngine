@@ -124,8 +124,7 @@ namespace Demo.Engine.Platform.DirectX
             //temporary fix for a memory leak when creating them each frame
             _vertexBuffer?.Dispose();
             _indexBuffer?.Dispose();
-            _worldMatrixBuffer?.Dispose();
-            _vpBuffer?.Dispose();
+            _constantBuffer?.Dispose();
             _vertexShader?.Dispose();
             _pixelShader?.Dispose();
             _inputLayout?.Dispose();
@@ -135,12 +134,12 @@ namespace Demo.Engine.Platform.DirectX
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private readonly struct Vertex
+        public readonly struct Vertex
         {
             public Vertex(
                 float x, float y, float z,
-                byte r, byte g, byte b, byte a) =>
-                (Position, Color) = (new Vector3(x, y, z), new Color(r, g, b, a));
+                byte r, byte g, byte b, byte a)
+                : this(new Vector3(x, y, z), new Color(r, g, b, a)) { }
 
             public Vertex(Vector3 position, Color color) =>
                 (Position, Color) = (position, color);
@@ -149,12 +148,50 @@ namespace Demo.Engine.Platform.DirectX
             public Color Color { get; }
 
             public static readonly int SizeInBytes = Marshal.SizeOf<Vertex>();
+            public static readonly int PositionSizeInBytes = Marshal.SizeOf<Vector3>();
+            public static readonly int ColorSizeInBytes = Marshal.SizeOf<Color>();
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public readonly struct MatricesBuffer
+        {
+            public MatricesBuffer(
+                Matrix4x4 modelToWorldMatrix,
+                Matrix4x4 viewProjectionMatrix) =>
+                (ModelToWorldMatrix, ViewProjectionMatrix) = (modelToWorldMatrix, viewProjectionMatrix);
+
+            public Matrix4x4 ModelToWorldMatrix { get; }
+            public Matrix4x4 ViewProjectionMatrix { get; }
+
+            public static readonly int SizeInBytes = Marshal.SizeOf<MatricesBuffer>();
+        }
+
+        public readonly struct CubeFacesColors
+        {
+            public CubeFacesColors(Color4 face1, Color4 face2, Color4 face3, Color4 face4, Color4 face5, Color4 face6)
+            {
+                Face1 = face1;
+                Face2 = face2;
+                Face3 = face3;
+                Face4 = face4;
+                Face5 = face5;
+                Face6 = face6;
+            }
+
+            public Color4 Face1 { get; }
+            public Color4 Face2 { get; }
+            public Color4 Face3 { get; }
+            public Color4 Face4 { get; }
+            public Color4 Face5 { get; }
+            public Color4 Face6 { get; }
+
+            public static int SizeInBytes = Marshal.SizeOf<CubeFacesColors>();
         }
 
         private ID3D11Buffer? _vertexBuffer;
         private ID3D11Buffer? _indexBuffer;
-        private ID3D11Buffer? _worldMatrixBuffer;
-        private ID3D11Buffer? _vpBuffer;
+        private ID3D11Buffer? _constantBuffer;
+        private ID3D11Buffer? _cubeFacesColorsBuffer;
         private ID3D11VertexShader? _vertexShader;
         private ID3D11PixelShader? _pixelShader;
         private ID3D11InputLayout? _inputLayout;
@@ -225,7 +262,7 @@ namespace Demo.Engine.Platform.DirectX
                 Matrix4x4.Identity
                 * Matrix4x4.CreateRotationZ(angleInRadians)
                 * Matrix4x4.CreateRotationY(angleInRadians)
-                * Matrix4x4.CreateRotationY(angleInRadians)
+                * Matrix4x4.CreateRotationX(angleInRadians)
                 * Matrix4x4.CreateTranslation(0f, 0f, -0.0f)
 
                 );
@@ -238,10 +275,11 @@ namespace Demo.Engine.Platform.DirectX
                 // Projection matrix - perspective
                 //* Matrix4x4.CreatePerspective(1, Control.DrawHeight / (float)Control.DrawWidth, 0.1f, 10f));
                 * Matrix4x4.CreatePerspectiveFieldOfView(fovRad, (float)Control.DrawWidth / Control.DrawHeight, 0.1f, 10f));
+            var matricesBuffer = new MatricesBuffer(worldMatrix, viewProjectionMatrix);
 
             //constant buffer
-            _worldMatrixBuffer = _device.CreateBuffer(
-                ref worldMatrix,
+            _constantBuffer = _device.CreateBuffer(
+                ref matricesBuffer,
                 new BufferDescription
                 {
                     Usage = Vortice.Direct3D11.Usage.Dynamic,
@@ -249,27 +287,36 @@ namespace Demo.Engine.Platform.DirectX
                     OptionFlags = ResourceOptionFlags.None,
                     CpuAccessFlags = CpuAccessFlags.Write,
                     StructureByteStride = 0,
-                    SizeInBytes = Marshal.SizeOf(worldMatrix),
+                    SizeInBytes = MatricesBuffer.SizeInBytes,
                 });
-
-            _vpBuffer = _device.CreateBuffer(
-                ref viewProjectionMatrix,
+            //pixel shader constant buffers (cube colors)
+            var colors = new CubeFacesColors(
+                new Color4(255, 000, 000, 255),
+                new Color4(000, 255, 000, 255),
+                new Color4(000, 000, 255, 255),
+                new Color4(000, 125, 125, 255),
+                new Color4(125, 125, 000, 255),
+                new Color4(125, 000, 125, 255));
+            _cubeFacesColorsBuffer = _device.CreateBuffer(
+                ref colors,
                 new BufferDescription
                 {
                     Usage = Vortice.Direct3D11.Usage.Dynamic,
                     BindFlags = BindFlags.ConstantBuffer,
                     OptionFlags = ResourceOptionFlags.None,
                     CpuAccessFlags = CpuAccessFlags.Write,
-                    StructureByteStride = 0,
-                    SizeInBytes = Marshal.SizeOf(viewProjectionMatrix),
+                    StructureByteStride = Marshal.SizeOf<Color4>(),
+                    SizeInBytes = CubeFacesColors.SizeInBytes
                 });
 
             //set Vertex buffer
             _deviceContext.IASetVertexBuffers(0, new VertexBufferView(_vertexBuffer, Vertex.SizeInBytes));
             //set Index buffer
             _deviceContext.IASetIndexBuffer(_indexBuffer, Format.R16_UInt, 0);
-            //set Constant buffer
-            _deviceContext.VSSetConstantBuffers(0, _worldMatrixBuffer, _vpBuffer);
+            //set Vertex Shader Constant buffer
+            _deviceContext.VSSetConstantBuffers(0, _constantBuffer);
+            //set PixelShader Constatn buffer
+            _deviceContext.PSSetConstantBuffers(0, _cubeFacesColorsBuffer);
             unsafe
             {
                 fixed (byte* ptr = _triangleVertexShader.Span)
@@ -300,7 +347,7 @@ namespace Demo.Engine.Platform.DirectX
                     "color",
                     0,
                     Format.R8G8B8A8_UNorm,
-                    sizeof(float) * 3, //X, Y, Z
+                    Vertex.PositionSizeInBytes,
                     0,
                     InputClassification.PerVertexData,
                     0)
@@ -352,8 +399,7 @@ namespace Demo.Engine.Platform.DirectX
                     // TODO: dispose managed state (managed objects).
                     _vertexBuffer?.Dispose();
                     _indexBuffer?.Dispose();
-                    _worldMatrixBuffer?.Dispose();
-                    _vpBuffer?.Dispose();
+                    _constantBuffer?.Dispose();
                     _vertexShader?.Dispose();
                     _pixelShader?.Dispose();
                     _inputLayout?.Dispose();

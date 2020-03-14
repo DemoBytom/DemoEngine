@@ -7,12 +7,9 @@ struct VSOut
 cbuffer constatnBuffer : register(b0)
 {
     matrix transform;
-};
-
-cbuffer wvpBuffer : register(b1)
-{
     matrix worldViewProjection;
 };
+
 
 VSOut main(float3 pos : position, float4 color : color)
 {
