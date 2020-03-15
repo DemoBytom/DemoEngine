@@ -28,6 +28,9 @@ namespace Demo.Engine.Platform.DirectX
         private readonly ReadOnlyMemory<byte> _trianglePixelShader;
         private readonly ILogger<RenderingEngine> _logger;
         private readonly ID3D11RenderTargetView _renderTargetView;
+        private readonly ID3D11DepthStencilView _depthStencilView;
+        private readonly ID3D11DepthStencilState _depthStencilState;
+        private readonly ID3D11Texture2D _depthStencilTexture;
         private readonly IDXGISwapChain _swapChain;
         private readonly IOptionsMonitor<RenderSettings> _formSettings;
 
@@ -86,7 +89,7 @@ namespace Demo.Engine.Platform.DirectX
             _backBuffer = _swapChain.GetBuffer<ID3D11Texture2D>(0);
             _renderTargetView = _device.CreateRenderTargetView(_backBuffer);
 
-            var rd = new Vortice.Direct3D11.RasterizerDescription
+            var rd = new RasterizerDescription
             {
                 FillMode = FillMode.Solid,
                 CullMode = CullMode.Back,
@@ -102,6 +105,33 @@ namespace Demo.Engine.Platform.DirectX
 
             _deviceContext.RSSetState(_device.CreateRasterizerState(rd));
 
+            _depthStencilState = _device.CreateDepthStencilState(new DepthStencilDescription
+            {
+                DepthEnable = true,
+                DepthWriteMask = DepthWriteMask.All,
+                DepthFunc = ComparisonFunction.Less,
+            });
+            _deviceContext.OMSetDepthStencilState(_depthStencilState);
+
+            _depthStencilTexture = _device.CreateTexture2D(new Texture2DDescription
+            {
+                Width = _formSettings.CurrentValue.Width,
+                Height = _formSettings.CurrentValue.Height,
+                MipLevels = 1,
+                ArraySize = 1,
+                Format = Format.D32_Float,
+                SampleDescription = new SampleDescription(1, 0),
+                Usage = Vortice.Direct3D11.Usage.Default,
+                BindFlags = BindFlags.DepthStencil
+            });
+
+            _depthStencilView = _device.CreateDepthStencilView(_depthStencilTexture, new DepthStencilViewDescription
+            {
+                Format = Format.D32_Float,
+                ViewDimension = DepthStencilViewDimension.Texture2D,
+                Texture2D = new Texture2DDepthStencilView { MipSlice = 0 }
+            });
+
             Control.Show();
         }
 
@@ -112,6 +142,7 @@ namespace Demo.Engine.Platform.DirectX
         public void BeginScene(Color4 color)
         {
             _deviceContext.ClearRenderTargetView(_renderTargetView, color);
+            _deviceContext.ClearDepthStencilView(_depthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
         }
 
         public bool EndScene()
@@ -120,14 +151,6 @@ namespace Demo.Engine.Platform.DirectX
                 _formSettings.CurrentValue.VSync ? 1 : 0,
                 PresentFlags.None
                 );
-
-            //temporary fix for a memory leak when creating them each frame
-            _vertexBuffer?.Dispose();
-            _indexBuffer?.Dispose();
-            _constantBuffer?.Dispose();
-            _vertexShader?.Dispose();
-            _pixelShader?.Dispose();
-            _inputLayout?.Dispose();
 
             return !result.Failure
                 || result.Code != Vortice.DXGI.ResultCode.DeviceRemoved.Code;
@@ -231,7 +254,7 @@ namespace Demo.Engine.Platform.DirectX
             5,4,1, 1,4,0
         };
 
-        public void DrawCube(float angleInRadians)
+        public void DrawCube(Vector3 position, float rotationAngleInRadians)
         {
             _vertexBuffer = _device.CreateBuffer(
                 _triangleVertices,
@@ -260,10 +283,10 @@ namespace Demo.Engine.Platform.DirectX
             //Model to world transformation(s)
             var worldMatrix = Matrix4x4.Transpose(
                 Matrix4x4.Identity
-                * Matrix4x4.CreateRotationZ(angleInRadians)
-                * Matrix4x4.CreateRotationY(angleInRadians)
-                * Matrix4x4.CreateRotationX(angleInRadians)
-                * Matrix4x4.CreateTranslation(0f, 0f, -0.0f)
+                * Matrix4x4.CreateRotationZ(rotationAngleInRadians)
+                * Matrix4x4.CreateRotationY(rotationAngleInRadians)
+                * Matrix4x4.CreateRotationX(rotationAngleInRadians)
+                * Matrix4x4.CreateTranslation(position)
 
                 );
             const int FOV = 90;
@@ -356,7 +379,7 @@ namespace Demo.Engine.Platform.DirectX
             _deviceContext.IASetInputLayout(_inputLayout);
 
             //bind render target
-            _deviceContext.OMSetRenderTargets(_renderTargetView);
+            _deviceContext.OMSetRenderTargets(_renderTargetView, _depthStencilView);
 
             _deviceContext.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
@@ -368,6 +391,15 @@ namespace Demo.Engine.Platform.DirectX
             });
 
             _deviceContext.DrawIndexed(_triangleIndices.Length, 0, 0);
+
+            //temporary fix for a memory leak when creating them each frame
+            _vertexBuffer?.Dispose();
+            _indexBuffer?.Dispose();
+            _constantBuffer?.Dispose();
+            _cubeFacesColorsBuffer?.Dispose();
+            _vertexShader?.Dispose();
+            _pixelShader?.Dispose();
+            _inputLayout?.Dispose();
         }
 
         #region IDisposable Support
@@ -400,11 +432,15 @@ namespace Demo.Engine.Platform.DirectX
                     _vertexBuffer?.Dispose();
                     _indexBuffer?.Dispose();
                     _constantBuffer?.Dispose();
+                    _cubeFacesColorsBuffer?.Dispose();
                     _vertexShader?.Dispose();
                     _pixelShader?.Dispose();
                     _inputLayout?.Dispose();
 
                     _renderTargetView?.Dispose();
+                    _depthStencilView?.Dispose();
+                    _depthStencilState?.Dispose();
+                    _depthStencilTexture?.Dispose();
                     _backBuffer?.Dispose();
                     _deviceContext?.ClearState();
                     _deviceContext?.Flush();

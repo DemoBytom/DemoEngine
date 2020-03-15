@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -152,7 +153,8 @@ namespace Demo.Engine.Core.Services
             angleInRadians = (angleInRadians + 0.01f) % TWO_PI;
 
             renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
-            renderingEngine.DrawCube(angleInRadians);
+            renderingEngine.DrawCube(Vector3.Zero, angleInRadians);
+            renderingEngine.DrawCube(new Vector3(0.5f, 0.0f, -0.5f), -angleInRadians * 2);
             renderingEngine.EndScene();
 
             return Task.CompletedTask;
