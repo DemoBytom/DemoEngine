@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Nuke.Common" Version="0.24.7" />
-    <PackageReference Include="ReportGenerator" Version="4.5.4" />
+    <PackageReference Include="ReportGenerator" Version="4.5.5" />
     <PackageDownload Include="GitVersion.Tool" Version="[5.1.3]" />
     <PackageReference Include="coveralls.net" Version="1.0.0">
       <ExcludeAssets>all</ExcludeAssets>
