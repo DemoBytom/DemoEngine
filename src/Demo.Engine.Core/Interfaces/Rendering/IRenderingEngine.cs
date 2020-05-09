@@ -1,5 +1,5 @@
 using System;
-using System.Numerics;
+using System.Collections.Generic;
 using Demo.Engine.Core.Interfaces.Platform;
 using Vortice.Mathematics;
 
@@ -15,6 +15,6 @@ namespace Demo.Engine.Core.Interfaces.Rendering
 
         void BeginScene();
 
-        void DrawCube(Vector3 position, float rotationAngleInRadians);
+        void Draw(IEnumerable<IDrawable> drawables);
     }
 }

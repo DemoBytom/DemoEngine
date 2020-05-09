@@ -1,4 +1,3 @@
-using System.IO;
 using Nuke.Common;
 using Nuke.Common.Git;
 using static Nuke.Common.ChangeLog.ChangelogTasks;
@@ -21,11 +20,11 @@ namespace BuildScript
                      _changelogFile,
                     _gitVersion.MajorMinorPatch,
                     _gitRepository);
-                if (false)
-                {
-                    Git($"add {_changelogFile}");
-                    Git($"commit -m \"Finalize {Path.GetFileName(_changelogFile)} for {_gitVersion.MajorMinorPatch}\"");
-                }
+                //if (false) //TODO one day, maybe
+                //{
+                //    Git($"add {_changelogFile}");
+                //    Git($"commit -m \"Finalize {Path.GetFileName(_changelogFile)} for {_gitVersion.MajorMinorPatch}\"");
+                //}
             });
 
         private Target Release => _ => _

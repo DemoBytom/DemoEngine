@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -82,6 +83,11 @@ namespace Demo.Engine.Core.Services
             {
                 using var scope = _scopeFactory.CreateScope();
 
+                _drawables = new[]
+                {
+                    scope.ServiceProvider.GetRequiredService<ICube>(),
+                    scope.ServiceProvider.GetRequiredService<ICube>()
+                };
                 var mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
 
                 await mainLoop.RunAsync(
@@ -144,17 +150,23 @@ namespace Demo.Engine.Core.Services
         public static float Map(float value, float inMin, float inMax, float outMin, float outMax) =>
             ((value - inMin) * (outMax - outMin) / (inMax - inMin)) + outMin;
 
-        private float angleInRadians = 0.0f;
+        private float _angleInRadians = 0.0f;
+        private ICube[] _drawables = Array.Empty<ICube>();
         private const float TWO_PI = MathHelper.TwoPi;
 
         private Task Render(IRenderingEngine renderingEngine)
 
         {
-            angleInRadians = (angleInRadians + 0.01f) % TWO_PI;
+            _angleInRadians = (_angleInRadians + 0.01f) % TWO_PI;
 
             renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
-            renderingEngine.DrawCube(Vector3.Zero, angleInRadians);
-            renderingEngine.DrawCube(new Vector3(0.5f, 0.0f, -0.5f), -angleInRadians * 2);
+            //renderingEngine.DrawCube(Vector3.Zero, _angleInRadians);
+            //renderingEngine.DrawCube(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 2);
+            _drawables.ElementAtOrDefault(0)
+                ?.Update(Vector3.Zero, _angleInRadians);
+            _drawables.ElementAtOrDefault(1)
+                ?.Update(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
+            renderingEngine.Draw(_drawables);
             renderingEngine.EndScene();
 
             return Task.CompletedTask;

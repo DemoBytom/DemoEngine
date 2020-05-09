@@ -9,9 +9,12 @@ using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Platform.DirectX;
+using Demo.Engine.Platform.DirectX.Interfaces;
+using Demo.Engine.Platform.DirectX.Models;
 using Demo.Engine.Platform.DirectX.Shaders;
 using Demo.Engine.Platform.Windows;
 using Demo.Engine.Windows.Platform.Netstandard.Win32;
+using Demo.Tools.Common.Extensions.DependencyInjection;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,12 +39,17 @@ namespace Demo.Engine
                         services.AddHostedService<EngineService>();
                         services.Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)));
                         services.AddSingleton<IKeyboardCache, KeyboardCache>();
-                        services.AddScoped<IRenderingEngine, RenderingEngine>();
+                        services.AddScoped<
+                            ID3DRenderingEngine,
+                            IRenderingEngine,
+                            D3D11RenderingEngine>();
                         services.AddScoped<IMainLoopService, MainLoopService>();
                         /*** Windows Only ***/
                         services.AddTransient<IRenderingControl, RenderingForm>();
                         services.AddScoped<IOSMessageHandler, WindowsMessagesHandler>();
                         services.AddTransient<IShaderCompiler, ShaderCompiler>();
+                        //tmp
+                        services.AddTransient<ICube, Cube>();
                         /*** End Windows Only ***/
                         services.AddMediatR(
                             typeof(KeyboardHandler).Assembly);
