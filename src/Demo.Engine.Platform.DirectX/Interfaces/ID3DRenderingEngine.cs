@@ -5,7 +5,7 @@ namespace Demo.Engine.Platform.DirectX.Interfaces
 {
     public interface ID3DRenderingEngine : IRenderingEngine
     {
-        public ID3D11Device GetDevice { get; }
-        public ID3D11DeviceContext GetDeviceContext { get; }
+        public ID3D11Device Device { get; }
+        public ID3D11DeviceContext DeviceContext { get; }
     }
 }

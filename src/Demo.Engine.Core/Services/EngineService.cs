@@ -141,6 +141,11 @@ namespace Demo.Engine.Core.Services
                 _sin = 0;
             }
 
+            _drawables.ElementAtOrDefault(0)
+                ?.Update(Vector3.Zero, _angleInRadians);
+            _drawables.ElementAtOrDefault(1)
+                ?.Update(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
+
             return Task.CompletedTask;
         }
 
@@ -160,12 +165,6 @@ namespace Demo.Engine.Core.Services
             _angleInRadians = (_angleInRadians + 0.01f) % TWO_PI;
 
             renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
-            //renderingEngine.DrawCube(Vector3.Zero, _angleInRadians);
-            //renderingEngine.DrawCube(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 2);
-            _drawables.ElementAtOrDefault(0)
-                ?.Update(Vector3.Zero, _angleInRadians);
-            _drawables.ElementAtOrDefault(1)
-                ?.Update(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
             renderingEngine.Draw(_drawables);
             renderingEngine.EndScene();
 

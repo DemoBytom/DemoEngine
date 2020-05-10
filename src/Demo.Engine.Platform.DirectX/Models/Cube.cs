@@ -1,10 +1,12 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Enums;
+using Demo.Engine.Platform.DirectX.Bindable;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
@@ -19,16 +21,12 @@ namespace Demo.Engine.Platform.DirectX.Models
         private readonly ID3D11Device _device;
         private readonly ID3D11DeviceContext _deviceContext;
 
+        private readonly ReadOnlyCollection<IBindable> _bindables;
+        private readonly ReadOnlyCollection<IUpdatable> _updatables;
         private bool _disposedValue = false;
 
         private readonly Vertex[] _triangleVertices = new Vertex[]
         {
-            //Triangles
-            //new Vertex( 0.0f,  0.75f, -0.1f, 255, 000, 000, 255),
-            //new Vertex( 0.5f,  0.0f,  -0.1f, 255, 255, 255, 255),
-            //new Vertex(-0.5f,  0.0f,  -0.1f, 255, 255, 255, 255),
-            //new Vertex( 0.0f, -0.75f, -0.1f, 000, 000, 255, 255),
-
             //Cube
             new Vertex( -1.0f, -1.0f, -1.0f, 255, 000, 000, 255  ),
             new Vertex(  1.0f, -1.0f, -1.0f, 125, 125, 000, 255  ),
@@ -42,11 +40,6 @@ namespace Demo.Engine.Platform.DirectX.Models
 
         private readonly ushort[] _triangleIndices = new ushort[]
         {
-            //Trianlges
-            //0, 1, 2,
-            //2, 1, 3,
-            //0, 2, 1,
-            //1, 2, 3,
             //Cube
             4,5,6, 6,5,7,
             5,1,7, 7,1,3,
@@ -61,9 +54,6 @@ namespace Demo.Engine.Platform.DirectX.Models
 
         private readonly ID3D11Buffer? _vertexBuffer;
         private readonly ID3D11Buffer? _indexBuffer;
-        private readonly CubeFacesColors _colors;
-        private readonly ID3D11Buffer? _matricesConstantBuffer;
-        private readonly ID3D11Buffer? _cubeFacesColorsBuffer;
         private readonly ID3D11VertexShader? _vertexShader;
         private readonly ID3D11PixelShader? _pixelShader;
         private readonly ID3D11InputLayout? _inputLayout;
@@ -73,8 +63,8 @@ namespace Demo.Engine.Platform.DirectX.Models
             IShaderCompiler shaderCompiler)
         {
             _renderingEngine = renderingEngine;
-            _device = renderingEngine.GetDevice;
-            _deviceContext = renderingEngine.GetDeviceContext;
+            _device = renderingEngine.Device;
+            _deviceContext = renderingEngine.DeviceContext;
 
             _triangleVertexShader = shaderCompiler.CompileShader("Shaders/Triangle/TriangleVS.hlsl", ShaderStage.VertexShader);
             _trianglePixelShader = shaderCompiler.CompileShader("Shaders/Triangle/TrianglePS.hlsl", ShaderStage.PixelShader);
@@ -118,43 +108,8 @@ namespace Demo.Engine.Platform.DirectX.Models
                     SizeInBytes = sizeof(ushort) * _triangleIndices.Length,
                 });
 
-            _colors = new CubeFacesColors(
-                new Color4(255, 000, 000, 255),
-                new Color4(000, 255, 000, 255),
-                new Color4(000, 000, 255, 255),
-                new Color4(000, 125, 125, 255),
-                new Color4(125, 125, 000, 255),
-                new Color4(125, 000, 125, 255));
-
-            //pixel shader constant buffers (cube colors)
-            _cubeFacesColorsBuffer = _device.CreateBuffer(
-                ref _colors,
-                new BufferDescription
-                {
-                    Usage = Vortice.Direct3D11.Usage.Dynamic,
-                    BindFlags = BindFlags.ConstantBuffer,
-                    OptionFlags = ResourceOptionFlags.None,
-                    CpuAccessFlags = CpuAccessFlags.Write,
-                    StructureByteStride = Marshal.SizeOf<Color4>(),
-                    SizeInBytes = CubeFacesColors.SizeInBytes
-                });
-
-            _matricesBuffer = new MatricesBuffer(Matrix4x4.Identity, Matrix4x4.Identity);
-            //constant buffer
-            _matricesConstantBuffer = _device.CreateBuffer(
-                ref _matricesBuffer,
-                new BufferDescription
-                {
-                    Usage = Vortice.Direct3D11.Usage.Dynamic,
-                    BindFlags = BindFlags.ConstantBuffer,
-                    OptionFlags = ResourceOptionFlags.None,
-                    CpuAccessFlags = CpuAccessFlags.Write,
-                    StructureByteStride = 0,
-                    SizeInBytes = MatricesBuffer.SizeInBytes,
-                });
-
             _inputLayout = _device.CreateInputLayout(new[]
-{
+            {
                 new InputElementDescription(
                     "position",
                     0,
@@ -172,6 +127,35 @@ namespace Demo.Engine.Platform.DirectX.Models
                     InputClassification.PerVertexData,
                     0)
             }, _triangleVertexShader.ToArray());
+
+            _matricesBuffer = new MatricesBuffer(Matrix4x4.Identity, Matrix4x4.Identity);
+            var matricesConstantBuffer = new VSConstantBuffer<MatricesBuffer>(
+                renderingEngine,
+                ref _matricesBuffer);
+
+            var colors = new CubeFacesColors(
+                new Color4(255, 000, 000, 255),
+                new Color4(000, 255, 000, 255),
+                new Color4(000, 000, 255, 255),
+                new Color4(000, 125, 125, 255),
+                new Color4(125, 125, 000, 255),
+                new Color4(125, 000, 125, 255));
+            var colorsConstantBuffer = new PSConstantBuffer<CubeFacesColors>(
+                renderingEngine,
+                ref colors);
+
+            matricesConstantBuffer.OnUpdate += (o, _) => o.Update(ref _matricesBuffer);
+
+            _bindables = new ReadOnlyCollectionBuilder<IBindable>
+            {
+                matricesConstantBuffer,
+                colorsConstantBuffer,
+            }.ToReadOnlyCollection();
+
+            _updatables = new ReadOnlyCollectionBuilder<IUpdatable>
+            {
+                matricesConstantBuffer
+            }.ToReadOnlyCollection();
         }
 
         private Vector3 _position;
@@ -202,32 +186,22 @@ namespace Demo.Engine.Platform.DirectX.Models
                 //* Matrix4x4.CreatePerspective(1, Control.DrawHeight / (float)Control.DrawWidth, 0.1f, 10f));
                 * Matrix4x4.CreatePerspectiveFieldOfView(FOV_RAD, (float)_renderingEngine.Control.DrawWidth / _renderingEngine.Control.DrawHeight, 0.1f, 10f));
             _matricesBuffer = new MatricesBuffer(worldMatrix, viewProjectionMatrix);
-
-            unsafe
+            foreach (var updatable in _updatables)
             {
-                var ms = _deviceContext.Map(
-                    _matricesConstantBuffer,
-                    0,
-                    MapMode.WriteDiscard,
-                    Vortice.Direct3D11.MapFlags.None);
-                Unsafe.CopyBlockUnaligned(
-                    (void*)ms.DataPointer,
-                    Unsafe.AsPointer(ref _matricesBuffer),
-                    (uint)MatricesBuffer.SizeInBytes);
-                _deviceContext.Unmap(_matricesConstantBuffer, 0);
+                updatable.Update();
             }
         }
 
         public void Draw()
         {
+            foreach (var bindable in _bindables)
+            {
+                bindable.Bind();
+            }
             //set Vertex buffer
             _deviceContext.IASetVertexBuffers(0, new VertexBufferView(_vertexBuffer, Vertex.SizeInBytes));
             //set Index buffer
             _deviceContext.IASetIndexBuffer(_indexBuffer, Format.R16_UInt, 0);
-            //set Vertex Shader Constant buffer
-            _deviceContext.VSSetConstantBuffers(0, _matricesConstantBuffer);
-            //set PixelShader Constatn buffer
-            _deviceContext.PSSetConstantBuffers(0, _cubeFacesColorsBuffer);
 
             _deviceContext.VSSetShader(_vertexShader);
             _deviceContext.PSSetShader(_pixelShader);
@@ -254,11 +228,14 @@ namespace Demo.Engine.Platform.DirectX.Models
                 {
                     _vertexBuffer?.Dispose();
                     _indexBuffer?.Dispose();
-                    _matricesConstantBuffer?.Dispose();
-                    _cubeFacesColorsBuffer?.Dispose();
                     _vertexShader?.Dispose();
                     _pixelShader?.Dispose();
                     _inputLayout?.Dispose();
+
+                    foreach (var disposable in _bindables.OfType<IDisposable>())
+                    {
+                        disposable.Dispose();
+                    }
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

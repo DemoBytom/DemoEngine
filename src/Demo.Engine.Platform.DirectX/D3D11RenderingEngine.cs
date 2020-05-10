@@ -31,8 +31,8 @@ namespace Demo.Engine.Platform.DirectX
         private readonly IDXGISwapChain _swapChain;
         private readonly IOptionsMonitor<RenderSettings> _formSettings;
 
-        public ID3D11Device GetDevice => _device;
-        public ID3D11DeviceContext GetDeviceContext => _deviceContext;
+        public ID3D11Device Device => _device;
+        public ID3D11DeviceContext DeviceContext => _deviceContext;
 
         public D3D11RenderingEngine(
             ILogger<D3D11RenderingEngine> logger,
