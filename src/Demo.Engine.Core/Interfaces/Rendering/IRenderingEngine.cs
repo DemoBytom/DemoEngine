@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Demo.Engine.Core.Interfaces.Platform;
 using Vortice.Mathematics;
 
@@ -16,5 +17,10 @@ namespace Demo.Engine.Core.Interfaces.Rendering
         void BeginScene();
 
         void Draw(IEnumerable<IDrawable> drawables);
+
+        /// <summary>
+        /// Temporary untill we have a proper Camera class
+        /// </summary>
+        Matrix4x4 ViewProjectionMatrix { get; }
     }
 }

@@ -3,7 +3,7 @@ using Demo.Engine.Platform.DirectX.Interfaces;
 namespace Demo.Engine.Platform.DirectX.Bindable
 {
     /// <summary>
-    /// Vertex shader constant buffer that can be bound to the renrering pipeline
+    /// Vertex shader constant buffer that can be bound to the rendering pipeline
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class VSConstantBuffer<T> : ConstantBuffer<T>

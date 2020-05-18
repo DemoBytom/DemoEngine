@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
@@ -133,6 +134,24 @@ namespace Demo.Engine.Platform.DirectX
         }
 
         public IRenderingControl Control { get; }
+
+        private const int FOV = 90;
+        private const float FOV_RAD = FOV * (MathF.PI / 180);
+
+        /* TODO separate into view and projection matrices, and move View matrix to a Camera
+         * Projection can (should be?) calculated once, and left there till it needs to be changed
+         * */
+
+        public Matrix4x4 ViewProjectionMatrix => Matrix4x4.Transpose(
+                // View matrix - Camera
+                Matrix4x4.CreateLookAt(new Vector3(0.0f, 0.0f, 4.0f), new Vector3(0.0f, 0.0f, 0.0f), Vector3.UnitY)
+                // Projection matrix - perspective
+                //* Matrix4x4.CreatePerspective(1, Control.DrawHeight / (float)Control.DrawWidth, 0.1f, 10f));
+                * Matrix4x4.CreatePerspectiveFieldOfView(
+                    FOV_RAD,
+                    (float)Control.DrawWidth / Control.DrawHeight,
+                    0.1f,
+                    10f));
 
         public void BeginScene() => BeginScene(new Color4(0, 0, 0, 1));
 

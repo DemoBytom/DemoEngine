@@ -176,15 +176,7 @@ namespace Demo.Engine.Platform.DirectX.Models
                  * Matrix4x4.CreateTranslation(position)
                  );
 
-            const int FOV = 90;
-            const float FOV_RAD = FOV * (MathF.PI / 180);
-
-            var viewProjectionMatrix = Matrix4x4.Transpose(
-                // View matrix - Camera
-                Matrix4x4.CreateLookAt(new Vector3(0.0f, 0.0f, 4.0f), new Vector3(0.0f, 0.0f, 0.0f), Vector3.UnitY)
-                // Projection matrix - perspective
-                //* Matrix4x4.CreatePerspective(1, Control.DrawHeight / (float)Control.DrawWidth, 0.1f, 10f));
-                * Matrix4x4.CreatePerspectiveFieldOfView(FOV_RAD, (float)_renderingEngine.Control.DrawWidth / _renderingEngine.Control.DrawHeight, 0.1f, 10f));
+            var viewProjectionMatrix = _renderingEngine.ViewProjectionMatrix;
             _matricesBuffer = new MatricesBuffer(worldMatrix, viewProjectionMatrix);
             foreach (var updatable in _updatables)
             {

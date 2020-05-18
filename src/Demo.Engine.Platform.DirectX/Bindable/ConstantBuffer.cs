@@ -35,11 +35,10 @@ namespace Demo.Engine.Platform.DirectX.Bindable
                 });
         }
 
-#pragma warning disable RCS1079 // Throwing of new NotImplementedException.
-
-        public virtual void Bind() => throw new NotImplementedException();
-
-#pragma warning restore RCS1079 // Throwing of new NotImplementedException.
+        /// <summary>
+        /// Method that binds the buffer (and it's resources) to the rendering pipeline
+        /// </summary>
+        public abstract void Bind();
 
         /// <summary>
         /// Method used to update the buffer with new data

@@ -3,7 +3,7 @@ using Demo.Engine.Platform.DirectX.Interfaces;
 namespace Demo.Engine.Platform.DirectX.Bindable
 {
     /// <summary>
-    /// Pixel shader constant buffer that can be bound to the renrering pipeline
+    /// Pixel shader constant buffer that can be bound to the rendering pipeline
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class PSConstantBuffer<T> : ConstantBuffer<T>
