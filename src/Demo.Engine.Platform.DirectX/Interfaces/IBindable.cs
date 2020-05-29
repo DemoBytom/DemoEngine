@@ -1,4 +1,4 @@
-namespace Demo.Engine.Platform.DirectX.Bindable
+namespace Demo.Engine.Platform.DirectX.Interfaces
 {
     /// <summary>
     /// An object that can be bound to the rendering pipeline

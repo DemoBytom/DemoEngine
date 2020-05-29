@@ -3,7 +3,7 @@ using Vortice.Direct3D11;
 
 namespace Demo.Engine.Platform.DirectX.Interfaces
 {
-    public interface ID3DRenderingEngine : IRenderingEngine
+    public interface ID3D11RenderingEngine : IRenderingEngine
     {
         public ID3D11Device Device { get; }
         public ID3D11DeviceContext DeviceContext { get; }

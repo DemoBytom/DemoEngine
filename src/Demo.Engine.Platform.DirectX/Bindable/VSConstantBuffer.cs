@@ -10,7 +10,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable
         where T : unmanaged
     {
         public VSConstantBuffer(
-            ID3DRenderingEngine renderingEngine,
+            ID3D11RenderingEngine renderingEngine,
             ref T data)
             : base(
                 renderingEngine,

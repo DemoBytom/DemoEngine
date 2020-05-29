@@ -13,12 +13,12 @@ namespace Demo.Engine.Platform.DirectX.Bindable
     public abstract class ConstantBuffer<T> : IBindable, IUpdatable, IDisposable
         where T : unmanaged
     {
-        protected readonly ID3DRenderingEngine _renderingEngine;
+        protected readonly ID3D11RenderingEngine _renderingEngine;
         protected readonly ID3D11Buffer _constantBuffer;
 
         private bool _disposedValue = false;
 
-        protected ConstantBuffer(ID3DRenderingEngine renderingEngine, ref T data)
+        protected ConstantBuffer(ID3D11RenderingEngine renderingEngine, ref T data)
         {
             _renderingEngine = renderingEngine;
 

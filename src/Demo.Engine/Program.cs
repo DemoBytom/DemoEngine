@@ -40,7 +40,7 @@ namespace Demo.Engine
                         services.Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)));
                         services.AddSingleton<IKeyboardCache, KeyboardCache>();
                         services.AddScoped<
-                            ID3DRenderingEngine,
+                            ID3D11RenderingEngine,
                             IRenderingEngine,
                             D3D11RenderingEngine>();
                         services.AddScoped<IMainLoopService, MainLoopService>();

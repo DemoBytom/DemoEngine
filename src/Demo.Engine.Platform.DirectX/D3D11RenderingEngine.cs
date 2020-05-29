@@ -16,7 +16,7 @@ using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX
 {
-    public class D3D11RenderingEngine : ID3DRenderingEngine, IRenderingEngine
+    public class D3D11RenderingEngine : ID3D11RenderingEngine
     {
         private readonly ID3D11Texture2D _backBuffer;
         private readonly ID3D11Device _device;

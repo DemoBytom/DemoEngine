@@ -5,7 +5,6 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
-using Demo.Engine.Core.Models.Enums;
 using Demo.Engine.Platform.DirectX.Bindable;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Vortice.Direct3D;
@@ -49,38 +48,29 @@ namespace Demo.Engine.Platform.DirectX.Models
             5,4,1, 1,4,0
         };
 
-        private readonly ReadOnlyMemory<byte> _triangleVertexShader;
-        private readonly ReadOnlyMemory<byte> _trianglePixelShader;
-
         private readonly ID3D11Buffer? _vertexBuffer;
         private readonly ID3D11Buffer? _indexBuffer;
-        private readonly ID3D11VertexShader? _vertexShader;
-        private readonly ID3D11PixelShader? _pixelShader;
         private readonly ID3D11InputLayout? _inputLayout;
 
         public Cube(
-            ID3DRenderingEngine renderingEngine,
+            ID3D11RenderingEngine renderingEngine,
             IShaderCompiler shaderCompiler)
         {
             _renderingEngine = renderingEngine;
             _device = renderingEngine.Device;
             _deviceContext = renderingEngine.DeviceContext;
 
-            _triangleVertexShader = shaderCompiler.CompileShader("Shaders/Triangle/TriangleVS.hlsl", ShaderStage.VertexShader);
-            _trianglePixelShader = shaderCompiler.CompileShader("Shaders/Triangle/TrianglePS.hlsl", ShaderStage.PixelShader);
+            //_triangleVertexShader = shaderCompiler.CompileShader("Shaders/Triangle/TriangleVS.hlsl", ShaderStage.VertexShader);
+            //_trianglePixelShader = shaderCompiler.CompileShader("Shaders/Triangle/TrianglePS.hlsl", ShaderStage.PixelShader);
 
-            unsafe
-            {
-                fixed (byte* ptr = _triangleVertexShader.Span)
-                {
-                    _vertexShader = _device.CreateVertexShader((IntPtr)ptr, _triangleVertexShader.Length);
-                }
-
-                fixed (byte* ptr = _trianglePixelShader.Span)
-                {
-                    _pixelShader = _device.CreatePixelShader((IntPtr)ptr, _trianglePixelShader.Length);
-                }
-            }
+            var vertexShader = new VertexShader(
+                "Shaders/Triangle/TriangleVS.hlsl",
+                shaderCompiler,
+                renderingEngine);
+            var pixelShader = new PixelShader(
+                "Shaders/Triangle/TrianglePS.hlsl",
+                shaderCompiler,
+                renderingEngine);
 
             //VertexBuffer
             _vertexBuffer = _device.CreateBuffer(
@@ -126,7 +116,7 @@ namespace Demo.Engine.Platform.DirectX.Models
                     0,
                     InputClassification.PerVertexData,
                     0)
-            }, _triangleVertexShader.ToArray());
+            }, vertexShader.CompiledShader.ToArray());
 
             _matricesBuffer = new MatricesBuffer(Matrix4x4.Identity, Matrix4x4.Identity);
             var matricesConstantBuffer = new VSConstantBuffer<MatricesBuffer>(
@@ -150,6 +140,8 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 matricesConstantBuffer,
                 colorsConstantBuffer,
+                vertexShader,
+                pixelShader,
             }.ToReadOnlyCollection();
 
             _updatables = new ReadOnlyCollectionBuilder<IUpdatable>
@@ -195,8 +187,7 @@ namespace Demo.Engine.Platform.DirectX.Models
             //set Index buffer
             _deviceContext.IASetIndexBuffer(_indexBuffer, Format.R16_UInt, 0);
 
-            _deviceContext.VSSetShader(_vertexShader);
-            _deviceContext.PSSetShader(_pixelShader);
+            //_deviceContext.PSSetShader(_pixelShader);
 
             _deviceContext.IASetInputLayout(_inputLayout);
 
@@ -220,8 +211,7 @@ namespace Demo.Engine.Platform.DirectX.Models
                 {
                     _vertexBuffer?.Dispose();
                     _indexBuffer?.Dispose();
-                    _vertexShader?.Dispose();
-                    _pixelShader?.Dispose();
+                    //_pixelShader?.Dispose();
                     _inputLayout?.Dispose();
 
                     foreach (var disposable in _bindables.OfType<IDisposable>())
