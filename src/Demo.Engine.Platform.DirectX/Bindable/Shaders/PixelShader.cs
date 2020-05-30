@@ -3,7 +3,7 @@ using Demo.Engine.Core.Models.Enums;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Vortice.Direct3D11;
 
-namespace Demo.Engine.Platform.DirectX.Bindable
+namespace Demo.Engine.Platform.DirectX.Bindable.Shaders
 {
     public class PixelShader : Shader<ID3D11PixelShader>
     {

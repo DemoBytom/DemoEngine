@@ -1,15 +1,15 @@
 using Demo.Engine.Platform.DirectX.Interfaces;
 
-namespace Demo.Engine.Platform.DirectX.Bindable
+namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
 {
     /// <summary>
-    /// Pixel shader constant buffer that can be bound to the rendering pipeline
+    /// Vertex shader constant buffer that can be bound to the rendering pipeline
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class PSConstantBuffer<T> : ConstantBuffer<T>
+    public class VSConstantBuffer<T> : ConstantBuffer<T>
         where T : unmanaged
     {
-        public PSConstantBuffer(
+        public VSConstantBuffer(
             ID3D11RenderingEngine renderingEngine,
             ref T data)
             : base(
@@ -19,6 +19,6 @@ namespace Demo.Engine.Platform.DirectX.Bindable
         }
 
         public override void Bind() => _renderingEngine.DeviceContext
-            .PSSetConstantBuffer(0, _constantBuffer);
+            .VSSetConstantBuffer(0, _buffer);
     }
 }

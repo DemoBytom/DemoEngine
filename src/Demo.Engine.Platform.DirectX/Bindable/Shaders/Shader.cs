@@ -4,7 +4,7 @@ using Demo.Engine.Core.Models.Enums;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Vortice.Direct3D11;
 
-namespace Demo.Engine.Platform.DirectX.Bindable
+namespace Demo.Engine.Platform.DirectX.Bindable.Shaders
 {
     public abstract class Shader<TShaderType> : IBindable, IDisposable
         where TShaderType : ID3D11DeviceChild

@@ -5,7 +5,8 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
-using Demo.Engine.Platform.DirectX.Bindable;
+using Demo.Engine.Platform.DirectX.Bindable.Buffers;
+using Demo.Engine.Platform.DirectX.Bindable.Shaders;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
@@ -48,8 +49,6 @@ namespace Demo.Engine.Platform.DirectX.Models
             5,4,1, 1,4,0
         };
 
-        private readonly ID3D11Buffer? _vertexBuffer;
-        private readonly ID3D11Buffer? _indexBuffer;
         private readonly ID3D11InputLayout? _inputLayout;
 
         public Cube(
@@ -59,9 +58,6 @@ namespace Demo.Engine.Platform.DirectX.Models
             _renderingEngine = renderingEngine;
             _device = renderingEngine.Device;
             _deviceContext = renderingEngine.DeviceContext;
-
-            //_triangleVertexShader = shaderCompiler.CompileShader("Shaders/Triangle/TriangleVS.hlsl", ShaderStage.VertexShader);
-            //_trianglePixelShader = shaderCompiler.CompileShader("Shaders/Triangle/TrianglePS.hlsl", ShaderStage.PixelShader);
 
             var vertexShader = new VertexShader(
                 "Shaders/Triangle/TriangleVS.hlsl",
@@ -73,30 +69,16 @@ namespace Demo.Engine.Platform.DirectX.Models
                 renderingEngine);
 
             //VertexBuffer
-            _vertexBuffer = _device.CreateBuffer(
+            var vertexBuffer = new VertexBuffer<Vertex>(
+                renderingEngine,
                 _triangleVertices,
-                new BufferDescription
-                {
-                    Usage = Vortice.Direct3D11.Usage.Default,
-                    BindFlags = BindFlags.VertexBuffer,
-                    OptionFlags = ResourceOptionFlags.None,
-                    CpuAccessFlags = CpuAccessFlags.None,
-                    StructureByteStride = Vertex.SizeInBytes,
-                    SizeInBytes = _triangleVertices.Length * Vertex.SizeInBytes
-                });
+                Vertex.SizeInBytes);
 
             //IndexBuffer
-            _indexBuffer = _device.CreateBuffer(
+            var indexBuffer = new IndexBuffer<ushort>(
+                renderingEngine,
                 _triangleIndices,
-                new BufferDescription
-                {
-                    Usage = Vortice.Direct3D11.Usage.Default,
-                    BindFlags = BindFlags.IndexBuffer,
-                    OptionFlags = ResourceOptionFlags.None,
-                    CpuAccessFlags = CpuAccessFlags.None,
-                    StructureByteStride = sizeof(ushort),
-                    SizeInBytes = sizeof(ushort) * _triangleIndices.Length,
-                });
+                sizeof(ushort));
 
             _inputLayout = _device.CreateInputLayout(new[]
             {
@@ -134,7 +116,7 @@ namespace Demo.Engine.Platform.DirectX.Models
                 renderingEngine,
                 ref colors);
 
-            matricesConstantBuffer.OnUpdate += (o, _) => o.Update(ref _matricesBuffer);
+            matricesConstantBuffer.OnUpdate += o => o.Update(ref _matricesBuffer);
 
             _bindables = new ReadOnlyCollectionBuilder<IBindable>
             {
@@ -142,6 +124,8 @@ namespace Demo.Engine.Platform.DirectX.Models
                 colorsConstantBuffer,
                 vertexShader,
                 pixelShader,
+                vertexBuffer,
+                indexBuffer,
             }.ToReadOnlyCollection();
 
             _updatables = new ReadOnlyCollectionBuilder<IUpdatable>
@@ -150,15 +134,10 @@ namespace Demo.Engine.Platform.DirectX.Models
             }.ToReadOnlyCollection();
         }
 
-        private Vector3 _position;
-        private float _rotationAngleInRadians;
         private MatricesBuffer _matricesBuffer;
 
         public void Update(Vector3 position, float rotationAngleInRadians)
         {
-            _position = position;
-            _rotationAngleInRadians = rotationAngleInRadians;
-
             //Model to world transformation(s)
             var worldMatrix = Matrix4x4.Transpose(
                  Matrix4x4.Identity
@@ -182,10 +161,6 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 bindable.Bind();
             }
-            //set Vertex buffer
-            _deviceContext.IASetVertexBuffers(0, new VertexBufferView(_vertexBuffer, Vertex.SizeInBytes));
-            //set Index buffer
-            _deviceContext.IASetIndexBuffer(_indexBuffer, Format.R16_UInt, 0);
 
             //_deviceContext.PSSetShader(_pixelShader);
 
@@ -209,8 +184,6 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 if (disposing)
                 {
-                    _vertexBuffer?.Dispose();
-                    _indexBuffer?.Dispose();
                     //_pixelShader?.Dispose();
                     _inputLayout?.Dispose();
 
