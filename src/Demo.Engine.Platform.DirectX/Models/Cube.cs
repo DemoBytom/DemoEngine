@@ -5,6 +5,7 @@ using Demo.Engine.Platform.DirectX.Bindable;
 using Demo.Engine.Platform.DirectX.Bindable.Buffers;
 using Demo.Engine.Platform.DirectX.Bindable.Shaders;
 using Demo.Engine.Platform.DirectX.Interfaces;
+using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
@@ -111,7 +112,10 @@ namespace Demo.Engine.Platform.DirectX.Models
                 pixelShader,
                 vertexBuffer,
                 indexBuffer,
-                inputLayout);
+                inputLayout,
+                new Topology(
+                    _renderingEngine,
+                    PrimitiveTopology.TriangleList));
         }
 
         public void Update(Vector3 position, float rotationAngleInRadians)

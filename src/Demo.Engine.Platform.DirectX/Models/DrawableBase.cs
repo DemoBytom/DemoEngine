@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Platform.DirectX.Interfaces;
-using Vortice.Direct3D;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX.Models
@@ -33,8 +32,6 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 bindable.Bind();
             }
-
-            _renderingEngine.DeviceContext.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
             //viewport
             _renderingEngine.DeviceContext.RSSetViewport(new Viewport(_renderingEngine.Control.DrawingArea)
