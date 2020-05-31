@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
+using Demo.Engine.Platform.DirectX.Bindable;
 using Demo.Engine.Platform.DirectX.Bindable.Buffers;
 using Demo.Engine.Platform.DirectX.Bindable.Shaders;
 using Demo.Engine.Platform.DirectX.Interfaces;
@@ -49,8 +50,6 @@ namespace Demo.Engine.Platform.DirectX.Models
             5,4,1, 1,4,0
         };
 
-        private readonly ID3D11InputLayout? _inputLayout;
-
         public Cube(
             ID3D11RenderingEngine renderingEngine,
             IShaderCompiler shaderCompiler)
@@ -79,26 +78,27 @@ namespace Demo.Engine.Platform.DirectX.Models
                 renderingEngine,
                 _triangleIndices,
                 sizeof(ushort));
-
-            _inputLayout = _device.CreateInputLayout(new[]
-            {
-                new InputElementDescription(
-                    "position",
-                    0,
-                    Format.R32G32B32_Float,
-                    0,
-                    0,
-                    InputClassification.PerVertexData,
-                    0),
-                new InputElementDescription(
-                    "color",
-                    0,
-                    Format.R8G8B8A8_UNorm,
-                    Vertex.PositionSizeInBytes,
-                    0,
-                    InputClassification.PerVertexData,
-                    0)
-            }, vertexShader.CompiledShader.ToArray());
+            var inputLayout = new InputLayout(
+                renderingEngine,
+                new[]
+                {
+                    new InputElementDescription(
+                        "position",
+                        0,
+                        Format.R32G32B32_Float,
+                        0,
+                        0,
+                        InputClassification.PerVertexData,
+                        0),
+                    new InputElementDescription(
+                        "color",
+                        0,
+                        Format.R8G8B8A8_UNorm,
+                        Vertex.PositionSizeInBytes,
+                        0,
+                        InputClassification.PerVertexData,
+                        0)
+                }, vertexShader.CompiledShader);
 
             _matricesBuffer = new MatricesBuffer(Matrix4x4.Identity, Matrix4x4.Identity);
             var matricesConstantBuffer = new VSConstantBuffer<MatricesBuffer>(
@@ -126,6 +126,7 @@ namespace Demo.Engine.Platform.DirectX.Models
                 pixelShader,
                 vertexBuffer,
                 indexBuffer,
+                inputLayout,
             }.ToReadOnlyCollection();
 
             _updatables = new ReadOnlyCollectionBuilder<IUpdatable>
@@ -162,10 +163,6 @@ namespace Demo.Engine.Platform.DirectX.Models
                 bindable.Bind();
             }
 
-            //_deviceContext.PSSetShader(_pixelShader);
-
-            _deviceContext.IASetInputLayout(_inputLayout);
-
             _deviceContext.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
             //viewport
@@ -184,30 +181,15 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 if (disposing)
                 {
-                    //_pixelShader?.Dispose();
-                    _inputLayout?.Dispose();
-
                     foreach (var disposable in _bindables.OfType<IDisposable>())
                     {
                         disposable.Dispose();
                     }
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
                 _disposedValue = true;
             }
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~Cube()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
