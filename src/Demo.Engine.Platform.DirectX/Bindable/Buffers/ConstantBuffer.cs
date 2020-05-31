@@ -9,7 +9,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
     /// Constant buffer that can be bound to the rendering pipeline
     /// </summary>
     /// <typeparam name="T">Data contained in the buffer</typeparam>
-    public abstract class ConstantBuffer<T> : Buffer<T>, IUpdatable
+    public abstract class ConstantBuffer<T> : Buffer<T>, IUpdatable<T>
         where T : unmanaged
     {
         protected ConstantBuffer(ID3D11RenderingEngine renderingEngine, ref T data)
@@ -45,11 +45,5 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
                 _renderingEngine.DeviceContext.Unmap(_buffer, 0);
             }
         }
-
-        public void Update() => OnUpdate?.Invoke(this);
-
-        public event ConstantBufferEventHandler? OnUpdate;
-
-        public delegate void ConstantBufferEventHandler(ConstantBuffer<T> buffer);
     }
 }

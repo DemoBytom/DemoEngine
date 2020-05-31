@@ -12,9 +12,9 @@ using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX.Models
 {
-    public class Cube : DrawableBase, ICube
+    public class Cube : DrawableBase<Cube>, ICube
     {
-        private MatricesBuffer _matricesBuffer;
+        private MatricesBuffer _matricesBuffer = new MatricesBuffer(Matrix4x4.Identity, Matrix4x4.Identity);
 
         private readonly Vertex[] _cubeVertices = new Vertex[]
         {
@@ -43,30 +43,36 @@ namespace Demo.Engine.Platform.DirectX.Models
         public Cube(
             ID3D11RenderingEngine renderingEngine,
             IShaderCompiler shaderCompiler) :
-            base(renderingEngine)
+            base(
+                renderingEngine,
+                t => t.PrepareBindables(shaderCompiler))
+        {
+        }
+
+        private IBindable[] PrepareBindables(IShaderCompiler shaderCompiler)
         {
             var vertexShader = new VertexShader(
-                "Shaders/Triangle/TriangleVS.hlsl",
-                shaderCompiler,
-                renderingEngine);
+                    "Shaders/Triangle/TriangleVS.hlsl",
+                    shaderCompiler,
+                    _renderingEngine);
             var pixelShader = new PixelShader(
                 "Shaders/Triangle/TrianglePS.hlsl",
                 shaderCompiler,
-                renderingEngine);
+                _renderingEngine);
 
             //VertexBuffer
             var vertexBuffer = new VertexBuffer<Vertex>(
-                renderingEngine,
+                _renderingEngine,
                 _cubeVertices,
                 Vertex.SizeInBytes);
 
             //IndexBuffer
             var indexBuffer = new IndexBuffer<ushort>(
-                renderingEngine,
+                _renderingEngine,
                 _triangleIndices,
                 sizeof(ushort));
             var inputLayout = new InputLayout(
-                renderingEngine,
+                _renderingEngine,
                 new[]
                 {
                     new InputElementDescription(
@@ -87,11 +93,6 @@ namespace Demo.Engine.Platform.DirectX.Models
                         0)
                 }, vertexShader.CompiledShader);
 
-            _matricesBuffer = new MatricesBuffer(Matrix4x4.Identity, Matrix4x4.Identity);
-            var matricesConstantBuffer = new VSConstantBuffer<MatricesBuffer>(
-                renderingEngine,
-                ref _matricesBuffer);
-
             var colors = new CubeFacesColors(
                 new Color4(255, 000, 000, 255),
                 new Color4(000, 255, 000, 255),
@@ -100,12 +101,14 @@ namespace Demo.Engine.Platform.DirectX.Models
                 new Color4(125, 125, 000, 255),
                 new Color4(125, 000, 125, 255));
             var colorsConstantBuffer = new PSConstantBuffer<CubeFacesColors>(
-                renderingEngine,
+                _renderingEngine,
                 ref colors);
 
-            matricesConstantBuffer.OnUpdate += o => o.Update(ref _matricesBuffer);
+            var matricesConstantBuffer = new VSConstantBuffer<MatricesBuffer>(
+                _renderingEngine,
+                ref _matricesBuffer);
 
-            BuildBindableUpdatableLists(
+            return new IBindable[] {
                 matricesConstantBuffer,
                 colorsConstantBuffer,
                 vertexShader,
@@ -115,7 +118,21 @@ namespace Demo.Engine.Platform.DirectX.Models
                 inputLayout,
                 new Topology(
                     _renderingEngine,
-                    PrimitiveTopology.TriangleList));
+                    PrimitiveTopology.TriangleList) };
+        }
+
+        protected override void UpdateUpdatables()
+        {
+            //foreach (var updatable in _updatables)
+            //{
+            //    if (updatable is VSConstantBuffer<MatricesBuffer> matricesCB)
+            //    {
+            //        matricesCB.Update(ref _matricesBuffer);
+            //    }
+            //}
+
+            var a = _updatables.GetUpdatable<VSConstantBuffer<MatricesBuffer>>();
+            a.Update(ref _matricesBuffer);
         }
 
         public void Update(Vector3 position, float rotationAngleInRadians)
@@ -131,10 +148,6 @@ namespace Demo.Engine.Platform.DirectX.Models
 
             var viewProjectionMatrix = _renderingEngine.ViewProjectionMatrix;
             _matricesBuffer = new MatricesBuffer(worldMatrix, viewProjectionMatrix);
-            foreach (var updatable in _updatables)
-            {
-                updatable.Update();
-            }
         }
     }
 }

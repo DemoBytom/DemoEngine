@@ -2,6 +2,10 @@ namespace Demo.Engine.Platform.DirectX.Interfaces
 {
     internal interface IUpdatable : IBindable
     {
-        public void Update();
+    }
+
+    internal interface IUpdatable<T> : IUpdatable
+    {
+        public void Update(ref T data);
     }
 }
