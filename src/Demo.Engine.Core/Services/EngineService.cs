@@ -186,7 +186,7 @@ namespace Demo.Engine.Core.Services
                 Task.Delay(Timeout.Infinite, cancellationToken));
         }
 
-        #region IDisposable Support
+        #region IDisposable
 
         protected virtual void Dispose(bool disposing)
         {
@@ -204,6 +204,6 @@ namespace Demo.Engine.Core.Services
 
         public void Dispose() => Dispose(true);
 
-        #endregion IDisposable Support
+        #endregion IDisposable
     }
 }

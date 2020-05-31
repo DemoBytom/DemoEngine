@@ -35,6 +35,8 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Shaders
 
         public abstract void Bind();
 
+        #region IDisposable
+
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposedValue)
@@ -47,5 +49,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Shaders
         }
 
         public void Dispose() => Dispose(disposing: true);
+
+        #endregion IDisposable
     }
 }

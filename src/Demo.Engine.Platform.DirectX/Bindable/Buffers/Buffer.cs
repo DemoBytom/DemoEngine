@@ -38,6 +38,8 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
         /// </summary>
         public abstract void Bind();
 
+        #region IDisposable
+
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposedValue)
@@ -56,5 +58,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+        #endregion IDisposable
     }
 }

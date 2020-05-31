@@ -32,6 +32,8 @@ namespace Demo.Engine.Platform.DirectX
         private readonly IDXGISwapChain _swapChain;
         private readonly IOptionsMonitor<RenderSettings> _formSettings;
 
+        private bool _disposedValue = false;
+
         public ID3D11Device Device => _device;
         public ID3D11DeviceContext DeviceContext => _deviceContext;
 
@@ -184,22 +186,6 @@ namespace Demo.Engine.Platform.DirectX
 
         #region IDisposable Support
 
-        /// <summary>
-        /// To detect redundant calls
-        /// </summary>
-        private bool _disposedValue = false;
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting
-        /// unmanaged resources.
-        /// </summary>
-        /// <remarks>
-        /// Uncomment the following line if the finalizer is overridden above. GC.SuppressFinalize(this);
-        /// <para/>
-        /// Override a finalizer only if Dispose(bool disposing) above has code to free unmanaged
-        /// resources. ~RenderingEngine() { // Do not change this code. Put cleanup code in Dispose(bool
-        /// disposing) above. Dispose(false);
-        /// </remarks>
         void IDisposable.Dispose() => Dispose(true);
 
         protected virtual void Dispose(bool disposing)

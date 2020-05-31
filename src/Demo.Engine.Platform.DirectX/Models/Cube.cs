@@ -1,32 +1,21 @@
-using System;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Platform.DirectX.Bindable;
 using Demo.Engine.Platform.DirectX.Bindable.Buffers;
 using Demo.Engine.Platform.DirectX.Bindable.Shaders;
 using Demo.Engine.Platform.DirectX.Interfaces;
-using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX.Models
 {
-    public class Cube : IDisposable, ICube
+    public class Cube : DrawableBase, ICube
     {
-        private readonly IRenderingEngine _renderingEngine;
-        private readonly ID3D11Device _device;
-        private readonly ID3D11DeviceContext _deviceContext;
+        private MatricesBuffer _matricesBuffer;
 
-        private readonly ReadOnlyCollection<IBindable> _bindables;
-        private readonly ReadOnlyCollection<IUpdatable> _updatables;
-        private bool _disposedValue = false;
-
-        private readonly Vertex[] _triangleVertices = new Vertex[]
+        private readonly Vertex[] _cubeVertices = new Vertex[]
         {
             //Cube
             new Vertex( -1.0f, -1.0f, -1.0f, 255, 000, 000, 255  ),
@@ -52,12 +41,9 @@ namespace Demo.Engine.Platform.DirectX.Models
 
         public Cube(
             ID3D11RenderingEngine renderingEngine,
-            IShaderCompiler shaderCompiler)
+            IShaderCompiler shaderCompiler) :
+            base(renderingEngine)
         {
-            _renderingEngine = renderingEngine;
-            _device = renderingEngine.Device;
-            _deviceContext = renderingEngine.DeviceContext;
-
             var vertexShader = new VertexShader(
                 "Shaders/Triangle/TriangleVS.hlsl",
                 shaderCompiler,
@@ -70,7 +56,7 @@ namespace Demo.Engine.Platform.DirectX.Models
             //VertexBuffer
             var vertexBuffer = new VertexBuffer<Vertex>(
                 renderingEngine,
-                _triangleVertices,
+                _cubeVertices,
                 Vertex.SizeInBytes);
 
             //IndexBuffer
@@ -118,24 +104,15 @@ namespace Demo.Engine.Platform.DirectX.Models
 
             matricesConstantBuffer.OnUpdate += o => o.Update(ref _matricesBuffer);
 
-            _bindables = new ReadOnlyCollectionBuilder<IBindable>
-            {
+            BuildBindableUpdatableLists(
                 matricesConstantBuffer,
                 colorsConstantBuffer,
                 vertexShader,
                 pixelShader,
                 vertexBuffer,
                 indexBuffer,
-                inputLayout,
-            }.ToReadOnlyCollection();
-
-            _updatables = new ReadOnlyCollectionBuilder<IUpdatable>
-            {
-                matricesConstantBuffer
-            }.ToReadOnlyCollection();
+                inputLayout);
         }
-
-        private MatricesBuffer _matricesBuffer;
 
         public void Update(Vector3 position, float rotationAngleInRadians)
         {
@@ -154,48 +131,6 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 updatable.Update();
             }
-        }
-
-        public void Draw()
-        {
-            foreach (var bindable in _bindables)
-            {
-                bindable.Bind();
-            }
-
-            _deviceContext.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-
-            //viewport
-            _deviceContext.RSSetViewport(new Viewport(_renderingEngine.Control.DrawingArea)
-            {
-                MinDepth = 0,
-                MaxDepth = 1
-            });
-
-            _deviceContext.DrawIndexed(_triangleIndices.Length, 0, 0);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    foreach (var disposable in _bindables.OfType<IDisposable>())
-                    {
-                        disposable.Dispose();
-                    }
-                }
-                _disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
         }
     }
 }

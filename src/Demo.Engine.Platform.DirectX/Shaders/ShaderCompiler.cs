@@ -10,10 +10,8 @@ namespace Demo.Engine.Platform.DirectX.Shaders
     {
         private readonly ILogger<ShaderCompiler> _logger;
 
-        public ShaderCompiler(ILogger<ShaderCompiler> logger)
-        {
+        public ShaderCompiler(ILogger<ShaderCompiler> logger) =>
             _logger = logger;
-        }
 
         public ReadOnlyMemory<byte> CompileShader(string path, ShaderStage shaderStage, string entryPoint = "main")
         {

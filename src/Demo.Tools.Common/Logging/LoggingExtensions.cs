@@ -24,12 +24,14 @@ namespace Demo.Tools.Common.Logging
         private readonly ILogger<T> _logger;
         private readonly string _className;
 
-        public LoggingContext(in ILogger<T> logger)
+        public LoggingContext(ILogger<T> logger)
         {
             _logger = logger;
             _className = typeof(T).Name;
             _logger.LogDebug("{class} initialization {state}", _className, "started");
         }
+
+        #region IDisposable
 
         protected virtual void Dispose(bool disposing)
         {
@@ -45,5 +47,7 @@ namespace Demo.Tools.Common.Logging
         }
 
         public void Dispose() => Dispose(true);
+
+        #endregion IDisposable
     }
 }

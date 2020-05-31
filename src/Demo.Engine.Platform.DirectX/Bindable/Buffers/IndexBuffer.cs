@@ -4,10 +4,11 @@ using Vortice.DXGI;
 
 namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
 {
-    public class IndexBuffer<T> : Buffer<T>
+    public class IndexBuffer<T> : Buffer<T>, IIndexBuffer
         where T : unmanaged
     {
         private readonly Format _format;
+        public int IndexCount { get; }
 
         public IndexBuffer(
             ID3D11RenderingEngine renderingEngine,
@@ -25,7 +26,11 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
                     CpuAccessFlags = CpuAccessFlags.None,
                     StructureByteStride = sizeInBytes,
                     SizeInBytes = data.Length * sizeInBytes,
-                }) => _format = format;
+                })
+        {
+            _format = format;
+            IndexCount = data.Length;
+        }
 
         public override void Bind() => _renderingEngine.DeviceContext
             .IASetIndexBuffer(_buffer, _format, 0);

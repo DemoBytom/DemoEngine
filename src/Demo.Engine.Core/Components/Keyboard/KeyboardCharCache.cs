@@ -14,6 +14,7 @@ namespace Demo.Engine.Core.Components.Keyboard
     {
         private readonly CircularQueue<char> _buffer = new CircularQueue<char>(16);
         private readonly IKeyboardCache _keboardCache;
+        private bool _disposedValue = false;
 
         /// <summary>
         /// <see cref="KeyboardCharCache"/> constructor
@@ -46,9 +47,7 @@ namespace Demo.Engine.Core.Components.Keyboard
             { }
         }
 
-        #region IDisposable Support
-
-        private bool _disposedValue = false; // To detect redundant calls
+        #region IDisposable
 
         protected virtual void Dispose(bool disposing)
         {
@@ -65,6 +64,6 @@ namespace Demo.Engine.Core.Components.Keyboard
 
         public void Dispose() => Dispose(true);
 
-        #endregion IDisposable Support
+        #endregion IDisposable
     }
 }

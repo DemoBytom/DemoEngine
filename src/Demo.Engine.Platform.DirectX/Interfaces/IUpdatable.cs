@@ -1,6 +1,6 @@
 namespace Demo.Engine.Platform.DirectX.Interfaces
 {
-    public interface IUpdatable
+    internal interface IUpdatable : IBindable
     {
         public void Update();
     }

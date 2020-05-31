@@ -23,6 +23,8 @@ namespace Demo.Engine.Platform.DirectX.Bindable
 
         public void Bind() => _renderingEngine.DeviceContext.IASetInputLayout(_inputLayout);
 
+        #region IDisposable
+
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposedValue)
@@ -39,5 +41,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+        #endregion IDisposable
     }
 }
