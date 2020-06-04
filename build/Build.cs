@@ -123,6 +123,7 @@ namespace BuildScript
             }
 
             Git("fetch --all --tags --quiet");
+            Environment.SetEnvironmentVariable("IGNORE_NORMALISATION_GIT_HEAD_MOVE", "1");
             _gitVersion = GitVersionTasks
                 .GitVersion(s => s
                     .SetNoFetch(false)
