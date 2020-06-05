@@ -52,9 +52,9 @@ namespace Demo.Engine.Platform.DirectX.Models
         private IBindable[] PrepareBindables(IShaderCompiler shaderCompiler)
         {
             var vertexShader = new VertexShader(
-                    "Shaders/Triangle/TriangleVS.hlsl",
-                    shaderCompiler,
-                    _renderingEngine);
+                "Shaders/Triangle/TriangleVS.hlsl",
+                shaderCompiler,
+                _renderingEngine);
             var pixelShader = new PixelShader(
                 "Shaders/Triangle/TrianglePS.hlsl",
                 shaderCompiler,
@@ -123,16 +123,8 @@ namespace Demo.Engine.Platform.DirectX.Models
 
         protected override void UpdateUpdatables()
         {
-            //foreach (var updatable in _updatables)
-            //{
-            //    if (updatable is VSConstantBuffer<MatricesBuffer> matricesCB)
-            //    {
-            //        matricesCB.Update(ref _matricesBuffer);
-            //    }
-            //}
-
-            var a = _updatables.GetUpdatable<VSConstantBuffer<MatricesBuffer>>();
-            a.Update(ref _matricesBuffer);
+            var matricesBuffer = GetUpdatable<VSConstantBuffer<MatricesBuffer>>();
+            matricesBuffer.Update(ref _matricesBuffer);
         }
 
         public void Update(Vector3 position, float rotationAngleInRadians)

@@ -17,9 +17,9 @@ namespace Demo.Engine.Platform.DirectX.Models
 
 #pragma warning disable RCS1158 // Static member in generic type should use a type parameter.
 
-        internal static ReadOnlyCollection<IBindable>? _bindables { get; private set; }
+        private static ReadOnlyCollection<IBindable>? _bindables;
 
-        internal static UpdatableCollection? _updatables { get; private set; }
+        private static ReadOnlyDictionary<Type, IUpdatable>? _updatables;
 
 #pragma warning restore RCS1158 // Static member in generic type should use a type parameter.
 
@@ -44,9 +44,12 @@ namespace Demo.Engine.Platform.DirectX.Models
         {
             UpdateUpdatables();
 
-            foreach (var bindable in _bindables)
+            if (_bindables is object)
             {
-                bindable.Bind();
+                foreach (var bindable in _bindables)
+                {
+                    bindable.Bind();
+                }
             }
 
             //viewport
@@ -59,24 +62,32 @@ namespace Demo.Engine.Platform.DirectX.Models
             _renderingEngine.DeviceContext.DrawIndexed(IndexCount, 0, 0);
         }
 
-        private (ReadOnlyCollection<IBindable> bindables, UpdatableCollection updatables) BuildBindableUpdatableLists(params IBindable[] bindables)
+        internal TUpdatable GetUpdatable<TUpdatable>()
+            where TUpdatable : IUpdatable =>
+                _updatables is object
+                && _updatables.TryGetValue(typeof(TUpdatable), out var u)
+                && u is TUpdatable updatable
+            ? updatable
+            : throw new ArgumentException("Type not found!");
+
+        private (ReadOnlyCollection<IBindable> bindables, ReadOnlyDictionary<Type, IUpdatable> updatables) BuildBindableUpdatableLists(params IBindable[] bindables)
         {
             if (bindables?.Any() != true)
             {
                 return (
                     new ReadOnlyCollection<IBindable>(Array.Empty<IBindable>()),
-                    new UpdatableCollection());
+                    new ReadOnlyDictionary<Type, IUpdatable>(new Dictionary<Type, IUpdatable>()));
             }
 
             var bindableList = new ReadOnlyCollectionBuilder<IBindable>();
-            var updatableList = new UpdatableCollection();
+            var updatableList = new Dictionary<Type, IUpdatable>();
 
             foreach (var bindable in bindables)
             {
                 bindableList.Add(bindable);
                 if (bindable is IUpdatable u)
                 {
-                    updatableList.Add(u);
+                    updatableList.Add(u.GetType(), u);
                 }
                 if (bindable is IIndexBuffer ib)
                 {
@@ -86,7 +97,7 @@ namespace Demo.Engine.Platform.DirectX.Models
                 }
             }
 
-            return (bindableList.ToReadOnlyCollection(), updatableList);
+            return (bindableList.ToReadOnlyCollection(), new ReadOnlyDictionary<Type, IUpdatable>(updatableList));
         }
 
         #region IDisposable
@@ -114,61 +125,5 @@ namespace Demo.Engine.Platform.DirectX.Models
         }
 
         #endregion IDisposable
-    }
-
-    internal class UpdatableCollection
-    {
-        private Dictionary<Type, IUpdatable> _dict = new Dictionary<Type, IUpdatable>();
-
-        public int Count => _dict.Count;
-
-        public bool IsReadOnly => false;
-
-        public void Add<T>(IUpdatable<T> item)
-        {
-            if (item is null)
-            {
-                throw new NullReferenceException("Collection can't contain null values!");
-            }
-
-            _dict.Add(item.GetType(), item);
-        }
-
-        public void Add(IUpdatable item)
-        {
-            if (item is null)
-            {
-                throw new NullReferenceException("Collection can't contain null values!");
-            }
-
-            _dict.Add(item.GetType(), item);
-        }
-
-        public void Clear() => _dict.Clear();
-
-        public bool Contains<T>(IUpdatable<T> item)
-        {
-            if (item is null)
-            {
-                throw new NullReferenceException("Collection can't contain null values!");
-            }
-            return _dict.ContainsKey(item.GetType());
-        }
-
-        public bool Remove<T>(IUpdatable<T> item)
-        {
-            if (item is null)
-            {
-                throw new NullReferenceException("Collection can't contain null values!");
-            }
-
-            return _dict.Remove(item.GetType());
-        }
-
-        public T GetUpdatable<T>()
-            where T : class
-        {
-            return _dict[typeof(T)] as T ?? throw new ArgumentException("Type not found!");
-        }
     }
 }
