@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Vortice.Mathematics;
@@ -14,12 +15,16 @@ namespace Demo.Engine.Platform.DirectX.Models
     {
         private bool _disposedValue;
         protected readonly ID3D11RenderingEngine _renderingEngine;
+        private readonly Guid _drawableGuid;
+        private static readonly ReaderWriterLockSlim _lockSlim = new ReaderWriterLockSlim();
 
 #pragma warning disable RCS1158 // Static member in generic type should use a type parameter.
 
         private static ReadOnlyCollection<IBindable>? _bindables;
 
         private static ReadOnlyDictionary<Type, IUpdatable>? _updatables;
+
+        private static readonly HashSet<Guid> _references = new HashSet<Guid>();
 
 #pragma warning restore RCS1158 // Static member in generic type should use a type parameter.
 
@@ -30,11 +35,22 @@ namespace Demo.Engine.Platform.DirectX.Models
             Func<T, IBindable[]> func)
         {
             _renderingEngine = renderingEngine;
-            if (_bindables?.Any() != true)
+            //Add reference
+            _drawableGuid = Guid.NewGuid();
+            _lockSlim.EnterWriteLock();
+            try
             {
-                var (bindables, updatables) = BuildBindableUpdatableLists(func((T)this));
-                _bindables = bindables;
-                _updatables = updatables;
+                _references.Add(_drawableGuid);
+                if (_bindables?.Any() != true)
+                {
+                    var (bindables, updatables) = BuildBindableUpdatableLists(func((T)this));
+                    _bindables = bindables;
+                    _updatables = updatables;
+                }
+            }
+            finally
+            {
+                _lockSlim.ExitWriteLock();
             }
         }
 
@@ -108,9 +124,38 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 if (disposing)
                 {
-                    foreach (var disposable in _bindables.OfType<IDisposable>())
+                    _lockSlim.EnterUpgradeableReadLock();
+                    try
                     {
-                        disposable.Dispose();
+                        if (!_references.Remove(_drawableGuid))
+                        {
+                            throw new InvalidOperationException("Missing reference!");
+                        }
+                        if (_references.Count == 0)
+                        {
+                            _lockSlim.EnterWriteLock();
+                            try
+                            {
+                                if (_references.Count == 0)
+                                {
+                                    foreach (var disposable in _bindables.OfType<IDisposable>())
+                                    {
+                                        disposable.Dispose();
+                                    }
+                                    _bindables = null;
+                                    _updatables = null;
+                                    IndexCount = int.MinValue;
+                                }
+                            }
+                            finally
+                            {
+                                _lockSlim.ExitWriteLock();
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        _lockSlim.ExitUpgradeableReadLock();
                     }
                 }
                 _disposedValue = true;

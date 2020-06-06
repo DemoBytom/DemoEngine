@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
@@ -76,13 +77,15 @@ namespace Demo.Engine.Core.Services
             return tcs.Task;
         }
 
+        private IServiceProvider? _sp;
+
         private async Task DoWork()
         {
             _logger.LogInformation("Engine working! v{version}", _version);
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-
+                _sp = scope.ServiceProvider;
                 _drawables = new[]
                 {
                     scope.ServiceProvider.GetRequiredService<ICube>(),
@@ -94,6 +97,7 @@ namespace Demo.Engine.Core.Services
                     Update,
                     Render,
                     _loopCancellationTokenSource.Token);
+                _sp = null;
             }
             finally
             {
@@ -128,6 +132,33 @@ namespace Demo.Engine.Core.Services
             if (keyboardHandle?.GetKeyPressed(VirtualKeys.Escape) == true)
             {
                 _loopCancellationTokenSource.Cancel();
+            }
+
+            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Back) == true)
+            {
+                var d = _drawables.ElementAtOrDefault(0) as IDisposable;
+                if (d is object)
+                {
+                    d?.Dispose();
+                    if (_drawables.Length > 0)
+                    {
+                        _drawables = _drawables[1..];
+                    }
+                    else
+                    {
+                        _drawables = Array.Empty<ICube>();
+                    }
+                }
+            }
+            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Enter) == true)
+            {
+                if (_drawables?.Length < 2)
+                {
+                    _drawables = new List<ICube>(_drawables)
+                    {
+                        _sp.GetRequiredService<ICube>()
+                    }.ToArray();
+                }
             }
 
             //Share the rainbow
