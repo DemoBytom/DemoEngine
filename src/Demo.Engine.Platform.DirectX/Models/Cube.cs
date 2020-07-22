@@ -124,7 +124,7 @@ namespace Demo.Engine.Platform.DirectX.Models
         protected override void UpdateUpdatables()
         {
             var matricesBuffer = GetUpdatable<VSConstantBuffer<MatricesBuffer>>();
-            matricesBuffer.Update(ref _matricesBuffer);
+            matricesBuffer.Update(in _matricesBuffer);
         }
 
         public void Update(Vector3 position, float rotationAngleInRadians)

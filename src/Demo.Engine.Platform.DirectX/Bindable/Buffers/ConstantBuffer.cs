@@ -29,7 +29,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
         /// Method used to update the buffer with new data
         /// </summary>
         /// <param name="data"></param>
-        public void Update(ref T data)
+        public void Update(in T data)
         {
             unsafe
             {
@@ -38,10 +38,14 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
                     0,
                     MapMode.WriteDiscard,
                     MapFlags.None);
-                Unsafe.CopyBlockUnaligned(
-                    (void*)ms.DataPointer,
-                    Unsafe.AsPointer(ref data),
-                    (uint)MatricesBuffer.SizeInBytes);
+
+                fixed (void* dataPtr = &data)
+                {
+                    Unsafe.CopyBlock(
+                        (void*)ms.DataPointer,
+                        dataPtr,
+                        (uint)MatricesBuffer.SizeInBytes);
+                }
                 _renderingEngine.DeviceContext.Unmap(_buffer, 0);
             }
         }

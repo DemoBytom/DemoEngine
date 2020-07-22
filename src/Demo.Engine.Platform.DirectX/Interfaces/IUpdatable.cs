@@ -6,6 +6,6 @@ namespace Demo.Engine.Platform.DirectX.Interfaces
 
     internal interface IUpdatable<T> : IUpdatable
     {
-        public void Update(ref T data);
+        public void Update(in T data);
     }
 }
