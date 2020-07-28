@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Platform.DirectX.Interfaces;
+using Demo.Tools.Common.Extensions.LockSlim;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX.Models
@@ -124,19 +125,16 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 if (disposing)
                 {
-                    _lockSlim.EnterUpgradeableReadLock();
-                    try
-                    {
-                        if (!_references.Remove(_drawableGuid))
+                    _lockSlim.EnterUpgradableReadLockBlock(
+                        lockSlim =>
                         {
-                            throw new InvalidOperationException("Missing reference!");
-                        }
-                        if (_references.Count == 0)
-                        {
-                            _lockSlim.EnterWriteLock();
-                            try
+                            if (!_references.Remove(_drawableGuid))
                             {
-                                if (_references.Count == 0)
+                                throw new InvalidOperationException("Missing reference!");
+                            }
+                            lockSlim.IfActionEnterWriteLockBlock(
+                                () => _references.Count == 0,
+                                () =>
                                 {
                                     foreach (var disposable in _bindables.OfType<IDisposable>())
                                     {
@@ -145,18 +143,8 @@ namespace Demo.Engine.Platform.DirectX.Models
                                     _bindables = null;
                                     _updatables = null;
                                     IndexCount = int.MinValue;
-                                }
-                            }
-                            finally
-                            {
-                                _lockSlim.ExitWriteLock();
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        _lockSlim.ExitUpgradeableReadLock();
-                    }
+                                });
+                        });
                 }
                 _disposedValue = true;
             }
