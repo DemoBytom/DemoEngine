@@ -21,11 +21,13 @@ namespace BuildScript
                      _changelogFile,
                     _gitVersion.MajorMinorPatch,
                     _gitRepository);
+#pragma warning disable CS0162 // Unreachable code detected
                 if (false)
                 {
                     Git($"add {_changelogFile}");
                     Git($"commit -m \"Finalize {Path.GetFileName(_changelogFile)} for {_gitVersion.MajorMinorPatch}\"");
                 }
+#pragma warning restore CS0162 // Unreachable code detected
             });
 
         private Target Release => _ => _

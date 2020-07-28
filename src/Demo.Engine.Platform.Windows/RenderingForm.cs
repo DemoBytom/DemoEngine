@@ -15,8 +15,9 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 {
     public partial class RenderingForm : Form, IRenderingForm
     {
-        private readonly FormWindowState _previousWindowState;
+        //private readonly FormWindowState _previousWindowState;
         private readonly FormSettings _formSettings;
+
         private Point _currentNonFullscreenPosition;
         private readonly bool _allowUserResizing;
         private readonly ILogger<RenderingForm> _logger;
@@ -33,7 +34,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
             ResizeRedraw = true;
 
-            _previousWindowState = FormWindowState.Normal;
+            //_previousWindowState = FormWindowState.Normal;
             _currentNonFullscreenPosition = DesktopLocation;
 
             var fullscreen = _formSettings.Fullscreen;

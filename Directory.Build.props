@@ -4,5 +4,7 @@
     <Nullable>enable</Nullable>
     <NoWarn>RCS1090</NoWarn>
     <Authors>Michał Dembski</Authors>
+    <Features>strict</Features>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>
