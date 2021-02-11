@@ -6,5 +6,6 @@
     <Authors>Michał Dembski</Authors>
     <Features>strict</Features>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TargetLatestRuntimePatch>true</TargetLatestRuntimePatch>
   </PropertyGroup>
 </Project>

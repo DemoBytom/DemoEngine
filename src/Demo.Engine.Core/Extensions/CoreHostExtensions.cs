@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +24,10 @@ namespace Microsoft.Extensions.Hosting
             .ConfigureHostConfiguration((configHost) =>
             {
                 configHost.SetBasePath(Directory.GetCurrentDirectory());
-                if (args != null)
+                configHost.AddEnvironmentVariables("DEMOENGINE_");
+
+
+                if (args is object)
                 {
                     configHost.AddCommandLine(args);
                 }
@@ -35,16 +37,17 @@ namespace Microsoft.Extensions.Hosting
                 var env = hostingContext.HostingEnvironment;
                 configApp.AddJsonFile(appsettingsFile, optional: false, reloadOnChange: true);
 
-                if (Debugger.IsAttached)
+
+                if (env.IsDevelopment())
                 {
                     var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
-                    if (appAssembly != null)
+                    if (appAssembly is object)
                     {
                         configApp.AddUserSecrets(appAssembly, optional: true);
                     }
                 }
 
-                if (args != null)
+                if (args is object)
                 {
                     configApp.AddCommandLine(args);
                 }
@@ -54,10 +57,11 @@ namespace Microsoft.Extensions.Hosting
                 //supresses the default "Application started. Press Ctrl+C to shut down." etc. log messages, that ConsoleLifetime produces
                 services.Configure<ConsoleLifetimeOptions>(options => options.SuppressStatusMessages = true);
             })
-            .UseDefaultServiceProvider((_, options) =>
+            .UseDefaultServiceProvider((context, options) =>
             {
-                options.ValidateOnBuild = true;
-                options.ValidateScopes = true;
+                var isDev = context.HostingEnvironment.IsDevelopment();
+                options.ValidateOnBuild = isDev;
+                options.ValidateScopes = isDev;
             });
     }
 }

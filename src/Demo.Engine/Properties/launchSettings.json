@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Demo.Engine": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DEMOENGINE_ENVIRONMENT": "development"
+      },
+      "nativeDebugging": true
+    }
+  }
+}

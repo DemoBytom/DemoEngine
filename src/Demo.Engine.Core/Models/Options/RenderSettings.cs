@@ -1,6 +1,6 @@
 namespace Demo.Engine.Core.Models.Options
 {
-    public class FormSettings
+    public class RenderSettings
     {
         /// <summary>
         /// Screen width
@@ -16,6 +16,11 @@ namespace Demo.Engine.Core.Models.Options
         /// Should the application run in Fullscreen mode
         /// </summary>
         public bool Fullscreen { get; set; }
+
+        /// <summary>
+        /// Use Vertical Sync
+        /// </summary>
+        public bool VSync { get; set; }
 
         /// <summary>
         /// Screen that should be used to display the application in fullscreen mode
