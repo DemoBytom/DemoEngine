@@ -18,16 +18,11 @@ namespace Demo.Engine.Platform.DirectX.Models
         protected readonly ID3D11RenderingEngine _renderingEngine;
         private readonly Guid _drawableGuid;
         private static readonly ReaderWriterLockSlim _lockSlim = new ReaderWriterLockSlim();
-
-#pragma warning disable RCS1158 // Static member in generic type should use a type parameter.
-
         private static ReadOnlyCollection<IBindable>? _bindables;
 
         private static ReadOnlyDictionary<Type, IUpdatable>? _updatables;
 
         private static readonly HashSet<Guid> _references = new HashSet<Guid>();
-
-#pragma warning restore RCS1158 // Static member in generic type should use a type parameter.
 
         protected static int IndexCount { get; private set; } = int.MinValue;
 

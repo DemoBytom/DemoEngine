@@ -3,91 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Demo.Tools.Common.Extensions.LockSlim;
 using FluentAssertions;
 using Xunit;
-
-//using Demo.Tools.Common.Extensions.LockSlim;
 
 namespace Demo.Tools.Common.UTs.Extensions.LockSlim
 {
     public class ReaderWriterLockSlimExtensionsTests
     {
-        [Fact]
-        public async Task Test_Lock()
-        {
-            using var lockSlim = new ReaderWriterLockSlim();
-            for (var i = 0; i < 10; ++i)
-            {
-                var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-                var sb = new StringBuilder();
-
-                var taskCompletionSource1 = new TaskCompletionSource<bool>();
-                var taskCompletionSource2 = new TaskCompletionSource<bool>();
-
-                var t1 = new Thread(() =>
-                {
-                    lockSlim.EnterWriteLock();
-                    try
-                    {
-                        try
-                        {
-                            sb.AppendLine("T1 start");
-                            Thread.Sleep(TimeSpan.FromSeconds(10));
-                            sb.AppendLine("T1 end");
-                            taskCompletionSource1.SetResult(true);
-                        }
-                        finally
-                        {
-                            lockSlim.ExitWriteLock();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        taskCompletionSource1.SetException(ex);
-                    }
-                });
-
-                var t2 = new Thread(() =>
-                {
-                    lockSlim.EnterWriteLock();
-                    try
-                    {
-                        try
-                        {
-                            sb.AppendLine("T2 start");
-                            Thread.Sleep(TimeSpan.FromSeconds(5));
-                            sb.AppendLine("T2 end");
-                            taskCompletionSource2.SetResult(true);
-                        }
-                        finally
-                        {
-                            lockSlim.ExitWriteLock();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        taskCompletionSource2.SetException(ex);
-                    }
-                });
-
-                t1.Start();
-                t2.Start();
-
-                await Task.WhenAll(
-                    taskCompletionSource1.Task,
-                    taskCompletionSource2.Task);
-
-                sb.ToString().Should().Contain(
-                    @"T1 start
-T1 end",
-                    $"Failed at attempt no {i}");
-                sb.ToString().Should().Contain(
-                @"T2 start
-T2 end",
-                $"Failed at attempt no {i}");
-            }
-        }
-
         [Fact]
         public async Task Test_Lock_2()
         {
@@ -106,31 +29,33 @@ T2 end",
 
             using var lockSlim = new ReaderWriterLockSlim();
             var sb = new StringBuilder();
-            var threadJobs = new List<ThreadJob>();
-            threadJobs.Add(new ThreadJob(T1, () => lockSlim.TryEnterWriteLock(TimeSpan.FromSeconds(20))));
-            threadJobs.Add(new ThreadJob(T1, () =>
+            var threadJobs = new List<ThreadJob>
             {
-                sb.Append("T1 start");
-                Thread.Sleep(5);
-            }));
-            threadJobs.Add(new ThreadJob(T2, () => lockSlim.TryEnterWriteLock(TimeSpan.FromSeconds(20))));
-            threadJobs.Add(new ThreadJob(T1, () =>
-            {
-                sb.Append("T1 end");
-                Thread.Sleep(5);
-            }));
-            threadJobs.Add(new ThreadJob(T1, () => lockSlim.ExitWriteLock()));
-            threadJobs.Add(new ThreadJob(T2, () =>
-            {
-                sb.Append("T2 start");
-                Thread.Sleep(5);
-            }));
-            threadJobs.Add(new ThreadJob(T2, () =>
-            {
-                sb.Append("T2 end");
-                Thread.Sleep(5);
-            }));
-            threadJobs.Add(new ThreadJob(T2, () => lockSlim.ExitWriteLock()));
+                new ThreadJob(T1, () => lockSlim.TryEnterWriteLock(TimeSpan.FromSeconds(20))),
+                new ThreadJob(T1, () =>
+                {
+                    sb.Append("T1 start");
+                    Thread.Sleep(5);
+                }),
+                new ThreadJob(T2, () => lockSlim.TryEnterWriteLock(TimeSpan.FromSeconds(20))),
+                new ThreadJob(T1, () =>
+                {
+                    sb.Append("T1 end");
+                    Thread.Sleep(5);
+                }),
+                new ThreadJob(T1, () => lockSlim.ExitWriteLock()),
+                new ThreadJob(T2, () =>
+                {
+                    sb.Append("T2 start");
+                    Thread.Sleep(5);
+                }),
+                new ThreadJob(T2, () =>
+                {
+                    sb.Append("T2 end");
+                    Thread.Sleep(5);
+                }),
+                new ThreadJob(T2, () => lockSlim.ExitWriteLock())
+            };
 
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
 
@@ -144,99 +69,76 @@ T2 end",
             sb.ToString().Should().Contain("T1 startT1 end");
             sb.ToString().Should().Contain("T2 startT2 end");
         }
-    }
 
-    public class ThreadWorker
-    {
-        private readonly Thread _thread;
-        private readonly TaskCompletionSource<bool> _completionSource;
-
-        public ThreadWorker(
-            string threadID,
-            List<ThreadJob> threadJobs,
-            CancellationToken cts)
+        [Fact]
+        public async Task Test_Write_Lock_Extensions()
         {
-            _completionSource = new TaskCompletionSource<bool>();
-            _thread = new Thread(() =>
+            using var lockSlim = new ReaderWriterLockSlim();
+
+            const string T1 = "THREAD_1";
+            const string T2 = "THREAD_2";
+            const string T3 = "T1_BREAKER_THREAD";
+
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+
+            var t1Started = false;
+            var t2Started = false;
+            var t1FinishedWriting = false;
+            var sb = new StringBuilder();
+
+            var threadJobs = new List<ThreadJob>
             {
-                try
+                new ThreadJob(T1, () => lockSlim.EnterWriteLockBlock(() =>
                 {
-                    var i = 0;
-                    while (i < threadJobs.Count)
+                    sb.Append("T1 start");
+                    while (!cts.IsCancellationRequested && !t1FinishedWriting)
                     {
-                        if (cts.IsCancellationRequested)
-                        {
-                            throw new TaskCanceledException(threadID);
-                        }
-
-                        var tj = threadJobs[i];
-
-                        if (tj.ThreadId == threadID)
-                        {
-                            tj.Perform();
-                            i++;
-                        }
-                        else if (tj.Attempted)
-                        {
-                            i++;
-                        }
+                        Thread.Sleep(5);
+                        t1Started = true;
                     }
-                    _completionSource.SetResult(true);
-                }
-                catch (Exception ex)
+                    sb.Append("T1 end");
+                })),
+                new ThreadJob(T2, () =>
                 {
-                    _completionSource.SetException(ex);
-                }
-            });
-        }
+                    while (!cts.IsCancellationRequested && !t1Started)
+                    {
+                        Thread.Sleep(5);
+                    }
+                    sb.Append("T2 attempt");
+                    t2Started = true;
+                    lockSlim.EnterWriteLockBlock(() =>
+                    {
+                        sb.Append("T2 start");
+                        Thread.Sleep(5);
+                        sb.Append("T2 end");
+                    });
+                }),
+                new ThreadJob(T3, () =>
+                {
+                    while (!t1Started || !t2Started)
+                    {
+                        t1FinishedWriting = false;
+                    }
 
-        public Task Start()
-        {
-            _thread.Start();
-            return _completionSource.Task;
-        }
-    }
+                    t1FinishedWriting = true;
+                })
+            };
 
-    public class ThreadJob
-    {
-        public ThreadJob(
-            string threadId,
-            Action act)
-        {
-            ThreadId = threadId;
-            Act = act;
-            Completed = false;
-        }
+            var tw1 = new ThreadWorker(T1, threadJobs, cts.Token);
+            var tw2 = new ThreadWorker(T2, threadJobs, cts.Token);
+            var tw3 = new ThreadWorker(T3, threadJobs, cts.Token);
 
-        public string ThreadId { get; }
-        public Action Act { get; }
-        public bool Completed { get; private set; }
-        public bool Attempted { get; private set; }
+            await Task.WhenAll(
+                tw1.Start(),
+                tw2.Start(),
+                tw3.Start());
 
-        public void Perform()
-        {
-            if (!Completed)
-            {
-                Attempt();
-                Act();
-                Completed = true;
-            }
-            else
-            {
-                throw new Exception($"{ThreadId} ALREADY COMPLETED!");
-            }
-        }
-
-        private void Attempt()
-        {
-            if (!Attempted)
-            {
-                Attempted = true;
-            }
-            else
-            {
-                throw new Exception($"{ThreadId} ALREADY ATTEMPTED!");
-            }
+            sb.ToString().Should().Be(
+                "T1 start" +
+                "T2 attempt" +
+                "T1 end" +
+                "T2 start" +
+                "T2 end");
         }
     }
 }
