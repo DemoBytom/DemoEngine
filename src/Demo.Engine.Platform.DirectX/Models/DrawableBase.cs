@@ -39,7 +39,7 @@ namespace Demo.Engine.Platform.DirectX.Models
                 _references.Add(_drawableGuid);
                 if (_bindables?.Any() != true)
                 {
-                    var (bindables, updatables) = BuildBindableUpdatableLists(func((T)this));
+                    var (bindables, updatables) = DrawableBase<T>.BuildBindableUpdatableLists(func((T)this));
                     _bindables = bindables;
                     _updatables = updatables;
                 }
@@ -65,16 +65,19 @@ namespace Demo.Engine.Platform.DirectX.Models
             }
 
             //viewport
-            _renderingEngine.DeviceContext.RSSetViewport(new Viewport(_renderingEngine.Control.DrawingArea)
-            {
-                MinDepth = 0,
-                MaxDepth = 1
-            });
+            _renderingEngine.DeviceContext.RSSetViewport(new Viewport(
+                _renderingEngine.Control.DrawingArea.X,
+                _renderingEngine.Control.DrawingArea.Y,
+                _renderingEngine.Control.DrawingArea.Width,
+                _renderingEngine.Control.DrawingArea.Height,
+                0, 1));
 
             _renderingEngine.DeviceContext.DrawIndexed(IndexCount, 0, 0);
         }
 
-        internal TUpdatable GetUpdatable<TUpdatable>()
+#pragma warning disable RCS1158 // Static member in generic type should use a type parameter.
+
+        internal static TUpdatable GetUpdatable<TUpdatable>()
             where TUpdatable : IUpdatable =>
                 _updatables is object
                 && _updatables.TryGetValue(typeof(TUpdatable), out var u)
@@ -82,7 +85,9 @@ namespace Demo.Engine.Platform.DirectX.Models
             ? updatable
             : throw new ArgumentException("Type not found!");
 
-        private (ReadOnlyCollection<IBindable> bindables, ReadOnlyDictionary<Type, IUpdatable> updatables) BuildBindableUpdatableLists(params IBindable[] bindables)
+#pragma warning restore RCS1158 // Static member in generic type should use a type parameter.
+
+        private static (ReadOnlyCollection<IBindable> bindables, ReadOnlyDictionary<Type, IUpdatable> updatables) BuildBindableUpdatableLists(params IBindable[] bindables)
         {
             if (bindables?.Any() != true)
             {
@@ -131,10 +136,14 @@ namespace Demo.Engine.Platform.DirectX.Models
                                 () => _references.Count == 0,
                                 () =>
                                 {
-                                    foreach (var disposable in _bindables.OfType<IDisposable>())
+                                    if (_bindables is not null)
                                     {
-                                        disposable.Dispose();
+                                        foreach (var disposable in _bindables.OfType<IDisposable>())
+                                        {
+                                            disposable.Dispose();
+                                        }
                                     }
+
                                     _bindables = null;
                                     _updatables = null;
                                     IndexCount = int.MinValue;

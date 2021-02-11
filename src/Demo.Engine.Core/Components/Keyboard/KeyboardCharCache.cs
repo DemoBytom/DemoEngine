@@ -26,10 +26,7 @@ namespace Demo.Engine.Core.Components.Keyboard
             _keboardCache.OnChar += KeyboardCache_OnCharEvent;
         }
 
-        private void KeyboardCache_OnCharEvent(object sender, EventArgs<char> e)
-        {
-            _buffer.Enqueue(e.Value);
-        }
+        private void KeyboardCache_OnCharEvent(object? sender, EventArgs<char> e) => _buffer.Enqueue(e.Value);
 
         public string ReadCache()
         {
@@ -62,7 +59,11 @@ namespace Demo.Engine.Core.Components.Keyboard
             }
         }
 
-        public void Dispose() => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         #endregion IDisposable
     }

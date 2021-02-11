@@ -27,7 +27,7 @@ namespace Demo.Engine.Core.Services
         private readonly CancellationTokenSource _loopCancellationTokenSource = new CancellationTokenSource();
 
         private readonly string _version =
-            Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0";
 
         private readonly IServiceScopeFactory _scopeFactory;
 
@@ -134,31 +134,21 @@ namespace Demo.Engine.Core.Services
                 _loopCancellationTokenSource.Cancel();
             }
 
-            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Back) == true)
+            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Back) == true
+                && _drawables.ElementAtOrDefault(0) is IDisposable d)
             {
-                var d = _drawables.ElementAtOrDefault(0) as IDisposable;
-                if (d is object)
-                {
-                    d?.Dispose();
-                    if (_drawables.Length > 0)
-                    {
-                        _drawables = _drawables[1..];
-                    }
-                    else
-                    {
-                        _drawables = Array.Empty<ICube>();
-                    }
-                }
+                d?.Dispose();
+                _drawables = _drawables.Length > 0
+                    ? _drawables[1..]
+                    : Array.Empty<ICube>();
             }
-            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Enter) == true)
+            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Enter) == true
+                && _drawables?.Length < 2 && _sp is not null)
             {
-                if (_drawables?.Length < 2)
+                _drawables = new List<ICube>(_drawables)
                 {
-                    _drawables = new List<ICube>(_drawables)
-                    {
-                        _sp.GetRequiredService<ICube>()
-                    }.ToArray();
-                }
+                    _sp.GetRequiredService<ICube>()
+                }.ToArray();
             }
 
             //Share the rainbow
@@ -172,9 +162,9 @@ namespace Demo.Engine.Core.Services
                 _sin = 0;
             }
 
-            _drawables.ElementAtOrDefault(0)
+            _drawables?.ElementAtOrDefault(0)
                 ?.Update(Vector3.Zero, _angleInRadians);
-            _drawables.ElementAtOrDefault(1)
+            _drawables?.ElementAtOrDefault(1)
                 ?.Update(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
 
             return Task.CompletedTask;
@@ -233,7 +223,11 @@ namespace Demo.Engine.Core.Services
             }
         }
 
-        public void Dispose() => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         #endregion IDisposable
     }
