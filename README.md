@@ -1,9 +1,9 @@
 # DemoEngine
 [![GitHub](https://img.shields.io/github/license/DemoBytom/DemoEngine?style=for-the-badge)](https://github.com/DemoBytom/DemoEngine/blob/master/LICENSE) [![Coveralls github](https://img.shields.io/coveralls/github/DemoBytom/DemoEngine?style=for-the-badge&logo=coveralls)](https://coveralls.io/github/DemoBytom/DemoEngine)
 
-**DemoEngine** is a simple game engine written in C#, .NET Core 3.1 and DirectX.
+**DemoEngine** is a simple game engine written in C#, .NET Core 5.0 and DirectX.
 
-Engine is currently developed for Windows 10 platform, with references to `Windows.Forms` and DirectX, but the code outside of those, should work wherever .NET Core 3.1 works. A provided layer of abstraction over platform specific codebase should make it possible to add cross platform later.
+Engine is currently developed for Windows 10 platform, with references to `Windows.Forms` and DirectX, but the code outside of those, should work wherever .NET Core 5.0 works. A provided layer of abstraction over platform specific codebase should make it possible to add cross platform later.
 
 Project is using [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows) as a DirectX wrapper, with parts of the main form handling based on [SharpDX](https://github.com/sharpdx/SharpDX/blob/master/Source/SharpDX.Desktop/RenderForm.cs)
 
@@ -18,7 +18,7 @@ Project is using [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows
 In order to compile, you need **Visual Studio 2019, or newer** with the following workloads and components:
  - [x] .NET Core cross-platform development
  - [x] .NET desktop development
- - [x] [.NET Core 3.1.100 SDK](https://github.com/dotnet/core/blob/master/release-notes/3.1/3.1.0/3.1.0.md)
+ - [x] [.NET Core 5.0.100 SDK](https://github.com/dotnet/core/blob/master/release-notes/5.0/5.0.0/5.0.0.md)
 
 **Command line** build can be done using [Nuke](https://nuke.build/):
 * Using **Global Tool**:
