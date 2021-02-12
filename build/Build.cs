@@ -17,7 +17,6 @@ using Nuke.Common.Tools.Coverlet;
 using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
-using Nuke.Common.Tools.InspectCode;
 using Nuke.Common.Tools.ReportGenerator;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
@@ -77,7 +76,7 @@ namespace BuildScript
         public static int Main() => Execute<Build>(x => x.Publish);
 
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-        public readonly Configuration Config = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+        public readonly string Config = IsLocalBuild ? "debug" : "release";
 
         [Parameter("GitHub token")]
         public readonly string GitHubToken = string.Empty;
@@ -100,11 +99,12 @@ namespace BuildScript
         [GitRepository] private readonly GitRepository _gitRepository = default!;
 
         //[GitVersion] private readonly GitVersion _gitVersion = default!;
+        //[GitVersion(Framework = "net5.0", NoFetch = true)]
         private GitVersion _gitVersion = default!;
 
-        private AbsolutePath SourceDirectory => RootDirectory / "src";
-        private AbsolutePath TestDirectory => RootDirectory / "test";
-        private AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+        private static AbsolutePath SourceDirectory => RootDirectory / "src";
+        private static AbsolutePath TestDirectory => RootDirectory / "test";
+        private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         private Project[] TestProjects => _solution.GetProjects("*.UTs").ToArray();
 
         private const string MASTER_BRANCH = "master";
@@ -129,8 +129,8 @@ namespace BuildScript
                     .SetNoFetch(false)
                     .SetNoCache(true)
                     .SetVerbosity(GitVersionVerbosity.debug)
-                    .SetFramework("netcoreapp3.1")
-                    .DisableLogOutput())
+                    .SetFramework("net5.0")
+                    .DisableProcessLogOutput())
                 .Result;
         }
 
@@ -199,7 +199,7 @@ namespace BuildScript
             .Executes(() =>
             {
                 ReportGenerator(_ => _
-                    .SetFramework("netcoreapp3.0")
+                    .SetFramework("net5.0")
                     .SetReports(ArtifactsDirectory / "*.xml")
                     .SetReportTypes(ReportTypes.HtmlInline)
                     .SetTargetDirectory(ArtifactsDirectory / "coverage"));
@@ -207,7 +207,7 @@ namespace BuildScript
                 if (ExecutingTargets.Contains(UploadCoveralls))
                 {
                     ReportGenerator(_ => _
-                        .SetFramework("netcoreapp3.0")
+                        .SetFramework("net5.0")
                         .SetReports(ArtifactsDirectory / "*.xml")
                         .SetReportTypes(ReportTypes.Xml)
                         .SetTargetDirectory(ArtifactsDirectory / "coveralls"));
@@ -272,7 +272,7 @@ namespace BuildScript
                     .SetCommitEmail(authorMail)
                     .SetCommitMessage(commitBody)
                     .SetInput(ArtifactsDirectory / "coveralls")
-                    .SetArgumentConfigurator(argumentConfigurator =>
+                    .SetProcessArgumentConfigurator(argumentConfigurator =>
                         argumentConfigurator
                             .Add("--jobId")
                             .Add(CoverallsJobID)
