@@ -8,7 +8,7 @@ using Demo.Engine.Platform.DirectX.Interfaces;
 using Demo.Tools.Common.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SharpGen.Runtime.Win32;
+using SharpGen.Runtime;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
@@ -54,7 +54,7 @@ namespace Demo.Engine.Platform.DirectX
             }
 
             D3D11.D3D11CreateDevice(
-                null,
+                IntPtr.Zero,
                 DriverType.Hardware,
                 DeviceCreationFlags.BgraSupport | DeviceCreationFlags.Debug,
                 new[]
