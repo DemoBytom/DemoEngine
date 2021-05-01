@@ -12,7 +12,7 @@ namespace Demo.Engine.Core.Components.Keyboard
     /// </summary>
     public class KeyboardCharCache : IDisposable
     {
-        private readonly CircularQueue<char> _buffer = new CircularQueue<char>(16);
+        private readonly CircularQueue<char> _buffer = new(16);
         private readonly IKeyboardCache _keboardCache;
         private bool _disposedValue = false;
 

@@ -48,7 +48,11 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Shaders
             }
         }
 
-        public void Dispose() => Dispose(disposing: true);
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
 
         #endregion IDisposable
     }

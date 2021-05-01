@@ -16,10 +16,7 @@ namespace Demo.Engine.Core.Components.Keyboard.Internal
     {
         private readonly IKeyboardCache _keyboardCache;
 
-        public KeyboardHandler(IKeyboardCache keyboardCache)
-        {
-            _keyboardCache = keyboardCache;
-        }
+        public KeyboardHandler(IKeyboardCache keyboardCache) => _keyboardCache = keyboardCache;
 
         /// <summary>
         /// OnKeyUp/OnKeyDown

@@ -24,7 +24,7 @@ namespace Demo.Engine.Core.Services
         private readonly IHostApplicationLifetime _applicationLifetime;
         private bool _stopRequested;
         private readonly ILogger<EngineService> _logger;
-        private readonly CancellationTokenSource _loopCancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _loopCancellationTokenSource = new();
 
         private readonly string _version =
             Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0";
@@ -117,11 +117,11 @@ namespace Demo.Engine.Core.Services
             KeyboardHandle keyboardHandle,
             KeyboardCharCache keyboardCharCache)
         {
-            if (keyboardHandle?.GetKeyPressed(VirtualKeys.OemOpenBrackets) == true)
+            if (keyboardHandle.GetKeyPressed(VirtualKeys.OemOpenBrackets))
             {
                 keyboardCharCache.Clear();
             }
-            if (keyboardHandle?.GetKeyPressed(VirtualKeys.OemCloseBrackets) == true)
+            if (keyboardHandle.GetKeyPressed(VirtualKeys.OemCloseBrackets))
             {
                 var str = keyboardCharCache?.ReadCache();
                 if (!string.IsNullOrEmpty(str))
@@ -129,12 +129,12 @@ namespace Demo.Engine.Core.Services
                     _logger.LogInformation(str);
                 }
             }
-            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Escape) == true)
+            if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
             {
                 _loopCancellationTokenSource.Cancel();
             }
 
-            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Back) == true
+            if (keyboardHandle.GetKeyPressed(VirtualKeys.Back)
                 && _drawables.ElementAtOrDefault(0) is IDisposable d)
             {
                 d?.Dispose();
@@ -142,8 +142,9 @@ namespace Demo.Engine.Core.Services
                     ? _drawables[1..]
                     : Array.Empty<ICube>();
             }
-            if (keyboardHandle?.GetKeyPressed(VirtualKeys.Enter) == true
-                && _drawables?.Length < 2 && _sp is not null)
+            if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter)
+                && _drawables.Length < 2
+                && _sp is not null)
             {
                 _drawables = new List<ICube>(_drawables)
                 {
@@ -162,9 +163,9 @@ namespace Demo.Engine.Core.Services
                 _sin = 0;
             }
 
-            _drawables?.ElementAtOrDefault(0)
+            _drawables.ElementAtOrDefault(0)
                 ?.Update(Vector3.Zero, _angleInRadians);
-            _drawables?.ElementAtOrDefault(1)
+            _drawables.ElementAtOrDefault(1)
                 ?.Update(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
 
             return Task.CompletedTask;
@@ -197,7 +198,7 @@ namespace Demo.Engine.Core.Services
             _logger.LogInformation("Engine stopping!");
 
             _stopRequested = true;
-            if (_executingTask == null)
+            if (_executingTask is null)
             {
                 return;
             }

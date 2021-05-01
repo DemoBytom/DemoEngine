@@ -61,6 +61,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 
                 WindowState = FormWindowState.Maximized;
                 FormBorderStyle = FormBorderStyle.None;
+                formSettings.CurrentValue.Width = ClientSize.Width;
+                formSettings.CurrentValue.Height = ClientSize.Height;
             }
             else
             {

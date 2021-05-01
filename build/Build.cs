@@ -107,10 +107,11 @@ namespace BuildScript
         private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         private Project[] TestProjects => Solution.GetProjects("*.UTs").ToArray();
 
-        private const string MASTER_BRANCH = "master";
+        //private const string MASTER_BRANCH = "master";
         private const string DEVELOP_BRANCH = "develop";
-        private const string RELEASE_BRANCH_PREFIX = "release";
-        private const string HOTFIX_BRANCH_PREFIX = "hotfix";
+
+        //private const string RELEASE_BRANCH_PREFIX = "release";
+        //private const string HOTFIX_BRANCH_PREFIX = "hotfix";
 
         protected override void OnBuildInitialized()
         {
@@ -319,6 +320,6 @@ namespace BuildScript
                 fileMode: FileMode.Create);
         }
 
-        private Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish).Unlisted();
+        public Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish).Unlisted();
     }
 }

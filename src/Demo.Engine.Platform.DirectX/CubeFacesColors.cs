@@ -22,6 +22,6 @@ namespace Demo.Engine.Platform.DirectX
         public Color4 Face5 { get; }
         public Color4 Face6 { get; }
 
-        public static int SizeInBytes = Marshal.SizeOf<CubeFacesColors>();
+        public static readonly int SizeInBytes = Marshal.SizeOf<CubeFacesColors>();
     }
 }
