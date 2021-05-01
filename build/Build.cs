@@ -95,7 +95,7 @@ namespace BuildScript
             _ => null
         };
 
-        [Solution] private readonly Solution _solution = default!;
+        [Solution] public readonly Solution Solution = default!;
         [GitRepository] private readonly GitRepository _gitRepository = default!;
 
         //[GitVersion] private readonly GitVersion _gitVersion = default!;
@@ -105,7 +105,7 @@ namespace BuildScript
         private static AbsolutePath SourceDirectory => RootDirectory / "src";
         private static AbsolutePath TestDirectory => RootDirectory / "test";
         private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
-        private Project[] TestProjects => _solution.GetProjects("*.UTs").ToArray();
+        private Project[] TestProjects => Solution.GetProjects("*.UTs").ToArray();
 
         private const string MASTER_BRANCH = "master";
         private const string DEVELOP_BRANCH = "develop";
@@ -150,7 +150,7 @@ namespace BuildScript
             .Executes(() =>
             {
                 DotNetRestore(_ => _
-                    .SetProjectFile(_solution));
+                    .SetProjectFile(Solution));
             });
 
         private Target Compile => _ => _
@@ -158,8 +158,8 @@ namespace BuildScript
             .Executes(() =>
             {
                 DotNetBuild(_ => _
-                    .SetProjectFile(_solution)
-                    .SetNoRestore(ExecutingTargets.Contains(Restore))
+                    .SetProjectFile(Solution)
+                    .SetNoRestore(InvokedTargets.Contains(Restore))
                     .SetConfiguration(Config)
                     .SetAssemblyVersion(_gitVersion.AssemblySemVer)
                     .SetFileVersion(_gitVersion.AssemblySemFileVer)
@@ -177,8 +177,8 @@ namespace BuildScript
             {
                 DotNetTest(_ => _
                     .SetConfiguration(Config)
-                        .SetNoRestore(ExecutingTargets.Contains(Restore))
-                        .SetNoBuild(ExecutingTargets.Contains(Compile))
+                        .SetNoRestore(InvokedTargets.Contains(Restore))
+                        .SetNoBuild(InvokedTargets.Contains(Compile))
                         .SetProperty("CollectCoverage", propertyValue: true)
                         .SetProperty("CoverletOutputFormat", "opencover")
                     //.SetProperty("ExcludeByFile", "*.Generated.cs")
@@ -204,7 +204,7 @@ namespace BuildScript
                     .SetReportTypes(ReportTypes.HtmlInline)
                     .SetTargetDirectory(ArtifactsDirectory / "coverage"));
 
-                if (ExecutingTargets.Contains(UploadCoveralls))
+                if (ScheduledTargets.Contains(UploadCoveralls))
                 {
                     ReportGenerator(_ => _
                         .SetFramework("net5.0")
@@ -295,15 +295,15 @@ namespace BuildScript
             }
 
             DotNetPublish(_ => _
-                        .SetProject(_solution.GetProject(projectName))
+                        .SetProject(Solution.GetProject(projectName))
                         .SetConfiguration(Config)
                         .SetAssemblyVersion(_gitVersion.AssemblySemVer)
                         .SetFileVersion(_gitVersion.AssemblySemFileVer)
                         .SetInformationalVersion(_gitVersion.InformationalVersion)
                         .SetOutput(outputDir)
                         .When(string.IsNullOrEmpty(rid), _ => _
-                            .SetNoRestore(ExecutingTargets.Contains(Restore))
-                            .SetNoBuild(ExecutingTargets.Contains(Compile)))
+                            .SetNoRestore(InvokedTargets.Contains(Restore))
+                            .SetNoBuild(InvokedTargets.Contains(Compile)))
                         .When(!string.IsNullOrEmpty(rid), _ => _
                             .SetNoRestore(false)
                             .SetNoBuild(false)
