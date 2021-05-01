@@ -21,21 +21,23 @@ namespace BuildExtensions
 
             for (var i = 0; i < baseJob.Steps.Length; ++i)
             {
-                if (baseJob.Steps[i] is GitHubActionsUsingStep a &&
-                    a.Using.Equals(
-                        "actions/checkout@v1",
-                        StringComparison.OrdinalIgnoreCase))
+                baseJob.Steps[i] = baseJob.Steps[i] switch
                 {
-                    baseJob.Steps[i] = new GitHubActionsUsingWithStep
-                    {
-                        Using = "actions/checkout@v2",
-                        Withs = new[]
+                    GitHubActionsUsingStep { Using: "actions/checkout@v1" }
+                        => new GitHubActionsUsingWithStep
                         {
-                            ("fetch-depth", "0"),
-                            ("lfs", "true")
-                        }
-                    };
-                }
+                            Using = "actions/checkout@v2",
+                            Withs = new[]
+                            {
+                                ("fetch-depth", "0"),
+                                ("lfs", "true")
+                            }
+                        },
+                    GitHubActionsArtifactStep artifactStep
+                        => GitHubActionsArtifactV2Step.FromBase(artifactStep),
+                    var @default
+                        => @default
+                };
             }
 
             return baseJob;
@@ -65,5 +67,30 @@ namespace BuildExtensions
                 }
             }
         }
+    }
+
+    public class GitHubActionsArtifactV2Step : GitHubActionsArtifactStep
+    {
+        public override void Write(CustomFileWriter writer)
+        {
+            writer.WriteLine("- uses: actions/upload-artifact@v2");
+
+            using (writer.Indent())
+            {
+                writer.WriteLine("with:");
+                using (writer.Indent())
+                {
+                    writer.WriteLine($"name: {Name}");
+                    writer.WriteLine($"path: {Path}");
+                }
+            }
+        }
+
+        public static GitHubActionsArtifactV2Step FromBase(GitHubActionsArtifactStep step) =>
+            new()
+            {
+                Name = step.Name,
+                Path = step.Path
+            };
     }
 }
