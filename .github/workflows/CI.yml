@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0
           lfs: true
       - name: Cache .nuke/temp, ~/.nuget/packages
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.5
         with:
           path: |
             .nuke/temp
