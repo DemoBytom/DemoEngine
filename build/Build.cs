@@ -5,7 +5,6 @@ using System.IO.Compression;
 using System.Linq;
 using BuildExtensions;
 using Nuke.Common;
-using Nuke.Common.CI;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Execution;
 using Nuke.Common.Git;
@@ -185,7 +184,7 @@ namespace BuildScript
                     .SetResultsDirectory(ArtifactsDirectory)
                     .CombineWith(TestProjects, (oo, testProj) => oo
                         .SetProjectFile(testProj)
-                        .SetLogger($"trx;LogFileName={testProj.Name}.trx")
+                        .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
                         //.SetLogger($"xunit;LogFileName={testProj.Name}.xml")
                         .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
                     degreeOfParallelism: TestProjects.Length,
