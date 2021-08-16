@@ -21,7 +21,7 @@ namespace Demo.Engine.Platform.DirectX
         private readonly ID3D11Texture2D _backBuffer;
         private readonly ID3D11Device _device;
         private readonly ID3D11DeviceContext _deviceContext;
-        private readonly IDXGIFactory1 _factory;
+        private readonly IDXGIFactory1? _factory;
         private readonly FeatureLevel _featureLevel;
 
         private readonly ILogger<D3D11RenderingEngine> _logger;
@@ -48,7 +48,7 @@ namespace Demo.Engine.Platform.DirectX
 
             Control = renderingForm;
 
-            if (DXGI.CreateDXGIFactory1(out _factory).Failure)
+            if (DXGI.CreateDXGIFactory1(out _factory).Failure || _factory is null)
             {
                 throw new InvalidOperationException("Cannot create {IDXGIFactory1} instance!");
             }
@@ -121,7 +121,7 @@ namespace Demo.Engine.Platform.DirectX
                 ArraySize = 1,
                 Format = Format.D32_Float,
                 SampleDescription = new SampleDescription(1, 0),
-                Usage = Vortice.Direct3D11.Usage.Default,
+                Usage = ResourceUsage.Default,
                 BindFlags = BindFlags.DepthStencil
             });
 

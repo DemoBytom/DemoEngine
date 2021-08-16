@@ -59,7 +59,7 @@ namespace Demo.Engine.Core.UTs.Services
                 cancellationToken);
 
             // Assert
-            func.Should().Throw<ArgumentNullException>();
+            func.Should().ThrowAsync<ArgumentNullException>();
             _mockRepository.VerifyAll();
         }
 
@@ -78,7 +78,7 @@ namespace Demo.Engine.Core.UTs.Services
                 cancellationToken);
 
             // Assert
-            func.Should().Throw<ArgumentNullException>();
+            func.Should().ThrowAsync<ArgumentNullException>();
             _mockRepository.VerifyAll();
         }
 
