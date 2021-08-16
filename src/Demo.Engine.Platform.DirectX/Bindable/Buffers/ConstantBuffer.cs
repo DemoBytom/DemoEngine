@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Vortice.Direct3D11;
 
@@ -20,7 +19,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
                 OptionFlags = ResourceOptionFlags.None,
                 CpuAccessFlags = CpuAccessFlags.Write,
                 StructureByteStride = 0,
-                SizeInBytes = Marshal.SizeOf<T>(),
+                SizeInBytes = Unsafe.SizeOf<T>(),
             })
         {
         }

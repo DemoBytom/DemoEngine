@@ -13,9 +13,7 @@ namespace Demo.Engine.Platform.Windows
 
         public WindowsMessagesHandler(
             ILogger<WindowsMessagesHandler> logger)
-        {
-            _logger = logger;
-        }
+            => _logger = logger;
 
         public bool DoEvents(IRenderingControl control)
         {
@@ -43,8 +41,8 @@ namespace Demo.Engine.Platform.Windows
                         //var message = new Message() { HWnd = msg.HWnd, LParam = msg.LParam, Msg = msg.Msg, WParam = msg.WParam };
                         if (!Application.FilterMessage(ref msg))
                         {
-                            User32.TranslateMessage(ref msg);
-                            User32.DispatchMessage(ref msg);
+                            _ = User32.TranslateMessage(ref msg);
+                            _ = User32.DispatchMessage(ref msg);
                         }
                     }
                 }

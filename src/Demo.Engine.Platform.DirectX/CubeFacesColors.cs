@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX
@@ -22,6 +22,6 @@ namespace Demo.Engine.Platform.DirectX
         public Color4 Face5 { get; }
         public Color4 Face6 { get; }
 
-        public static readonly int SizeInBytes = Marshal.SizeOf<CubeFacesColors>();
+        public static readonly int SizeInBytes = Unsafe.SizeOf<CubeFacesColors>();
     }
 }
