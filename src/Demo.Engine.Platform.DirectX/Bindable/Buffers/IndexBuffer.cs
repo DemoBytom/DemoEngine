@@ -20,7 +20,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
                 data,
                 new BufferDescription
                 {
-                    Usage = Vortice.Direct3D11.Usage.Default,
+                    Usage = ResourceUsage.Default,
                     BindFlags = BindFlags.IndexBuffer,
                     OptionFlags = ResourceOptionFlags.None,
                     CpuAccessFlags = CpuAccessFlags.None,

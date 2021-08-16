@@ -15,7 +15,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
         protected ConstantBuffer(ID3D11RenderingEngine renderingEngine, ref T data)
             : base(renderingEngine, ref data, new BufferDescription
             {
-                Usage = Usage.Dynamic,
+                Usage = ResourceUsage.Dynamic,
                 BindFlags = BindFlags.ConstantBuffer,
                 OptionFlags = ResourceOptionFlags.None,
                 CpuAccessFlags = CpuAccessFlags.Write,

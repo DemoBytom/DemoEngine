@@ -17,7 +17,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
                 data,
                 new BufferDescription
                 {
-                    Usage = Usage.Default,
+                    Usage = ResourceUsage.Default,
                     BindFlags = BindFlags.VertexBuffer,
                     OptionFlags = ResourceOptionFlags.None,
                     CpuAccessFlags = CpuAccessFlags.None,
