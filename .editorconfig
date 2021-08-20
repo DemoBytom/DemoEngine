@@ -22,6 +22,8 @@ trim_trailing_whitespace = false
 generated_code = true
 
 [*.{cs}]
+# Default copyright header for source files
+file_header_template  = Copyright © Michał Dembski and contributors.\nDistributed under MIT license. See LICENSE file in the root for more information.
 # Dotnet code style settings:
 # Organize usings
 dotnet_sort_system_directives_first                                      = true

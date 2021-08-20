@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System.Threading;
 using Demo.Tools.Common.Extensions.DependencyInjection;
 using FluentAssertions;

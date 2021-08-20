@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Demo.Tools.Common.Extensions.DependencyInjection
