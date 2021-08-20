@@ -53,7 +53,7 @@ namespace Demo.Engine.Platform.DirectX
                 throw new InvalidOperationException("Cannot create {IDXGIFactory1} instance!");
             }
 
-            D3D11.D3D11CreateDevice(
+            _ = D3D11.D3D11CreateDevice(
                 IntPtr.Zero,
                 DriverType.Hardware,
                 DeviceCreationFlags.BgraSupport | DeviceCreationFlags.Debug,
@@ -213,7 +213,7 @@ namespace Demo.Engine.Platform.DirectX
                     _swapChain?.GetFullscreenState(out fullscreen);
                     if (fullscreen == true)
                     {
-                        _swapChain?.SetFullscreenState(false);
+                        _ = _swapChain?.SetFullscreenState(false);
                     }
 
                     _swapChain?.Dispose();

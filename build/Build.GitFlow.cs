@@ -9,7 +9,7 @@ namespace BuildScript
     {
         private readonly string _changelogFile = RootDirectory / "CHANGELOG.MD";
 
-        private Target Changelog => _ => _
+        public Target Changelog => _ => _
             .OnlyWhenStatic(() =>
                 _gitRepository.IsOnReleaseBranch()
                 || _gitRepository.IsOnHotfixBranch())
@@ -27,7 +27,7 @@ namespace BuildScript
                 //}
             });
 
-        private Target Release => _ => _
+        public Target Release => _ => _
             .DependsOn(Changelog)
             .Requires(() =>
                 !_gitRepository.IsOnReleaseBranch()
@@ -39,7 +39,7 @@ namespace BuildScript
                 Logger.Info($"isRelease {isRelease}, clean {clean}");
             });
 
-        private Target FinishFeature => _ => _
+        public Target FinishFeature => _ => _
             .DependsOn(Clean, Restore, Compile, Test)
             .Executes(() =>
             {

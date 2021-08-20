@@ -35,4 +35,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Demo.Tools.Common\Demo.Tools.Common.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="D:\GIT\DemoEngine\test\Demo.Tools.Common.UTs\.editorconfig" />
+  </ItemGroup>
 </Project>

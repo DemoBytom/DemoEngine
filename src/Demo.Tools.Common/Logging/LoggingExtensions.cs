@@ -15,7 +15,7 @@ namespace Demo.Tools.Common.Logging
         /// <typeparam name="T"></typeparam>
         /// <param name="logger"></param>
         /// <returns></returns>
-        public static LoggingContext<T> LogScopeInitialization<T>(this ILogger<T> logger) => new LoggingContext<T>(logger);
+        public static LoggingContext<T> LogScopeInitialization<T>(this ILogger<T> logger) => new(logger);
     }
 
     public class LoggingContext<T> : IDisposable
@@ -46,7 +46,11 @@ namespace Demo.Tools.Common.Logging
             }
         }
 
-        public void Dispose() => Dispose(true);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         #endregion IDisposable
     }

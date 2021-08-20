@@ -55,7 +55,7 @@ namespace Demo.Engine.Core.Services
                 return;
             }
 
-            await Task.WhenAny(
+            _ = await Task.WhenAny(
                 _executingTask,
                 Task.Delay(Timeout.Infinite, cancellationToken));
         }

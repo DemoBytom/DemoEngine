@@ -33,7 +33,7 @@ namespace Demo.Engine.Core.Components.Keyboard
             var sb = new StringBuilder();
             while (_buffer.TryDequeue(out var c))
             {
-                sb.Append(c);
+                _ = sb.Append(c);
             }
             return sb.ToString();
         }

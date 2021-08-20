@@ -20,7 +20,8 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
 
         private Point _currentNonFullscreenPosition;
         private readonly bool _allowUserResizing;
-        private readonly ILogger<RenderingForm> _logger;
+
+        //private readonly ILogger<RenderingForm> _logger;
         private readonly IMediator _mediator;
 
         public RenderingForm(
@@ -30,7 +31,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
         {
             using var loggingContext = logger.LogScopeInitialization();
 
-            _logger = logger;
+            //_logger = logger;
             _mediator = mediator;
             _formSettings = formSettings;
 
@@ -103,36 +104,36 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32
                 switch ((WindowMessageTypes)m.Msg)
                 {
                     case WindowMessageTypes.KillFocus:
-                        {
-                            _mediator.Publish(new ClearKeysNotification());
-                            break;
-                        }
+                    {
+                        _mediator.Publish(new ClearKeysNotification()).GetAwaiter().GetResult();
+                        break;
+                    }
                     case WindowMessageTypes.SysKeyDown:
                     case WindowMessageTypes.KeyDown:
-                        {
-                            var lparam = m.LParam.ToInt64();
+                    {
+                        var lparam = m.LParam.ToInt64();
 
-                            //bit 30
-                            if ((lparam & 0x4000_0000) == 0)
-                            {
-                                var key = (VirtualKeys)wparam;
-                                _mediator.Publish(new KeyNotification(key, true));
-                            }
-                            break;
-                        }
-                    case WindowMessageTypes.SysKeyUp:
-                    case WindowMessageTypes.KeyUp:
+                        //bit 30
+                        if ((lparam & 0x4000_0000) == 0)
                         {
                             var key = (VirtualKeys)wparam;
-                            _mediator.Publish(new KeyNotification(key, false));
-                            break;
+                            _mediator.Publish(new KeyNotification(key, true)).GetAwaiter().GetResult();
                         }
+                        break;
+                    }
+                    case WindowMessageTypes.SysKeyUp:
+                    case WindowMessageTypes.KeyUp:
+                    {
+                        var key = (VirtualKeys)wparam;
+                        _mediator.Publish(new KeyNotification(key, false)).GetAwaiter().GetResult();
+                        break;
+                    }
                     case WindowMessageTypes.Char:
-                        {
-                            var c = (char)wparam;
-                            _mediator.Publish(new CharNotification(c));
-                            break;
-                        }
+                    {
+                        var c = (char)wparam;
+                        _mediator.Publish(new CharNotification(c)).GetAwaiter().GetResult();
+                        break;
+                    }
                 }
             }
 

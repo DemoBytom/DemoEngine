@@ -1,6 +1,6 @@
 # Suppress: EC114
 # You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
-# Taken from https://gist.github.com/DemoBytom/19d1005b84eee5e7afba2b0648924c1d
+# Taken and modified from https://gist.github.com/DemoBytom/19d1005b84eee5e7afba2b0648924c1d
 
 [*]
 #Core editorconfig formatting - indentation
@@ -17,11 +17,16 @@ indent_size              = 2
 [*.md]
 trim_trailing_whitespace = false
 
-[*.{cs,vb}]
+# Generated code
+[*.Designer.cs]
+generated_code = true
+
+[*.{cs}]
 # Dotnet code style settings:
 # Organize usings
 dotnet_sort_system_directives_first                                      = true
 dotnet_separate_import_directive_groups                                  = false
+csharp_using_directive_placement                                         = outside_namespace:error
 # "This." and "Me." qualifiers
 dotnet_style_qualification_for_field                                     = false:suggestion
 dotnet_style_qualification_for_property                                  = false:suggestion
@@ -52,6 +57,9 @@ dotnet_style_prefer_conditional_expression_over_return                   = true:
 # "Null" checking preferences
 dotnet_style_coalesce_expression                                         = true:suggestion
 dotnet_style_null_propagation                                            = true:suggestion
+dotnet_style_prefer_compound_assignment                                  = true:suggestion
+dotnet_style_prefer_simplified_boolean_expressions                       = true:suggestion
+dotnet_style_prefer_simplified_interpolation                             = true:suggestion
 
 ## C# code style settings
 # Implicit and explicit types
@@ -65,15 +73,25 @@ csharp_style_expression_bodied_operators                                 = true:
 csharp_style_expression_bodied_properties                                = true:suggestion
 csharp_style_expression_bodied_indexers                                  = true:suggestion
 csharp_style_expression_bodied_accessors                                 = true:suggestion
+csharp_style_expression_bodied_lambdas                                   = true:suggestion
+csharp_style_expression_bodied_local_functions                           = true:suggestion
 # Pattern matching
 csharp_style_pattern_matching_over_is_with_cast_check                    = true:suggestion
 csharp_style_pattern_matching_over_as_with_null_check                    = true:suggestion
+csharp_style_prefer_not_pattern                                          = true:warning
+csharp_style_prefer_pattern_matching                                     = true:suggestion
 # Inlined variable declarations
 csharp_style_inlined_variable_declaration                                = true:suggestion
 # Expression-level preferences
 csharp_style_deconstructed_variable_declaration                          = true:suggestion
 csharp_prefer_simple_default_expression                                  = true:suggestion
 csharp_style_pattern_local_over_anonymous_function                       = true:suggestion
+csharp_prefer_simple_using_statement                                     = true:suggestion
+csharp_style_prefer_index_operator                                       = true:warning
+csharp_style_prefer_switch_expression                                    = true:suggestion
+csharp_style_prefer_range_operator                                       = true:suggestion
+csharp_style_unused_value_assignment_preference                          = discard_variable:suggestion
+csharp_style_unused_value_expression_statement_preference                = discard_variable:suggestion
 # "Null" checking preferences
 csharp_style_throw_expression                                            = true:suggestion
 csharp_style_conditional_delegate_call                                   = true:suggestion
@@ -94,6 +112,7 @@ csharp_new_line_between_query_expression_clauses                         = true
 csharp_indent_case_contents                                              = true
 csharp_indent_switch_labels                                              = true
 csharp_indent_labels                                                     = flush_left
+csharp_indent_case_contents_when_block                                   = false
 # Spacing options
 csharp_space_after_cast                                                  = false
 csharp_space_after_keywords_in_control_flow_statements                   = true
@@ -122,19 +141,20 @@ dotnet_naming_style.first_word_lower_style_undersore_prefix.required_prefix = _
 dotnet_naming_rule.const_members_must_be_caps.style             = all_upper_style
 dotnet_naming_rule.const_members_must_be_caps.severity          = warning 
 dotnet_naming_rule.const_members_must_be_caps.symbols           = const_symbols
+dotnet_naming_symbols.const_symbols.applicable_kinds            = property,method,event,delegate,field,local
 dotnet_naming_symbols.const_symbols.required_modifiers          = const
 
 # Public members must be capitalized (public_members_must_be_capitalized)
 dotnet_naming_rule.public_members_must_be_capitalized.symbols   = public_symbols
 dotnet_naming_rule.public_members_must_be_capitalized.severity  = warning 
-dotnet_naming_symbols.public_symbols.applicable_kinds           = property,method,field,event,delegate
+dotnet_naming_symbols.public_symbols.applicable_kinds           = property,method,event,delegate
 dotnet_naming_symbols.public_symbols.applicable_accessibilities = public, protected
 dotnet_naming_rule.public_members_must_be_capitalized.style     = pascal_case_style
 
 # Private members must be capitalized (private_members_must_be_lower_underscore)
 dotnet_naming_rule.private_members_must_be_lower_underscore.symbols   = private_symbols
 dotnet_naming_rule.private_members_must_be_lower_underscore.severity  = warning 
-dotnet_naming_symbols.private_symbols.applicable_kinds                = field,event,delegate
+dotnet_naming_symbols.private_symbols.applicable_kinds                = field
 dotnet_naming_symbols.private_symbols.applicable_accessibilities      = private, protected
 dotnet_naming_rule.private_members_must_be_lower_underscore.style     = first_word_lower_style_undersore_prefix
 
@@ -149,3 +169,10 @@ dotnet_naming_rule.local_methods_must_be_pascal_case.symbols       = local_metho
 dotnet_naming_rule.local_methods_must_be_pascal_case.severity      = warning 
 dotnet_naming_symbols.local_methods_symbols.applicable_kinds       = local_function
 dotnet_naming_rule.local_methods_must_be_pascal_case.style         = pascal_case_style
+
+### Analyzers and diagnostics
+dotnet_diagnostic.<rule_id>.severity = unset
+dotnet_analyzer_diagnostic.severity = unset
+dotnet_analyzer_diagnostic.category-<category>.severity = unset
+dotnet_remove_unnecessary_suppression_exclusions = all
+dotnet_code_quality_unused_parameters = all

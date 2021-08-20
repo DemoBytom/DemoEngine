@@ -128,7 +128,7 @@ namespace Demo.Engine.Core.Services
 
             renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
             renderingEngine.Draw(_drawables);
-            renderingEngine.EndScene();
+            _ = renderingEngine.EndScene();
 
             return Task.CompletedTask;
         }

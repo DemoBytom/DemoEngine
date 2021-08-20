@@ -20,11 +20,9 @@ namespace Microsoft.Extensions.Hosting
                 .WriteTo.Debug()
                 .CreateLogger();
             return hostBuilder
-                .ConfigureLogging((hostingContext, configLog) =>
-                {
+                .ConfigureLogging((_, configLog) =>
                     //configLog.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                    configLog.AddSerilog(Log.Logger);
-                });
+                    configLog.AddSerilog(Log.Logger));
         }
     }
 }

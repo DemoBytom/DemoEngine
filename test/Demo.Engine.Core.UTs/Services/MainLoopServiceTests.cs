@@ -37,8 +37,8 @@ namespace Demo.Engine.Core.UTs.Services
             _mockRenderingEngine = _mockRepository.Create<IRenderingEngine>();
         }
 
-        private MainLoopService CreateService() =>
-            new MainLoopService(
+        private MainLoopService CreateService()
+            => new(
                 _mockMediator.Object,
                 _mockHostApplicationLifetime.Object,
                 _mockOSMessageHandler.Object,

@@ -33,9 +33,9 @@ namespace Demo.Engine.Platform.DirectX.Models
             _renderingEngine = renderingEngine;
             //Add reference
             _drawableGuid = Guid.NewGuid();
-            _lockSlim.EnterWriteLockBlock(() =>
+            _ = _lockSlim.EnterWriteLockBlock(() =>
             {
-                _references.Add(_drawableGuid);
+                _ = _references.Add(_drawableGuid);
                 if (_bindables?.Any() != true)
                 {
                     var (bindables, updatables) = DrawableBase<T>.BuildBindableUpdatableLists(func((T)this));
@@ -123,14 +123,14 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 if (disposing)
                 {
-                    _lockSlim.EnterUpgradableReadLockBlock(
+                    _ = _lockSlim.EnterUpgradableReadLockBlock(
                         lockSlim =>
                         {
                             if (!_references.Remove(_drawableGuid))
                             {
                                 throw new InvalidOperationException("Missing reference!");
                             }
-                            lockSlim.IfActionEnterWriteLockBlock(
+                            _ = lockSlim.IfActionEnterWriteLockBlock(
                                 () => _references.Count == 0,
                                 () =>
                                 {

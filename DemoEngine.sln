@@ -13,6 +13,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{44B24605-5039-4F0E-916D-88283C58C4DE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{02C42BC8-F6DA-4F33-9E4A-892F09090E9A}"
+	ProjectSection(SolutionItems) = preProject
+		test\.editorconfig = test\.editorconfig
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo.Tools.Common", "src\Demo.Tools.Common\Demo.Tools.Common.csproj", "{B56900FE-A1D2-473D-8842-3F8481326774}"
 EndProject

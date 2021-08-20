@@ -12,7 +12,7 @@ namespace Demo.Tools.Common.Collections
         private readonly int _capacity;
         private readonly ConcurrentQueue<T> _buffer;
 
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim _lock = new();
 
         public CircularQueue(int capacity)
         {
@@ -36,7 +36,7 @@ namespace Demo.Tools.Common.Collections
             {
                 if (_buffer.Count == _capacity)
                 {
-                    _buffer.TryDequeue(out _);
+                    _ = _buffer.TryDequeue(out _);
                 }
 
                 _buffer.Enqueue(value);
@@ -57,12 +57,9 @@ namespace Demo.Tools.Common.Collections
             _lock.EnterWriteLock();
             try
             {
-                if (!_buffer.TryDequeue(out var retVal))
-                {
-                    throw new InvalidOperationException("Dequeue failed!");
-                }
-
-                return retVal;
+                return _buffer.TryDequeue(out var retVal)
+                    ? retVal
+                    : throw new InvalidOperationException("Dequeue failed!");
             }
             finally
             {
@@ -84,14 +81,9 @@ namespace Demo.Tools.Common.Collections
         /// <returns></returns>
         /// <exception cref="InvalidOperationException">If can't peek</exception>
         public T Peek()
-        {
-            if (!TryPeek(out var retVal))
-            {
-                throw new InvalidOperationException("Peek failed!");
-            }
-
-            return retVal;
-        }
+            => TryPeek(out var retVal)
+                ? retVal
+                : throw new InvalidOperationException("Peek failed!");
 
         /// <summary>
         /// Tries to return top element from the queue without dequeuing it

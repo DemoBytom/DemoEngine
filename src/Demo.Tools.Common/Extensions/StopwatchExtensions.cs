@@ -8,21 +8,24 @@ namespace Demo.Tools.Common.Extensions
         /// Returns elapsed time in nanoseconds (ns)
         /// </summary>
         /// <param name="stopwatch"></param>
-        /// <returns></returns>
-        public static double ElapsedNanoseconds(this Stopwatch stopwatch) => stopwatch.ElapsedTicks / (double)Stopwatch.Frequency * 1_000_000_000;
+        /// <returns>Elapsed time in nanoseconds (ns)</returns>
+        public static double ElapsedNanoseconds(this Stopwatch stopwatch)
+            => stopwatch.ElapsedTicks / (double)Stopwatch.Frequency * 1_000_000_000;
 
         /// <summary>
         /// Returns elapsed time in microseconds (μs)
         /// </summary>
         /// <param name="stopwatch"></param>
-        /// <returns></returns>
-        public static double ElapsedMicroseconds(this Stopwatch stopwatch) => stopwatch.ElapsedTicks / (double)Stopwatch.Frequency * 1_000_000;
+        /// <returns>Elapsed time in microseconds (μs)</returns>
+        public static double ElapsedMicroseconds(this Stopwatch stopwatch)
+            => stopwatch.ElapsedTicks / (double)Stopwatch.Frequency * 1_000_000;
 
         /// <summary>
         /// Returns elapsed time in miliseconds (ms)
         /// </summary>
         /// <param name="stopwatch"></param>
-        /// <returns></returns>
-        public static double ElapsedMilliseconds(this Stopwatch stopwatch) => stopwatch.ElapsedTicks / (double)Stopwatch.Frequency * 1_000;
+        /// <returns>Elapsed time in miliseconds (ms)</returns>
+        public static double ElapsedMilliseconds(this Stopwatch stopwatch)
+            => stopwatch.ElapsedTicks / (double)Stopwatch.Frequency * 1_000;
     }
 }

@@ -34,26 +34,25 @@ namespace Demo.Engine
                 var hostBuilder = new HostBuilder()
                     .CreateDefault(args)
                     .WithSerilog()
-                    .ConfigureServices((hostContext, services) =>
-                    {
-                        services.AddHostedService<EngineService>();
-                        services.Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)));
-                        services.AddSingleton<IKeyboardCache, KeyboardCache>();
-                        services.AddScoped<
+                    .ConfigureServices((hostContext, services)
+                    => _ = services
+                        .AddHostedService<EngineService>()
+                        .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
+                        .AddSingleton<IKeyboardCache, KeyboardCache>()
+                        .AddScoped<
                             ID3D11RenderingEngine,
                             IRenderingEngine,
-                            D3D11RenderingEngine>();
-                        services.AddScoped<IMainLoopService, MainLoopService>();
+                            D3D11RenderingEngine>()
+                        .AddScoped<IMainLoopService, MainLoopService>()
                         /*** Windows Only ***/
-                        services.AddTransient<IRenderingControl, RenderingForm>();
-                        services.AddScoped<IOSMessageHandler, WindowsMessagesHandler>();
-                        services.AddTransient<IShaderCompiler, ShaderCompiler>();
+                        .AddTransient<IRenderingControl, RenderingForm>()
+                        .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
+                        .AddTransient<IShaderCompiler, ShaderCompiler>()
                         //tmp
-                        services.AddTransient<ICube, Cube>();
+                        .AddTransient<ICube, Cube>()
                         /*** End Windows Only ***/
-                        services.AddMediatR(
-                            typeof(KeyboardHandler).Assembly);
-                    });
+                        .AddMediatR(
+                            typeof(KeyboardHandler).Assembly));
 
                 var host = hostBuilder.Build();
 
