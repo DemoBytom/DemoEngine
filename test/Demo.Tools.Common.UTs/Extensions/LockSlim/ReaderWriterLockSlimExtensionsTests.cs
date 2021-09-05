@@ -66,8 +66,10 @@ namespace Demo.Tools.Common.UTs.Extensions.LockSlim
             var tw2 = new ThreadWorker(T2, threadJobs, cts.Token);
 
             await Task.WhenAll(
+            new[] {
                 tw1.Start(),
-                tw2.Start());
+                tw2.Start()
+            });
 
             sb.ToString().Should().Contain("T1 startT1 end");
             sb.ToString().Should().Contain("T2 startT2 end");

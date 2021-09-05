@@ -144,6 +144,13 @@ namespace Demo.Engine.Platform.DirectX.Models
                                             disposable.Dispose();
                                         }
                                     }
+                                    if (_updatables is not null)
+                                    {
+                                        foreach (var disposable in _updatables.Values.OfType<IDisposable>())
+                                        {
+                                            disposable.Dispose();
+                                        }
+                                    }
 
                                     _bindables = null;
                                     _updatables = null;

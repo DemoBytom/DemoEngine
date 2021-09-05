@@ -3,6 +3,8 @@
 
 using System;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
@@ -37,8 +39,11 @@ namespace Demo.Engine
                 var hostBuilder = new HostBuilder()
                     .CreateDefault(args)
                     .WithSerilog()
+                    .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                     .ConfigureServices((hostContext, services)
-                    => _ = services
+                    =>
+                    {
+                        _ = services
                         .AddHostedService<EngineService>()
                         .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
                         .AddSingleton<IKeyboardCache, KeyboardCache>()
@@ -52,10 +57,18 @@ namespace Demo.Engine
                         .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
                         .AddTransient<IShaderCompiler, ShaderCompiler>()
                         //tmp
-                        .AddTransient<ICube, Cube>()
+                        //.AddTransient<ICube, Cube>()
                         /*** End Windows Only ***/
                         .AddMediatR(
-                            typeof(KeyboardHandler).Assembly));
+                            typeof(KeyboardHandler).Assembly);
+
+                        _ = services.AddOptions();
+                    })
+                    .ConfigureContainer<ContainerBuilder>(builder
+                        => builder
+                            .RegisterType<Cube>()
+                            .As<ICube>()
+                            .ExternallyOwned());
 
                 var host = hostBuilder.Build();
 

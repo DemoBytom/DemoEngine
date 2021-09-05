@@ -46,6 +46,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Shaders
             {
                 if (disposing)
                 {
+                    _shader.Dispose();
                 }
                 _disposedValue = true;
             }

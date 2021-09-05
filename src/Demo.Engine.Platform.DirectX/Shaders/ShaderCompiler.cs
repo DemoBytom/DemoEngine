@@ -6,6 +6,7 @@ using System.IO;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Enums;
 using Microsoft.Extensions.Logging;
+using Vortice.Direct3D;
 
 namespace Demo.Engine.Platform.DirectX.Shaders
 {
@@ -24,19 +25,28 @@ namespace Demo.Engine.Platform.DirectX.Shaders
             var filename = Path.GetFileName(path);
 
             _logger.LogInformation("Compiling {shader} {name} with {profile}", shaderStage, filename, shaderProfile);
+            Blob? blob = null;
+            Blob? errorBlob = null;
+            try
+            {
+                var compileResult = Vortice.D3DCompiler.Compiler.Compile(
+                    shader,
+                    entryPoint,
+                    filename,
+                    shaderProfile,
+                    out blob,
+                    out errorBlob
+                    );
 
-            var compileResult = Vortice.D3DCompiler.Compiler.Compile(
-                shader,
-                entryPoint,
-                filename,
-                shaderProfile,
-                out var blob,
-                out var errorBlob
-                );
-
-            return compileResult.Failure
-                ? throw new Exception(errorBlob?.ConvertToString())
-                : blob.GetBytes().AsMemory();
+                return compileResult.Failure
+                    ? throw new Exception(errorBlob?.ConvertToString())
+                    : blob.GetBytes().AsMemory();
+            }
+            finally
+            {
+                blob?.Dispose();
+                errorBlob?.Dispose();
+            }
         }
 
         private static string GetShaderProfile(ShaderStage stage) => stage switch

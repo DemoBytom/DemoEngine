@@ -80,14 +80,38 @@ namespace Demo.Engine.Core.Services
             if (keyboardHandle.GetKeyPressed(VirtualKeys.Back)
                 && _drawables.ElementAtOrDefault(0) is IDisposable d)
             {
-                d?.Dispose();
+                System.Diagnostics.Debug.WriteLine("Removing cube!");
+
                 _drawables = _drawables.Length > 0
                     ? _drawables[1..]
                     : Array.Empty<ICube>();
+
+                d?.Dispose();
+
+                System.Diagnostics.Debug.WriteLine("Cube removed!");
             }
             if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter)
                 && _drawables.Length < 2
                 && _sp is not null)
+            {
+                System.Diagnostics.Debug.WriteLine("Adding new Cube!");
+                _drawables = new List<ICube>(_drawables)
+                {
+                    _sp.GetRequiredService<ICube>()
+                }.ToArray();
+                System.Diagnostics.Debug.WriteLine("Cube added!!");
+            }
+
+            if (_drawables.Length == 2)
+            {
+                foreach (var drawable in _drawables)
+                {
+                    (drawable as IDisposable)?.Dispose();
+                }
+
+                _drawables = Array.Empty<ICube>();
+            }
+            else if (_drawables.Length < 2 && _sp is not null)
             {
                 _drawables = new List<ICube>(_drawables)
                 {
