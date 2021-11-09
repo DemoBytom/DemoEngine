@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+echo "Formatting code!"
+
+files=`git diff --cached --name-only --diff-filter ACMR | xargs`
+
+dotnet format -v n --include $files
+
+git add $files
+
+echo 0
