@@ -9,86 +9,85 @@ using Microsoft.Extensions.Logging;
 using Vortice.Direct3D;
 using Compiler = Vortice.D3DCompiler.Compiler;
 
-namespace Demo.Engine.Platform.DirectX.Shaders
+namespace Demo.Engine.Platform.DirectX.Shaders;
+
+public class ShaderCompiler : IShaderCompiler
 {
-    public class ShaderCompiler : IShaderCompiler
+    private readonly ILogger<ShaderCompiler> _logger;
+
+    public ShaderCompiler(ILogger<ShaderCompiler> logger) =>
+        _logger = logger;
+
+    public ReadOnlyMemory<byte> CompileShader(string path, ShaderStage shaderStage, string entryPoint = "main")
     {
-        private readonly ILogger<ShaderCompiler> _logger;
+        var shader = File.ReadAllText(path);
 
-        public ShaderCompiler(ILogger<ShaderCompiler> logger) =>
-            _logger = logger;
+        var shaderProfile = $"{GetShaderProfile(shaderStage)}_5_0";
+        var filename = Path.GetFileName(path);
 
-        public ReadOnlyMemory<byte> CompileShader(string path, ShaderStage shaderStage, string entryPoint = "main")
+        _logger.LogInformation("Compiling {shader} {name} with {profile}", shaderStage, filename, shaderProfile);
+        Blob? blob = null;
+        Blob? errorBlob = null;
+        try
         {
-            var shader = File.ReadAllText(path);
+            var compileResult = Compiler.Compile(
+                shader,
+                entryPoint,
+                filename,
+                shaderProfile,
+                out blob,
+                out errorBlob
+                );
 
-            var shaderProfile = $"{GetShaderProfile(shaderStage)}_5_0";
-            var filename = Path.GetFileName(path);
-
-            _logger.LogInformation("Compiling {shader} {name} with {profile}", shaderStage, filename, shaderProfile);
-            Blob? blob = null;
-            Blob? errorBlob = null;
-            try
-            {
-                var compileResult = Compiler.Compile(
-                    shader,
-                    entryPoint,
-                    filename,
-                    shaderProfile,
-                    out blob,
-                    out errorBlob
-                    );
-
-                return compileResult.Failure
-                    ? throw new Exception(errorBlob?.ConvertToString())
-                    : blob.GetBytes().AsMemory();
-            }
-            finally
-            {
-                blob?.Dispose();
-                errorBlob?.Dispose();
-            }
+            return compileResult.Failure
+                ? throw new Exception(errorBlob?.ConvertToString())
+                : blob.GetBytes().AsMemory();
         }
-
-        private static string GetShaderProfile(ShaderStage stage) => stage switch
+        finally
         {
-            ShaderStage.VertexShader => "vs",
-            ShaderStage.HullShader => "hs",
-            ShaderStage.DomainShader => "ds",
-            ShaderStage.GeometryShader => "gs",
-            ShaderStage.PixelShader => "ps",
-            ShaderStage.ComputeShader => "cs",
-            _ => string.Empty,
-        };
-    }
-
-    public record CompiledS
-    {
-        public CompiledS(ReadOnlyMemory<byte> compiledShader)
-            => CompiledShader = compiledShader;
-        public ReadOnlyMemory<byte> CompiledShader { get; }
-    }
-    public record CompiledVS : CompiledS
-    {
-        public CompiledVS(
-            string path,
-            IShaderCompiler shaderCompiler)
-            : base(shaderCompiler.CompileShader(
-                path,
-                ShaderStage.VertexShader))
-        {
+            blob?.Dispose();
+            errorBlob?.Dispose();
         }
     }
 
-    public record CompiledPS : CompiledS
+    private static string GetShaderProfile(ShaderStage stage) => stage switch
     {
-        public CompiledPS(
-            string path,
-            IShaderCompiler shaderCompiler)
-            : base(shaderCompiler.CompileShader(
-                path,
-                ShaderStage.PixelShader))
-        {
-        }
+        ShaderStage.VertexShader => "vs",
+        ShaderStage.HullShader => "hs",
+        ShaderStage.DomainShader => "ds",
+        ShaderStage.GeometryShader => "gs",
+        ShaderStage.PixelShader => "ps",
+        ShaderStage.ComputeShader => "cs",
+        _ => string.Empty,
+    };
+}
+
+public record CompiledS
+{
+    public CompiledS(ReadOnlyMemory<byte> compiledShader)
+        => CompiledShader = compiledShader;
+    public ReadOnlyMemory<byte> CompiledShader { get; }
+}
+public record CompiledVS : CompiledS
+{
+    public CompiledVS(
+        string path,
+        IShaderCompiler shaderCompiler)
+        : base(shaderCompiler.CompileShader(
+            path,
+            ShaderStage.VertexShader))
+    {
+    }
+}
+
+public record CompiledPS : CompiledS
+{
+    public CompiledPS(
+        string path,
+        IShaderCompiler shaderCompiler)
+        : base(shaderCompiler.CompileShader(
+            path,
+            ShaderStage.PixelShader))
+    {
     }
 }

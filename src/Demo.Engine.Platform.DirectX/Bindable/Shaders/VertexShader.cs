@@ -5,20 +5,19 @@ using Demo.Engine.Platform.DirectX.Interfaces;
 using Demo.Engine.Platform.DirectX.Shaders;
 using Vortice.Direct3D11;
 
-namespace Demo.Engine.Platform.DirectX.Bindable.Shaders
-{
-    public class VertexShader : Shader<ID3D11VertexShader>
-    {
-        public VertexShader(
-            CompiledVS compiledVS,
-            ID3D11RenderingEngine renderingEngine)
-            : base(
-                  compiledVS,
-                (device, shader) => device.CreateVertexShader(shader.shaderPointer, shader.shaderLen),
-                renderingEngine)
-        {
-        }
+namespace Demo.Engine.Platform.DirectX.Bindable.Shaders;
 
-        public override void Bind() => _renderingEngine.DeviceContext.VSSetShader(_shader);
+public class VertexShader : Shader<ID3D11VertexShader>
+{
+    public VertexShader(
+        CompiledVS compiledVS,
+        ID3D11RenderingEngine renderingEngine)
+        : base(
+              compiledVS,
+            (device, shader) => device.CreateVertexShader(shader.shaderPointer, shader.shaderLen),
+            renderingEngine)
+    {
     }
+
+    public override void Bind() => _renderingEngine.DeviceContext.VSSetShader(_shader);
 }

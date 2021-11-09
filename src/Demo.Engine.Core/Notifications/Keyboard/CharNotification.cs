@@ -3,12 +3,11 @@
 
 using MediatR;
 
-namespace Demo.Engine.Core.Notifications.Keyboard
-{
-    public class CharNotification : INotification
-    {
-        public CharNotification(char @char) => Char = @char;
+namespace Demo.Engine.Core.Notifications.Keyboard;
 
-        public char Char { get; }
-    }
+public class CharNotification : INotification
+{
+    public CharNotification(char @char) => Char = @char;
+
+    public char Char { get; }
 }
