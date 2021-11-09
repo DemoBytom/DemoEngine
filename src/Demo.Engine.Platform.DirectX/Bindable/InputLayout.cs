@@ -34,6 +34,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable
             {
                 if (disposing)
                 {
+                    _inputLayout.Dispose();
                 }
                 _disposedValue = true;
             }
