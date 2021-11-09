@@ -31,305 +31,312 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
 using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 
-namespace BuildScript
-{
-    [CheckBuildProjectConfigurations]
-    [UnsetVisualStudioEnvironmentVariables]
-    [GitHubActionsV2(
-        "CI",
-        GitHubActionsImage.WindowsLatest,
-        On = new[]
-        {
+namespace BuildScript;
+
+[CheckBuildProjectConfigurations]
+[UnsetVisualStudioEnvironmentVariables]
+[GitHubActionsV2(
+    "CI",
+    GitHubActionsImage.WindowsLatest,
+    On = new[]
+    {
             GitHubActionsTrigger.Push
-        },
-        InvokedTargets = new[]
-        {
+    },
+    InvokedTargets = new[]
+    {
             nameof(Clean),
             nameof(Compile),
             nameof(Test),
             nameof(Publish)
-        },
-        ImportGitHubTokenAs = nameof(GitHubToken),
-        ImportSecrets = new[]
-        {
-            nameof(CoverallsToken)
-        })]
-    internal partial class Build : NukeBuild
+    },
+    ImportGitHubTokenAs = nameof(GitHubToken),
+    ImportSecrets = new[]
     {
-        /* Install Global Tool
-         * - $ dotnet tool install Nuke.GlobalTool --global
-         *
-         * To run the build using Global Tool
-         * - $ nuke Full
-         *
-         * To run the build using powershell, without Global Tool
-         * - PS> .\build.ps1 Full
-         *
-         * To run the build using shell, without Global Tool
-         * - $ ./build.sh Full
-         *
-         * Support plugins are available for:
-         * - JetBrains ReSharper https://nuke.build/resharper
-         * - JetBrains Rider https://nuke.build/rider
-         * - Microsoft VisualStudio https://nuke.build/visualstudio
-         * - Microsoft VSCode https://nuke.build/vscode
-         * */
+            nameof(CoverallsToken)
+    })]
+internal partial class Build : NukeBuild
+{
+    /* Install Global Tool
+     * - $ dotnet tool install Nuke.GlobalTool --global
+     *
+     * To run the build using Global Tool
+     * - $ nuke Full
+     *
+     * To run the build using powershell, without Global Tool
+     * - PS> .\build.ps1 Full
+     *
+     * To run the build using shell, without Global Tool
+     * - $ ./build.sh Full
+     *
+     * Support plugins are available for:
+     * - JetBrains ReSharper https://nuke.build/resharper
+     * - JetBrains Rider https://nuke.build/rider
+     * - Microsoft VisualStudio https://nuke.build/visualstudio
+     * - Microsoft VSCode https://nuke.build/vscode
+     * */
 
-        public static int Main() => Execute<Build>(x => x.Publish);
+    public static int Main() => Execute<Build>(x => x.Publish);
 
-        [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-        public readonly string Config = IsLocalBuild ? "debug" : "release";
+    [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
+    public readonly string Config = IsLocalBuild ? "debug" : "release";
 
-        [Parameter("GitHub token")]
-        public readonly string GitHubToken = string.Empty;
+    [Parameter("GitHub token")]
+    public readonly string GitHubToken = string.Empty;
 
-        [Parameter("Self contained application rids")]
-        public readonly string[] RIDs = Array.Empty<string>();
+    [Parameter("Self contained application rids")]
+    public readonly string[] RIDs = Array.Empty<string>();
 
-        [Parameter("Coveralls token")]
-        public readonly string? CoverallsToken = null;
+    [Parameter("Coveralls token")]
+    public readonly string? CoverallsToken = null;
 
-        [Parameter("Coveralls jobId")]
-        public readonly string? CoverallsJobID = EnvironmentInfo.Variables switch
+    [Parameter("Coveralls jobId")]
+    public readonly string? CoverallsJobID = EnvironmentInfo.Variables switch
+    {
+        var gh when gh.TryGetValue("GITHUB_RUN_ID", out var ghid) => ghid,
+        var nuke when nuke.TryGetValue("NUKE_RUN_ID", out var nukeid) => nukeid,
+        _ => null
+    };
+
+    [Solution] public readonly Solution Solution = default!;
+    [GitRepository] private readonly GitRepository _gitRepository = default!;
+
+    //[GitVersion] private readonly GitVersion _gitVersion = default!;
+    //[GitVersion(Framework = "net5.0", NoFetch = true)]
+    private GitVersion _gitVersion = default!;
+
+    private static AbsolutePath SourceDirectory => RootDirectory / "src";
+    private static AbsolutePath TestDirectory => RootDirectory / "test";
+    private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+    private Project[] TestProjects => Solution.GetProjects("*.UTs").ToArray();
+
+    //private const string MASTER_BRANCH = "master";
+    private const string DEVELOP_BRANCH = "develop";
+
+    //private const string RELEASE_BRANCH_PREFIX = "release";
+    //private const string HOTFIX_BRANCH_PREFIX = "hotfix";
+
+    protected override void OnBuildInitialized()
+    {
+        base.OnBuildInitialized();
+        var resp = Git("rev-parse --is-shallow-repository");
+        if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
         {
-            var gh when gh.TryGetValue("GITHUB_RUN_ID", out var ghid) => ghid,
-            var nuke when nuke.TryGetValue("NUKE_RUN_ID", out var nukeid) => nukeid,
-            _ => null
-        };
-
-        [Solution] public readonly Solution Solution = default!;
-        [GitRepository] private readonly GitRepository _gitRepository = default!;
-
-        //[GitVersion] private readonly GitVersion _gitVersion = default!;
-        //[GitVersion(Framework = "net5.0", NoFetch = true)]
-        private GitVersion _gitVersion = default!;
-
-        private static AbsolutePath SourceDirectory => RootDirectory / "src";
-        private static AbsolutePath TestDirectory => RootDirectory / "test";
-        private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
-        private Project[] TestProjects => Solution.GetProjects("*.UTs").ToArray();
-
-        //private const string MASTER_BRANCH = "master";
-        private const string DEVELOP_BRANCH = "develop";
-
-        //private const string RELEASE_BRANCH_PREFIX = "release";
-        //private const string HOTFIX_BRANCH_PREFIX = "hotfix";
-
-        protected override void OnBuildInitialized()
-        {
-            base.OnBuildInitialized();
-            var resp = Git("rev-parse --is-shallow-repository");
-            if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
-            {
-                Logger.Info("Unshallowing the repository");
-                Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
-            }
-
-            Git("fetch --all --tags --quiet");
-            Environment.SetEnvironmentVariable("IGNORE_NORMALISATION_GIT_HEAD_MOVE", "1");
-            _gitVersion = GitVersionTasks
-                .GitVersion(s => s
-                    .SetNoFetch(false)
-                    .SetNoCache(true)
-                    .SetVerbosity(GitVersionVerbosity.debug)
-                    .SetFramework("net5.0")
-                    .DisableProcessLogOutput())
-                .Result;
+            Logger.Info("Unshallowing the repository");
+            Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
         }
 
-        public Target Clean => _ => _
-             .Before(Restore, Compile, Test, Publish)
-             .Executes(() =>
-             {
-                 if (!Debugger.IsAttached)
-                 {
-                     SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-                     TestDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-                 }
-                 EnsureCleanDirectory(ArtifactsDirectory);
-             });
+        Git("fetch --all --tags --quiet");
+        Environment.SetEnvironmentVariable("IGNORE_NORMALISATION_GIT_HEAD_MOVE", "1");
+        _gitVersion = GitVersionTasks
+            .GitVersion(s => s
+                .SetNoFetch(false)
+                .SetNoCache(true)
+                .SetVerbosity(GitVersionVerbosity.debug)
+                .SetFramework("net5.0")
+                .DisableProcessLogOutput())
+            .Result;
+    }
 
-        public Target Restore => _ => _
-             .Executes(() =>
-             {
-                 DotNetRestore(_ => _
-                     .SetProjectFile(Solution));
-             });
-
-        public Target Compile => _ => _
-             .DependsOn(Restore)
-             .Executes(() =>
-             {
-                 DotNetBuild(_ => _
-                     .SetProjectFile(Solution)
-                     .SetNoRestore(InvokedTargets.Contains(Restore))
-                     .SetConfiguration(Config)
-                     .SetProperty("Platform", "x64")
-                     .SetAssemblyVersion(_gitVersion.AssemblySemVer)
-                     .SetFileVersion(_gitVersion.AssemblySemFileVer)
-                     .SetInformationalVersion(_gitVersion.InformationalVersion)
-                     .EnableNoRestore());
-             });
-
-        public Target Test => _ => _
-             .DependsOn(Compile)
-             .OnlyWhenDynamic(() => TestProjects.Length > 0)
-             //.Produces(
-             //    ArtifactsDirectory / "*.trx",
-             //    ArtifactsDirectory / "*.xml")
-             .Executes(() =>
-             {
-                 DotNetTest(_ => _
-                     .SetNoRestore(InvokedTargets.Contains(Restore))
-                     .SetNoBuild(InvokedTargets.Contains(Compile))
-                     .SetConfiguration(Config)
-                     .SetProperty("Platform", "x64")
-                     .SetProperty("CollectCoverage", propertyValue: true)
-                     .SetProperty("CoverletOutputFormat", "opencover")
-                     //.SetProperty("ExcludeByFile", "*.Generated.cs")
-                     .SetResultsDirectory(ArtifactsDirectory)
-                     .CombineWith(TestProjects, (oo, testProj) => oo
-                         .SetProjectFile(testProj)
-                         .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
-                         //.SetLogger($"xunit;LogFileName={testProj.Name}.xml")
-                         .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
-                     degreeOfParallelism: TestProjects.Length,
-                     completeOnFailure: true);
-             });
-
-        public Target Coverage => _ => _
-             .TriggeredBy(Test)
-             .DependsOn(Test)
-             .Produces(ArtifactsDirectory / "coverage.zip")
-             .Executes(() =>
-             {
-                 ReportGenerator(_ => _
-                     .SetFramework("net5.0")
-                     .SetReports(ArtifactsDirectory / "*.xml")
-                     .SetReportTypes(ReportTypes.HtmlInline)
-                     .SetTargetDirectory(ArtifactsDirectory / "coverage"));
-
-                 if (ScheduledTargets.Contains(UploadCoveralls))
-                 {
-                     ReportGenerator(_ => _
-                         .SetFramework("net5.0")
-                         .SetReports(ArtifactsDirectory / "*.xml")
-                         .SetReportTypes(ReportTypes.Xml)
-                         .SetTargetDirectory(ArtifactsDirectory / "coveralls"));
-                 }
-
-                 CompressZip(
-                     directory: ArtifactsDirectory / "coverage",
-                     archiveFile: ArtifactsDirectory / "coverage.zip",
-                     fileMode: FileMode.Create);
-             });
-
-        public Target Publish => _ => _
-             .DependsOn(Compile, Test)
-             .After(Test)
-             .Produces(
-                 ArtifactsDirectory / "Demo.Engine.zip",
-                 ArtifactsDirectory / "Demo.Engine.win10-x64.zip")
-             .Executes(() =>
-             {
-                 //A runtime dependant version is also currently generated by default and exposed to CI artifacts
-                 PublishApp("Demo.Engine");
-
-                 //We generate a self contained, "one file", trimmed version for Windows 10 x64 by default
-                 //Any other can be generated as well, but aren't currently supported so aren't exposed to CI artifacts
-                 foreach (var rid in RIDs.Concat("win10-x64"))
-                 {
-                     PublishApp("Demo.Engine", rid);
-                 }
-             });
-
-        public Target UploadCoveralls => _ => _
-             .TriggeredBy(Test)
-             .DependsOn(Test, Coverage)
-             .OnlyWhenStatic(() => IsServerBuild || Debugger.IsAttached)
-             .OnlyWhenDynamic(() => GitHasCleanWorkingCopy())
-             .Requires(() => CoverallsToken)
-             .Requires(() => CoverallsJobID)
-             .Executes(() =>
-             {
-                 var gitShow = Git("show -s --format=%H%n%cN%n%ce%n%B");
-                 Assert(gitShow.Count >= 4, "wrong GIT show return!");
-
-                 var commitID = gitShow.ElementAt(0).Text;
-                 var authorName = gitShow.ElementAt(1).Text;
-                 var authorMail = gitShow.ElementAt(2).Text;
-
-                 var commitBody = string
-                     .Join(
-                         Environment.NewLine,
-                         gitShow
-                             .ToArray()[3..]
-                             .Select(o => o.Text))
-                     .Trim();
-
-                 CoverallsNet(toolSettings => toolSettings
-                     .SetDryRun(Debugger.IsAttached)
-                     .SetRepoToken(CoverallsToken)
-                     .SetUserRelativePaths(true)
-                     .SetCommitBranch(_gitRepository.Branch)
-                     .SetCommitId(commitID)
-                     .SetCommitAuthor(authorName)
-                     .SetCommitEmail(authorMail)
-                     .SetCommitMessage(commitBody)
-                     .SetInput(ArtifactsDirectory / "coveralls")
-                     .SetProcessArgumentConfigurator(argumentConfigurator =>
-                         argumentConfigurator
-                             .Add("--jobId")
-                             .Add(CoverallsJobID)
-                             .Add("--reportgenerator"))
-                     );
-             });
-
-        private void PublishApp(string projectName, string? rid = null)
+    public Target Clean => _ => _
+        .Before(Restore, Compile, Test, Publish)
+        .Executes(() =>
         {
-            AbsolutePath outputDir;
-            if (string.IsNullOrEmpty(rid))
+            if (!Debugger.IsAttached)
             {
-                outputDir = ArtifactsDirectory / projectName;
-                Logger.Info($"Publishing {projectName} into {outputDir}");
+                SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
+                TestDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
             }
-            else
-            {
-                outputDir = ArtifactsDirectory / $"{projectName}.{rid}";
-                Logger.Info($"Publishing {projectName} for {rid} into {outputDir}");
-            }
+            EnsureCleanDirectory(ArtifactsDirectory);
+        });
 
-            DotNetPublish(_ => _
-                        .SetProject(Solution.GetProject(projectName))
-                        .SetConfiguration(Config)
-                        .SetProperty("Platform", "x64")
-                        .SetAssemblyVersion(_gitVersion.AssemblySemVer)
-                        .SetFileVersion(_gitVersion.AssemblySemFileVer)
-                        .SetInformationalVersion(_gitVersion.InformationalVersion)
-                        .SetOutput(outputDir)
-                        .When(string.IsNullOrEmpty(rid), _ => _
-                            .SetNoRestore(InvokedTargets.Contains(Restore))
-                            .SetNoBuild(InvokedTargets.Contains(Compile)))
-                        .When(!string.IsNullOrEmpty(rid), _ => _
-                            .SetNoRestore(false)
-                            .SetNoBuild(false)
-                            .SetSelfContained(true)
-                            .SetProperty("PublishSingleFile", true)
-                            /*Trimming is unsupported by windows-forms and has been disabled for .NET 6.0!
-                             * https://github.com/dotnet/runtime/issues/58894
-                             * https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities
-                             * */
-                            .SetProperty("PublishTrimmed", false)
-                            .SetRuntime(rid)
-                            .SetProperty("PublishReadyToRun", true)));
+    public Target Restore => _ => _
+        .Executes(() =>
+        {
+            DotNetRestore(_ => _
+                .SetProjectFile(Solution));
+        });
+
+    public Target VerifyCodeFormat => _ => _
+        .Executes(() =>
+        {
+            DotNet("format -v n --verify-no-changes");
+            // For now we don't run dotnet format on build.
+            //DotNet("format -v n");
+        });
+
+    public Target Compile => _ => _
+        .DependsOn(Restore, VerifyCodeFormat)
+        .Executes(() =>
+        {
+            DotNetBuild(_ => _
+                .SetProjectFile(Solution)
+                .SetNoRestore(InvokedTargets.Contains(Restore))
+                .SetConfiguration(Config)
+                .SetProperty("Platform", "x64")
+                .SetAssemblyVersion(_gitVersion.AssemblySemVer)
+                .SetFileVersion(_gitVersion.AssemblySemFileVer)
+                .SetInformationalVersion(_gitVersion.InformationalVersion)
+                .EnableNoRestore());
+        });
+
+    public Target Test => _ => _
+        .DependsOn(Compile)
+        .OnlyWhenDynamic(() => TestProjects.Length > 0)
+        //.Produces(
+        //    ArtifactsDirectory / "*.trx",
+        //    ArtifactsDirectory / "*.xml")
+        .Executes(() =>
+        {
+            DotNetTest(_ => _
+                .SetNoRestore(InvokedTargets.Contains(Restore))
+                .SetNoBuild(InvokedTargets.Contains(Compile))
+                .SetConfiguration(Config)
+                .SetProperty("Platform", "x64")
+                .SetProperty("CollectCoverage", propertyValue: true)
+                .SetProperty("CoverletOutputFormat", "opencover")
+                //.SetProperty("ExcludeByFile", "*.Generated.cs")
+                .SetResultsDirectory(ArtifactsDirectory)
+                .CombineWith(TestProjects, (oo, testProj) => oo
+                    .SetProjectFile(testProj)
+                    .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
+                    //.SetLogger($"xunit;LogFileName={testProj.Name}.xml")
+                    .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
+                degreeOfParallelism: TestProjects.Length,
+                completeOnFailure: true);
+        });
+
+    public Target Coverage => _ => _
+        .TriggeredBy(Test)
+        .DependsOn(Test)
+        .Produces(ArtifactsDirectory / "coverage.zip")
+        .Executes(() =>
+        {
+            ReportGenerator(_ => _
+                .SetFramework("net5.0")
+                .SetReports(ArtifactsDirectory / "*.xml")
+                .SetReportTypes(ReportTypes.HtmlInline)
+                .SetTargetDirectory(ArtifactsDirectory / "coverage"));
+
+            if (ScheduledTargets.Contains(UploadCoveralls))
+            {
+                ReportGenerator(_ => _
+                    .SetFramework("net5.0")
+                    .SetReports(ArtifactsDirectory / "*.xml")
+                    .SetReportTypes(ReportTypes.Xml)
+                    .SetTargetDirectory(ArtifactsDirectory / "coveralls"));
+            }
 
             CompressZip(
-                directory: outputDir,
-                archiveFile: $"{outputDir}.zip",
-                compressionLevel: CompressionLevel.Optimal,
+                directory: ArtifactsDirectory / "coverage",
+                archiveFile: ArtifactsDirectory / "coverage.zip",
                 fileMode: FileMode.Create);
+        });
+
+    public Target Publish => _ => _
+        .DependsOn(Compile, Test)
+        .After(Test)
+        .Produces(
+            ArtifactsDirectory / "Demo.Engine.zip",
+            ArtifactsDirectory / "Demo.Engine.win10-x64.zip")
+        .Executes(() =>
+        {
+            //A runtime dependant version is also currently generated by default and exposed to CI artifacts
+            PublishApp("Demo.Engine");
+
+            //We generate a self contained, "one file", trimmed version for Windows 10 x64 by default
+            //Any other can be generated as well, but aren't currently supported so aren't exposed to CI artifacts
+            foreach (var rid in RIDs.Concat("win10-x64"))
+            {
+                PublishApp("Demo.Engine", rid);
+            }
+        });
+
+    public Target UploadCoveralls => _ => _
+        .TriggeredBy(Test)
+        .DependsOn(Test, Coverage)
+        .OnlyWhenStatic(() => IsServerBuild || Debugger.IsAttached)
+        .OnlyWhenDynamic(() => GitHasCleanWorkingCopy())
+        .Requires(() => CoverallsToken)
+        .Requires(() => CoverallsJobID)
+        .Executes(() =>
+        {
+            var gitShow = Git("show -s --format=%H%n%cN%n%ce%n%B");
+            Assert(gitShow.Count >= 4, "wrong GIT show return!");
+
+            var commitID = gitShow.ElementAt(0).Text;
+            var authorName = gitShow.ElementAt(1).Text;
+            var authorMail = gitShow.ElementAt(2).Text;
+
+            var commitBody = string
+                .Join(
+                    Environment.NewLine,
+                    gitShow
+                        .ToArray()[3..]
+                        .Select(o => o.Text))
+                .Trim();
+
+            CoverallsNet(toolSettings => toolSettings
+                .SetDryRun(Debugger.IsAttached)
+                .SetRepoToken(CoverallsToken)
+                .SetUserRelativePaths(true)
+                .SetCommitBranch(_gitRepository.Branch)
+                .SetCommitId(commitID)
+                .SetCommitAuthor(authorName)
+                .SetCommitEmail(authorMail)
+                .SetCommitMessage(commitBody)
+                .SetInput(ArtifactsDirectory / "coveralls")
+                .SetProcessArgumentConfigurator(argumentConfigurator =>
+                    argumentConfigurator
+                        .Add("--jobId")
+                        .Add(CoverallsJobID)
+                        .Add("--reportgenerator"))
+                );
+        });
+
+    private void PublishApp(string projectName, string? rid = null)
+    {
+        AbsolutePath outputDir;
+        if (string.IsNullOrEmpty(rid))
+        {
+            outputDir = ArtifactsDirectory / projectName;
+            Logger.Info($"Publishing {projectName} into {outputDir}");
+        }
+        else
+        {
+            outputDir = ArtifactsDirectory / $"{projectName}.{rid}";
+            Logger.Info($"Publishing {projectName} for {rid} into {outputDir}");
         }
 
-        public Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish).Unlisted();
+        DotNetPublish(_ => _
+                    .SetProject(Solution.GetProject(projectName))
+                    .SetConfiguration(Config)
+                    .SetProperty("Platform", "x64")
+                    .SetAssemblyVersion(_gitVersion.AssemblySemVer)
+                    .SetFileVersion(_gitVersion.AssemblySemFileVer)
+                    .SetInformationalVersion(_gitVersion.InformationalVersion)
+                    .SetOutput(outputDir)
+                    .When(string.IsNullOrEmpty(rid), _ => _
+                        .SetNoRestore(InvokedTargets.Contains(Restore))
+                        .SetNoBuild(InvokedTargets.Contains(Compile)))
+                    .When(!string.IsNullOrEmpty(rid), _ => _
+                        .SetNoRestore(false)
+                        .SetNoBuild(false)
+                        .SetSelfContained(true)
+                        .SetProperty("PublishSingleFile", true)
+                        /*Trimming is unsupported by windows-forms and has been disabled for .NET 6.0!
+                         * https://github.com/dotnet/runtime/issues/58894
+                         * https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities
+                         * */
+                        .SetProperty("PublishTrimmed", false)
+                        .SetRuntime(rid)
+                        .SetProperty("PublishReadyToRun", true)));
+
+        CompressZip(
+            directory: outputDir,
+            archiveFile: $"{outputDir}.zip",
+            compressionLevel: CompressionLevel.Optimal,
+            fileMode: FileMode.Create);
     }
+
+    public Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish).Unlisted();
 }

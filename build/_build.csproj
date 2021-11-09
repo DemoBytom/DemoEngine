@@ -6,7 +6,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <RootNamespace></RootNamespace>
     <IsPackable>False</IsPackable>
-    <NoWarn>CS0649;CS0169</NoWarn>
+    <NoWarn>CS0649;CS0169;CA1822</NoWarn>
     <NukeTelemetryVersion>1</NukeTelemetryVersion>
     <Platforms>x64</Platforms>
   </PropertyGroup>
