@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Linq;
 using Demo.Engine.Core.Components.Keyboard;
@@ -25,26 +28,23 @@ namespace Demo.Engine.Core.UTs.Components.Keyboard
             _mockKeyboardCache.SetupGet(o => o.KeysPressed).Returns(_keyboardCache);
         }
 
-        private KeyboardHandle CreateKeyboardHandle()
-        {
-            return new KeyboardHandle(
-                _mockKeyboardCache.Object);
-        }
+        private KeyboardHandle CreateKeyboardHandle() =>
+            new(_mockKeyboardCache.Object);
 
         [Fact]
         public void GetKeyPressed_Only_One_Pressed()
         {
             // Arrange
             var keyboardHandle = CreateKeyboardHandle();
-            const VirtualKeys testKey = VirtualKeys.Q;
+            const VirtualKeys TESTKEY = VirtualKeys.Q;
 
-            _keyboardCache.Span[(char)testKey] = true;
+            _keyboardCache.Span[(char)TESTKEY] = true;
 
             // Act
             foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
             {
                 var result = keyboardHandle.GetKeyPressed(key);
-                result.Should().Be(key == testKey, $"{key} is {result}");
+                result.Should().Be(key == TESTKEY, $"{key} is {result}");
             }
 
             // Assert

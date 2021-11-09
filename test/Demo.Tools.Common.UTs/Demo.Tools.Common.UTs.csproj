@@ -2,8 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-
     <IsPackable>false</IsPackable>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DefineConstants />
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,5 +34,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Demo.Tools.Common\Demo.Tools.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="D:\GIT\DemoEngine\test\Demo.Tools.Common.UTs\.editorconfig" />
   </ItemGroup>
 </Project>

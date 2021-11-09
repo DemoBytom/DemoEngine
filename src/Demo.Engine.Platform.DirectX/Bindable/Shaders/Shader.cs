@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Enums;
@@ -43,12 +46,17 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Shaders
             {
                 if (disposing)
                 {
+                    _shader.Dispose();
                 }
                 _disposedValue = true;
             }
         }
 
-        public void Dispose() => Dispose(disposing: true);
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
 
         #endregion IDisposable
     }

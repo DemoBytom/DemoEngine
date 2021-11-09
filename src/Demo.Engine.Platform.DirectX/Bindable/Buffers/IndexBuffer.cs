@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Vortice.Direct3D11;
 using Vortice.DXGI;

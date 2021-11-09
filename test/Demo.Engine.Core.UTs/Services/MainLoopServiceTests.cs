@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -37,8 +40,8 @@ namespace Demo.Engine.Core.UTs.Services
             _mockRenderingEngine = _mockRepository.Create<IRenderingEngine>();
         }
 
-        private MainLoopService CreateService() =>
-            new MainLoopService(
+        private MainLoopService CreateService()
+            => new(
                 _mockMediator.Object,
                 _mockHostApplicationLifetime.Object,
                 _mockOSMessageHandler.Object,

@@ -1,4 +1,8 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Vortice.Mathematics;
 
@@ -18,8 +22,8 @@ namespace Demo.Engine.Platform.DirectX
         public Vector3 Position { get; }
         public Color Color { get; }
 
-        public static readonly int SizeInBytes = Marshal.SizeOf<Vertex>();
-        public static readonly int PositionSizeInBytes = Marshal.SizeOf<Vector3>();
-        public static readonly int ColorSizeInBytes = Marshal.SizeOf<Color>();
+        public static readonly int SizeInBytes = Unsafe.SizeOf<Vertex>();
+        public static readonly int PositionSizeInBytes = Unsafe.SizeOf<Vector3>();
+        public static readonly int ColorSizeInBytes = Unsafe.SizeOf<Color>();
     }
 }

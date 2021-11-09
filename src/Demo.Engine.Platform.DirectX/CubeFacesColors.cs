@@ -1,4 +1,7 @@
-using System.Runtime.InteropServices;
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
+using System.Runtime.CompilerServices;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX
@@ -22,6 +25,6 @@ namespace Demo.Engine.Platform.DirectX
         public Color4 Face5 { get; }
         public Color4 Face6 { get; }
 
-        public static int SizeInBytes = Marshal.SizeOf<CubeFacesColors>();
+        public static readonly int SizeInBytes = Unsafe.SizeOf<CubeFacesColors>();
     }
 }

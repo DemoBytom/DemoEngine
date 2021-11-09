@@ -1,4 +1,8 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Demo.Tools.Common.Collections;
 using FluentAssertions;
 using Xunit;
@@ -153,6 +157,10 @@ namespace Demo.Tools.Common.UTs.Collections
         }
 
         [Fact]
+        [SuppressMessage(
+            "Performance",
+            "CA1806:Do not ignore method results",
+            Justification = "Test method testing the constructor creations")]
         public void Constructor_negative_capacity()
         {
             Action circQueue = () => new CircularQueue<int>(-2);

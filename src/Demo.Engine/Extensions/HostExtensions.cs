@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using Serilog;
 
 namespace Microsoft.Extensions.Hosting
@@ -20,11 +23,9 @@ namespace Microsoft.Extensions.Hosting
                 .WriteTo.Debug()
                 .CreateLogger();
             return hostBuilder
-                .ConfigureLogging((hostingContext, configLog) =>
-                {
+                .ConfigureLogging((_, configLog) =>
                     //configLog.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                    configLog.AddSerilog(Log.Logger);
-                });
+                    configLog.AddSerilog(Log.Logger));
         }
     }
 }

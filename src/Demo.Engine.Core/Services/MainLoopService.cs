@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,8 +49,8 @@ namespace Demo.Engine.Core.Services
                 throw new ArgumentNullException(nameof(renderCallback), "Render callback method cannot be null!");
             }
             //TODO proper main loop instead of simple while
-            var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest());
-            var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest());
+            var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
+            var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
 
             while (
                 _oSMessageHandler.DoEvents(_renderingEngine.Control)

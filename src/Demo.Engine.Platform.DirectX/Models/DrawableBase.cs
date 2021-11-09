@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,14 +20,14 @@ namespace Demo.Engine.Platform.DirectX.Models
         private bool _disposedValue;
         protected readonly ID3D11RenderingEngine _renderingEngine;
         private readonly Guid _drawableGuid;
-        private static readonly ReaderWriterLockSlim _lockSlim = new ReaderWriterLockSlim();
+        private static readonly ReaderWriterLockSlim _lockSlim = new();
         private static ReadOnlyCollection<IBindable>? _bindables;
 
         private static ReadOnlyDictionary<Type, IUpdatable>? _updatables;
 
-        private static readonly HashSet<Guid> _references = new HashSet<Guid>();
+        private static readonly HashSet<Guid> _references = new();
 
-        protected static int IndexCount { get; private set; } = int.MinValue;
+        protected static int? IndexCount { get; private set; }
 
         internal DrawableBase(
             ID3D11RenderingEngine renderingEngine,
@@ -33,21 +36,16 @@ namespace Demo.Engine.Platform.DirectX.Models
             _renderingEngine = renderingEngine;
             //Add reference
             _drawableGuid = Guid.NewGuid();
-            _lockSlim.EnterWriteLock();
-            try
+            _ = _lockSlim.EnterWriteLockBlock(() =>
             {
-                _references.Add(_drawableGuid);
+                _ = _references.Add(_drawableGuid);
                 if (_bindables?.Any() != true)
                 {
                     var (bindables, updatables) = DrawableBase<T>.BuildBindableUpdatableLists(func((T)this));
                     _bindables = bindables;
                     _updatables = updatables;
                 }
-            }
-            finally
-            {
-                _lockSlim.ExitWriteLock();
-            }
+            });
         }
 
         protected abstract void UpdateUpdatables();
@@ -72,7 +70,10 @@ namespace Demo.Engine.Platform.DirectX.Models
                 _renderingEngine.Control.DrawingArea.Height,
                 0, 1));
 
-            _renderingEngine.DeviceContext.DrawIndexed(IndexCount, 0, 0);
+            _renderingEngine.DeviceContext.DrawIndexed(
+                indexCount: IndexCount ?? throw new ArgumentException("No index buffer!"),
+                startIndexLocation: 0,
+                baseVertexLocation: 0);
         }
 
 #pragma warning disable RCS1158 // Static member in generic type should use a type parameter.
@@ -108,7 +109,7 @@ namespace Demo.Engine.Platform.DirectX.Models
                 }
                 if (bindable is IIndexBuffer ib)
                 {
-                    IndexCount = IndexCount == int.MinValue
+                    IndexCount = IndexCount is null
                         ? ib.IndexCount
                         : throw new ArgumentException("Cannot add multiple index buffers!");
                 }
@@ -125,14 +126,14 @@ namespace Demo.Engine.Platform.DirectX.Models
             {
                 if (disposing)
                 {
-                    _lockSlim.EnterUpgradableReadLockBlock(
+                    _ = _lockSlim.EnterUpgradableReadLockBlock(
                         lockSlim =>
                         {
                             if (!_references.Remove(_drawableGuid))
                             {
                                 throw new InvalidOperationException("Missing reference!");
                             }
-                            lockSlim.IfActionEnterWriteLockBlock(
+                            _ = lockSlim.IfActionEnterWriteLockBlock(
                                 () => _references.Count == 0,
                                 () =>
                                 {
@@ -143,10 +144,17 @@ namespace Demo.Engine.Platform.DirectX.Models
                                             disposable.Dispose();
                                         }
                                     }
+                                    if (_updatables is not null)
+                                    {
+                                        foreach (var disposable in _updatables.Values.OfType<IDisposable>())
+                                        {
+                                            disposable.Dispose();
+                                        }
+                                    }
 
                                     _bindables = null;
                                     _updatables = null;
-                                    IndexCount = int.MinValue;
+                                    IndexCount = null;
                                 });
                         });
                 }

@@ -1,4 +1,8 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Demo.Engine.Platform.DirectX
@@ -14,6 +18,6 @@ namespace Demo.Engine.Platform.DirectX
         public Matrix4x4 ModelToWorldMatrix { get; }
         public Matrix4x4 ViewProjectionMatrix { get; }
 
-        public static readonly int SizeInBytes = Marshal.SizeOf<MatricesBuffer>();
+        public static readonly int SizeInBytes = Unsafe.SizeOf<MatricesBuffer>();
     }
 }

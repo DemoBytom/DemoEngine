@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Text;
 using Demo.Engine.Core.Interfaces.Components;
@@ -12,7 +15,7 @@ namespace Demo.Engine.Core.Components.Keyboard
     /// </summary>
     public class KeyboardCharCache : IDisposable
     {
-        private readonly CircularQueue<char> _buffer = new CircularQueue<char>(16);
+        private readonly CircularQueue<char> _buffer = new(16);
         private readonly IKeyboardCache _keboardCache;
         private bool _disposedValue = false;
 
@@ -33,7 +36,7 @@ namespace Demo.Engine.Core.Components.Keyboard
             var sb = new StringBuilder();
             while (_buffer.TryDequeue(out var c))
             {
-                sb.Append(c);
+                _ = sb.Append(c);
             }
             return sb.ToString();
         }

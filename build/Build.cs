@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -106,10 +109,11 @@ namespace BuildScript
         private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         private Project[] TestProjects => Solution.GetProjects("*.UTs").ToArray();
 
-        private const string MASTER_BRANCH = "master";
+        //private const string MASTER_BRANCH = "master";
         private const string DEVELOP_BRANCH = "develop";
-        private const string RELEASE_BRANCH_PREFIX = "release";
-        private const string HOTFIX_BRANCH_PREFIX = "hotfix";
+
+        //private const string RELEASE_BRANCH_PREFIX = "release";
+        //private const string HOTFIX_BRANCH_PREFIX = "hotfix";
 
         protected override void OnBuildInitialized()
         {
@@ -133,7 +137,7 @@ namespace BuildScript
                 .Result;
         }
 
-        private Target Clean => _ => _
+        public Target Clean => _ => _
             .Before(Restore, Compile, Test, Publish)
             .Executes(() =>
             {
@@ -145,14 +149,14 @@ namespace BuildScript
                 EnsureCleanDirectory(ArtifactsDirectory);
             });
 
-        private Target Restore => _ => _
+        public Target Restore => _ => _
             .Executes(() =>
             {
                 DotNetRestore(_ => _
                     .SetProjectFile(Solution));
             });
 
-        private Target Compile => _ => _
+        public Target Compile => _ => _
             .DependsOn(Restore)
             .Executes(() =>
             {
@@ -160,13 +164,14 @@ namespace BuildScript
                     .SetProjectFile(Solution)
                     .SetNoRestore(InvokedTargets.Contains(Restore))
                     .SetConfiguration(Config)
+                    .SetProperty("Platform", "x64")
                     .SetAssemblyVersion(_gitVersion.AssemblySemVer)
                     .SetFileVersion(_gitVersion.AssemblySemFileVer)
                     .SetInformationalVersion(_gitVersion.InformationalVersion)
                     .EnableNoRestore());
             });
 
-        private Target Test => _ => _
+        public Target Test => _ => _
             .DependsOn(Compile)
             .OnlyWhenDynamic(() => TestProjects.Length > 0)
             //.Produces(
@@ -175,11 +180,12 @@ namespace BuildScript
             .Executes(() =>
             {
                 DotNetTest(_ => _
+                    .SetNoRestore(InvokedTargets.Contains(Restore))
+                    .SetNoBuild(InvokedTargets.Contains(Compile))
                     .SetConfiguration(Config)
-                        .SetNoRestore(InvokedTargets.Contains(Restore))
-                        .SetNoBuild(InvokedTargets.Contains(Compile))
-                        .SetProperty("CollectCoverage", propertyValue: true)
-                        .SetProperty("CoverletOutputFormat", "opencover")
+                    .SetProperty("Platform", "x64")
+                    .SetProperty("CollectCoverage", propertyValue: true)
+                    .SetProperty("CoverletOutputFormat", "opencover")
                     //.SetProperty("ExcludeByFile", "*.Generated.cs")
                     .SetResultsDirectory(ArtifactsDirectory)
                     .CombineWith(TestProjects, (oo, testProj) => oo
@@ -191,7 +197,7 @@ namespace BuildScript
                     completeOnFailure: true);
             });
 
-        private Target Coverage => _ => _
+        public Target Coverage => _ => _
             .TriggeredBy(Test)
             .DependsOn(Test)
             .Produces(ArtifactsDirectory / "coverage.zip")
@@ -218,7 +224,7 @@ namespace BuildScript
                     fileMode: FileMode.Create);
             });
 
-        private Target Publish => _ => _
+        public Target Publish => _ => _
             .DependsOn(Compile, Test)
             .After(Test)
             .Produces(
@@ -237,7 +243,7 @@ namespace BuildScript
                 }
             });
 
-        private Target UploadCoveralls => _ => _
+        public Target UploadCoveralls => _ => _
             .TriggeredBy(Test)
             .DependsOn(Test, Coverage)
             .OnlyWhenStatic(() => IsServerBuild || Debugger.IsAttached)
@@ -296,6 +302,7 @@ namespace BuildScript
             DotNetPublish(_ => _
                         .SetProject(Solution.GetProject(projectName))
                         .SetConfiguration(Config)
+                        .SetProperty("Platform", "x64")
                         .SetAssemblyVersion(_gitVersion.AssemblySemVer)
                         .SetFileVersion(_gitVersion.AssemblySemFileVer)
                         .SetInformationalVersion(_gitVersion.InformationalVersion)
@@ -309,7 +316,8 @@ namespace BuildScript
                             .SetSelfContained(true)
                             .SetProperty("PublishSingleFile", true)
                             .SetProperty("PublishTrimmed", true)
-                            .SetRuntime(rid)));
+                            .SetRuntime(rid)
+                            .SetProperty("PublishReadyToRun", true)));
 
             CompressZip(
                 directory: outputDir,
@@ -318,6 +326,6 @@ namespace BuildScript
                 fileMode: FileMode.Create);
         }
 
-        private Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish).Unlisted();
+        public Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish).Unlisted();
     }
 }

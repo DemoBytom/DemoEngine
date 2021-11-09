@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Interfaces.Components;
@@ -16,10 +19,7 @@ namespace Demo.Engine.Core.Components.Keyboard.Internal
     {
         private readonly IKeyboardCache _keyboardCache;
 
-        public KeyboardHandler(IKeyboardCache keyboardCache)
-        {
-            _keyboardCache = keyboardCache;
-        }
+        public KeyboardHandler(IKeyboardCache keyboardCache) => _keyboardCache = keyboardCache;
 
         /// <summary>
         /// OnKeyUp/OnKeyDown

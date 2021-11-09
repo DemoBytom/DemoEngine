@@ -1,5 +1,10 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
@@ -34,26 +39,36 @@ namespace Demo.Engine
                 var hostBuilder = new HostBuilder()
                     .CreateDefault(args)
                     .WithSerilog()
-                    .ConfigureServices((hostContext, services) =>
+                    .UseServiceProviderFactory(new AutofacServiceProviderFactory())
+                    .ConfigureServices((hostContext, services)
+                    =>
                     {
-                        services.AddHostedService<EngineService>();
-                        services.Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)));
-                        services.AddSingleton<IKeyboardCache, KeyboardCache>();
-                        services.AddScoped<
+                        _ = services
+                        .AddHostedService<EngineService>()
+                        .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
+                        .AddSingleton<IKeyboardCache, KeyboardCache>()
+                        .AddScoped<
                             ID3D11RenderingEngine,
                             IRenderingEngine,
-                            D3D11RenderingEngine>();
-                        services.AddScoped<IMainLoopService, MainLoopService>();
+                            D3D11RenderingEngine>()
+                        .AddScoped<IMainLoopService, MainLoopService>()
                         /*** Windows Only ***/
-                        services.AddTransient<IRenderingControl, RenderingForm>();
-                        services.AddScoped<IOSMessageHandler, WindowsMessagesHandler>();
-                        services.AddTransient<IShaderCompiler, ShaderCompiler>();
+                        .AddTransient<IRenderingControl, RenderingForm>()
+                        .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
+                        .AddTransient<IShaderCompiler, ShaderCompiler>()
                         //tmp
-                        services.AddTransient<ICube, Cube>();
+                        //.AddTransient<ICube, Cube>()
                         /*** End Windows Only ***/
-                        services.AddMediatR(
+                        .AddMediatR(
                             typeof(KeyboardHandler).Assembly);
-                    });
+
+                        _ = services.AddOptions();
+                    })
+                    .ConfigureContainer<ContainerBuilder>(builder
+                        => builder
+                            .RegisterType<Cube>()
+                            .As<ICube>()
+                            .ExternallyOwned());
 
                 var host = hostBuilder.Build();
 

@@ -8,6 +8,11 @@
     <IsPackable>False</IsPackable>
     <NoWarn>CS0649;CS0169</NoWarn>
     <NukeTelemetryVersion>1</NukeTelemetryVersion>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

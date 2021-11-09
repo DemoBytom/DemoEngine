@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -53,7 +56,7 @@ namespace Demo.Engine.Platform.DirectX
                 throw new InvalidOperationException("Cannot create {IDXGIFactory1} instance!");
             }
 
-            D3D11.D3D11CreateDevice(
+            _ = D3D11.D3D11CreateDevice(
                 IntPtr.Zero,
                 DriverType.Hardware,
                 DeviceCreationFlags.BgraSupport | DeviceCreationFlags.Debug,
@@ -186,7 +189,11 @@ namespace Demo.Engine.Platform.DirectX
 
         #region IDisposable Support
 
-        void IDisposable.Dispose() => Dispose(true);
+        void IDisposable.Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         protected virtual void Dispose(bool disposing)
         {
@@ -209,7 +216,7 @@ namespace Demo.Engine.Platform.DirectX
                     _swapChain?.GetFullscreenState(out fullscreen);
                     if (fullscreen == true)
                     {
-                        _swapChain?.SetFullscreenState(false);
+                        _ = _swapChain?.SetFullscreenState(false);
                     }
 
                     _swapChain?.Dispose();

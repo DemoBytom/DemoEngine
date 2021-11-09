@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System.Numerics;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
@@ -14,7 +17,7 @@ namespace Demo.Engine.Platform.DirectX.Models
 {
     public class Cube : DrawableBase<Cube>, ICube
     {
-        private MatricesBuffer _matricesBuffer = new MatricesBuffer(Matrix4x4.Identity, Matrix4x4.Identity);
+        private MatricesBuffer _matricesBuffer = new(Matrix4x4.Identity, Matrix4x4.Identity);
 
         private readonly Vertex[] _cubeVertices = new Vertex[]
         {
@@ -76,21 +79,21 @@ namespace Demo.Engine.Platform.DirectX.Models
                 new[]
                 {
                     new InputElementDescription(
-                        "position",
-                        0,
-                        Format.R32G32B32_Float,
-                        0,
-                        0,
-                        InputClassification.PerVertexData,
-                        0),
+                        semanticName: "position",
+                        semanticIndex: 0,
+                        format: Format.R32G32B32_Float,
+                        offset: 0,
+                        slot: 0,
+                        slotClass: InputClassification.PerVertexData,
+                        stepRate: 0),
                     new InputElementDescription(
-                        "color",
-                        0,
-                        Format.R8G8B8A8_UNorm,
-                        Vertex.PositionSizeInBytes,
-                        0,
-                        InputClassification.PerVertexData,
-                        0)
+                        semanticName: "color",
+                        semanticIndex: 0,
+                        format: Format.R8G8B8A8_UNorm,
+                        offset: Vertex.PositionSizeInBytes,
+                        slot: 0,
+                        slotClass: InputClassification.PerVertexData,
+                        stepRate: 0)
                 }, vertexShader.CompiledShader);
 
             var colors = new CubeFacesColors(

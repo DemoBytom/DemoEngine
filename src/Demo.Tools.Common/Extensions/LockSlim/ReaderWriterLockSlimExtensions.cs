@@ -1,3 +1,6 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
 using System;
 using System.Threading;
 
@@ -62,7 +65,7 @@ namespace Demo.Tools.Common.Extensions.LockSlim
             //Check if you should enter write lock
             if (ifFunc())
             {
-                lockSlim.EnterWriteLockBlock(() =>
+                _ = lockSlim.EnterWriteLockBlock(() =>
                 {
                     //Check the requirement again, in rare case that value
                     //changed between if and successfully entering the lock
