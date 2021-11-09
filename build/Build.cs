@@ -315,7 +315,11 @@ namespace BuildScript
                             .SetNoBuild(false)
                             .SetSelfContained(true)
                             .SetProperty("PublishSingleFile", true)
-                            .SetProperty("PublishTrimmed", true)
+                            /*Trimming is unsupported by windows-forms and has been disabled for .NET 6.0!
+                             * https://github.com/dotnet/runtime/issues/58894
+                             * https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities
+                             * */
+                            .SetProperty("PublishTrimmed", false)
                             .SetRuntime(rid)
                             .SetProperty("PublishReadyToRun", true)));
 

@@ -12,6 +12,7 @@ trim_trailing_whitespace = true
 indent_style             = space
 insert_final_newline     = false
 tab_width                = unset
+csharp_style_namespace_declarations=file_scoped:silent
 [*.{json,xml,csproj,props}]
 indent_size              = 2
 [*.md]
