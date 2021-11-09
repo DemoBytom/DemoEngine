@@ -56,6 +56,7 @@ namespace Demo.Engine
                         .AddTransient<IRenderingControl, RenderingForm>()
                         .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
                         .AddTransient<IShaderCompiler, ShaderCompiler>()
+                        .AddTransient<IDebugLayerLogger, DebugLayerLogger>()
                         //tmp
                         //.AddTransient<ICube, Cube>()
                         /*** End Windows Only ***/
@@ -63,6 +64,12 @@ namespace Demo.Engine
                             typeof(KeyboardHandler).Assembly);
 
                         _ = services.AddOptions();
+
+                        _ = services
+                            .AddSingleton(x =>
+                                new CompiledVS("Shaders/Triangle/TriangleVS.hlsl", x.GetRequiredService<IShaderCompiler>()))
+                            .AddSingleton(x =>
+                                new CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
                     })
                     .ConfigureContainer<ContainerBuilder>(builder
                         => builder

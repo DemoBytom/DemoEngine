@@ -3,11 +3,11 @@
 
 using System.Numerics;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Platform.DirectX.Bindable;
 using Demo.Engine.Platform.DirectX.Bindable.Buffers;
 using Demo.Engine.Platform.DirectX.Bindable.Shaders;
 using Demo.Engine.Platform.DirectX.Interfaces;
+using Demo.Engine.Platform.DirectX.Shaders;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
@@ -45,22 +45,27 @@ namespace Demo.Engine.Platform.DirectX.Models
 
         public Cube(
             ID3D11RenderingEngine renderingEngine,
-            IShaderCompiler shaderCompiler) :
+            CompiledVS compiledVS,
+            CompiledPS compiledPS) :
             base(
                 renderingEngine,
-                t => t.PrepareBindables(shaderCompiler))
+                t => t.PrepareBindables(compiledVS, compiledPS))
         {
         }
 
-        private IBindable[] PrepareBindables(IShaderCompiler shaderCompiler)
+        private IBindable[] PrepareBindables(
+            CompiledVS compiledVS,
+            CompiledPS compiledPS)
         {
             var vertexShader = new VertexShader(
-                "Shaders/Triangle/TriangleVS.hlsl",
-                shaderCompiler,
+                //"Shaders/Triangle/TriangleVS.hlsl",
+                //shaderCompiler,
+                compiledVS,
                 _renderingEngine);
             var pixelShader = new PixelShader(
-                "Shaders/Triangle/TrianglePS.hlsl",
-                shaderCompiler,
+                //"Shaders/Triangle/TrianglePS.hlsl",
+                //shaderCompiler,
+                compiledPS,
                 _renderingEngine);
 
             //VertexBuffer
@@ -72,7 +77,7 @@ namespace Demo.Engine.Platform.DirectX.Models
             //IndexBuffer
             var indexBuffer = new IndexBuffer<ushort>(
                 _renderingEngine,
-                _triangleIndices,
+                in _triangleIndices,
                 sizeof(ushort));
             var inputLayout = new InputLayout(
                 _renderingEngine,

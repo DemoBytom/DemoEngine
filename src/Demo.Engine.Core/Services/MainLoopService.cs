@@ -19,6 +19,7 @@ namespace Demo.Engine.Core.Services
         private readonly IHostApplicationLifetime _applicationLifetime;
         private readonly IOSMessageHandler _oSMessageHandler;
         private readonly IRenderingEngine _renderingEngine;
+        private readonly IDebugLayerLogger _debugLayerLogger;
         private readonly IMediator _mediator;
 
         public bool IsRunning { get; private set; }
@@ -27,11 +28,13 @@ namespace Demo.Engine.Core.Services
             IMediator mediator,
             IHostApplicationLifetime applicationLifetime,
             IOSMessageHandler oSMessageHandler,
-            IRenderingEngine renderingEngine)
+            IRenderingEngine renderingEngine,
+            IDebugLayerLogger debugLayerLogger)
         {
             _applicationLifetime = applicationLifetime;
             _oSMessageHandler = oSMessageHandler;
             _renderingEngine = renderingEngine;
+            _debugLayerLogger = debugLayerLogger;
             _mediator = mediator;
         }
 
@@ -48,6 +51,7 @@ namespace Demo.Engine.Core.Services
             {
                 throw new ArgumentNullException(nameof(renderCallback), "Render callback method cannot be null!");
             }
+
             //TODO proper main loop instead of simple while
             var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
             var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
@@ -63,6 +67,8 @@ namespace Demo.Engine.Core.Services
                     keyboardHandle,
                     keyboardCharCache);
                 await renderCallback(_renderingEngine);
+
+                _debugLayerLogger.LogMessages();
             }
             IsRunning = false;
         }

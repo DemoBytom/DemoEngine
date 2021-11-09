@@ -15,7 +15,7 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
 
         public IndexBuffer(
             ID3D11RenderingEngine renderingEngine,
-            T[] data,
+            in T[] data,
             int sizeInBytes,
             Format format = Format.R16_UInt)
             : base(

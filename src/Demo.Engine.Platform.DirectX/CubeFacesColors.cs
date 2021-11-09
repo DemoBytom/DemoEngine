@@ -2,10 +2,12 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX
 {
+    [StructLayout(LayoutKind.Sequential)]
     public readonly struct CubeFacesColors
     {
         public CubeFacesColors(Color4 face1, Color4 face2, Color4 face3, Color4 face4, Color4 face5, Color4 face6)

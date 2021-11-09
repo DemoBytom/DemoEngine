@@ -12,7 +12,7 @@ trim_trailing_whitespace = true
 indent_style             = space
 insert_final_newline     = false
 tab_width                = unset
-csharp_style_namespace_declarations=file_scoped:silent
+
 [*.{json,xml,csproj,props}]
 indent_size              = 2
 [*.md]
@@ -65,6 +65,33 @@ dotnet_style_prefer_simplified_boolean_expressions                       = true:
 dotnet_style_prefer_simplified_interpolation                             = true:suggestion
 
 ## C# code style settings
+csharp_style_namespace_declarations                                      = file_scoped:silent
+csharp_space_before_comma                                                = false
+csharp_space_before_dot                                                  = false
+csharp_space_before_semicolon_in_for_statement                           = false
+csharp_space_between_square_brackets                                     = false
+csharp_space_between_empty_square_brackets                               = false
+csharp_space_before_open_square_brackets                                 = false
+csharp_space_around_declaration_statements                               = false
+csharp_space_between_method_declaration_name_and_open_parenthesis        = false
+csharp_indent_braces                                                     = false
+csharp_indent_block_contents                                             = true
+dotnet_style_operator_placement_when_wrapping                            = beginning_of_line
+csharp_space_after_comma                                                 = true
+csharp_space_after_dot                                                   = false
+csharp_space_after_semicolon_in_for_statement                            = true
+dotnet_style_namespace_match_folder                                      = true:suggestion
+csharp_prefer_static_local_function                                      = true:suggestion
+dotnet_style_allow_multiple_blank_lines_experimental                     = true:silent
+dotnet_style_allow_statement_immediately_after_block_experimental        = true:silent
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental   = true:silent
+csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental=true:silent
+csharp_style_implicit_object_creation_when_type_is_apparent              = true:suggestion
+csharp_style_prefer_null_check_over_type_check                           = true:suggestion
+csharp_style_allow_embedded_statements_on_same_line_experimental         = true:silent
+csharp_space_around_declaration_statements                               = ignore
+csharp_space_before_open_square_brackets                                 = false
+
 # Implicit and explicit types
 csharp_style_var_for_built_in_types                                      = true:suggestion
 csharp_style_var_when_type_is_apparent                                   = true:suggestion

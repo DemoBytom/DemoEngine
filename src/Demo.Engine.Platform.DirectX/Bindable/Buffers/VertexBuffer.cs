@@ -13,11 +13,11 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
 
         public VertexBuffer(
             ID3D11RenderingEngine renderingEngine,
-            T[] data,
+            in T[] data,
             int sizeInBytes)
             : base(
                 renderingEngine,
-                data,
+                in data,
                 new BufferDescription
                 {
                     Usage = ResourceUsage.Default,

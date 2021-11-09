@@ -7,6 +7,7 @@ using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Enums;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D;
+using Compiler = Vortice.D3DCompiler.Compiler;
 
 namespace Demo.Engine.Platform.DirectX.Shaders
 {
@@ -29,7 +30,7 @@ namespace Demo.Engine.Platform.DirectX.Shaders
             Blob? errorBlob = null;
             try
             {
-                var compileResult = Vortice.D3DCompiler.Compiler.Compile(
+                var compileResult = Compiler.Compile(
                     shader,
                     entryPoint,
                     filename,
@@ -59,5 +60,35 @@ namespace Demo.Engine.Platform.DirectX.Shaders
             ShaderStage.ComputeShader => "cs",
             _ => string.Empty,
         };
+    }
+
+    public record CompiledS
+    {
+        public CompiledS(ReadOnlyMemory<byte> compiledShader)
+            => CompiledShader = compiledShader;
+        public ReadOnlyMemory<byte> CompiledShader { get; }
+    }
+    public record CompiledVS : CompiledS
+    {
+        public CompiledVS(
+            string path,
+            IShaderCompiler shaderCompiler)
+            : base(shaderCompiler.CompileShader(
+                path,
+                ShaderStage.VertexShader))
+        {
+        }
+    }
+
+    public record CompiledPS : CompiledS
+    {
+        public CompiledPS(
+            string path,
+            IShaderCompiler shaderCompiler)
+            : base(shaderCompiler.CompileShader(
+                path,
+                ShaderStage.PixelShader))
+        {
+        }
     }
 }

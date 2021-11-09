@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Demo.Engine.Core.Components.Keyboard;
+using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
@@ -29,6 +30,7 @@ namespace Demo.Engine.Core.UTs.Services
         private readonly Mock<IHostApplicationLifetime> _mockHostApplicationLifetime;
         private readonly Mock<IOSMessageHandler> _mockOSMessageHandler;
         private readonly Mock<IRenderingEngine> _mockRenderingEngine;
+        private readonly Mock<IDebugLayerLogger> _mockDebugLayer;
 
         public MainLoopServiceTests()
         {
@@ -38,6 +40,7 @@ namespace Demo.Engine.Core.UTs.Services
             _mockHostApplicationLifetime = _mockRepository.Create<IHostApplicationLifetime>();
             _mockOSMessageHandler = _mockRepository.Create<IOSMessageHandler>();
             _mockRenderingEngine = _mockRepository.Create<IRenderingEngine>();
+            _mockDebugLayer = _mockRepository.Create<IDebugLayerLogger>(MockBehavior.Loose);
         }
 
         private MainLoopService CreateService()
@@ -45,7 +48,8 @@ namespace Demo.Engine.Core.UTs.Services
                 _mockMediator.Object,
                 _mockHostApplicationLifetime.Object,
                 _mockOSMessageHandler.Object,
-                _mockRenderingEngine.Object);
+                _mockRenderingEngine.Object,
+                _mockDebugLayer.Object);
 
         [Fact]
         public void RunAsync_Throws_On_UpdateCallback_Null()

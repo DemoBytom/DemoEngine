@@ -23,18 +23,25 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers
             _buffer = _renderingEngine.Device.CreateBuffer(
                 ref data,
                 bufferDescription);
+
+            SetDebugName(bufferDescription);
         }
 
         protected Buffer(
             ID3D11RenderingEngine renderingEngine,
-            T[] data,
+            in T[] data,
             BufferDescription bufferDescription)
         {
             _renderingEngine = renderingEngine;
             _buffer = _renderingEngine.Device.CreateBuffer(
                 data,
                 bufferDescription);
+
+            SetDebugName(bufferDescription);
         }
+
+        private void SetDebugName(BufferDescription bufferDescription) =>
+            _buffer.DebugName = $"[{GetType().Name}_{bufferDescription.SizeInBytes}b] {Guid.NewGuid()}";
 
         /// <summary>
         /// Method that binds the buffer (and it's resources) to the rendering pipeline

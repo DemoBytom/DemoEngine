@@ -38,11 +38,11 @@ namespace Demo.Engine.Core.Services
         {
             using var scope = _scopeFactory.CreateScope();
             _sp = scope.ServiceProvider;
-            _drawables = new[]
+            _drawables = Array.Empty<ICube>(); /* new[]
             {
                     scope.ServiceProvider.GetRequiredService<ICube>(),
-                    scope.ServiceProvider.GetRequiredService<ICube>()
-                };
+                    //scope.ServiceProvider.GetRequiredService<ICube>()
+            };*/
             var mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
 
             await mainLoop.RunAsync(
@@ -56,6 +56,7 @@ namespace Demo.Engine.Core.Services
 
         private float _sin = 0.0f;
 
+        //private bool _dontCreate = false;
         private Task Update(
             KeyboardHandle keyboardHandle,
             KeyboardCharCache keyboardCharCache)
@@ -111,12 +112,13 @@ namespace Demo.Engine.Core.Services
 
                 _drawables = Array.Empty<ICube>();
             }
-            else if (_drawables.Length < 2 && _sp is not null)
+            else if (_drawables.Length < 2 && _sp is not null /*&& _dontCreate == false*/)
             {
                 _drawables = new List<ICube>(_drawables)
                 {
                     _sp.GetRequiredService<ICube>()
                 }.ToArray();
+                //_dontCreate = true;
             }
 
             //Share the rainbow
