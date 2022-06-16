@@ -7,23 +7,22 @@ using System.Numerics;
 using Demo.Engine.Core.Interfaces.Platform;
 using Vortice.Mathematics;
 
-namespace Demo.Engine.Core.Interfaces.Rendering
+namespace Demo.Engine.Core.Interfaces.Rendering;
+
+public interface IRenderingEngine : IDisposable
 {
-    public interface IRenderingEngine : IDisposable
-    {
-        IRenderingControl Control { get; }
+    IRenderingControl Control { get; }
 
-        void BeginScene(Color4 color);
+    void BeginScene(Color4 color);
 
-        bool EndScene();
+    bool EndScene();
 
-        void BeginScene();
+    void BeginScene();
 
-        void Draw(IEnumerable<IDrawable> drawables);
+    void Draw(IEnumerable<IDrawable> drawables);
 
-        /// <summary>
-        /// Temporary untill we have a proper Camera class
-        /// </summary>
-        Matrix4x4 ViewProjectionMatrix { get; }
-    }
+    /// <summary>
+    /// Temporary untill we have a proper Camera class
+    /// </summary>
+    Matrix4x4 ViewProjectionMatrix { get; }
 }

@@ -96,7 +96,8 @@
               "Release",
               "Restore",
               "Test",
-              "UploadCoveralls"
+              "UploadCoveralls",
+              "VerifyCodeFormat"
             ]
           }
         },
@@ -120,7 +121,8 @@
               "Release",
               "Restore",
               "Test",
-              "UploadCoveralls"
+              "UploadCoveralls",
+              "VerifyCodeFormat"
             ]
           }
         },

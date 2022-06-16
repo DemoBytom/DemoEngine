@@ -3,9 +3,8 @@
 
 using MediatR;
 
-namespace Demo.Engine.Core.Notifications.Keyboard
+namespace Demo.Engine.Core.Notifications.Keyboard;
+
+public class ClearKeysNotification : INotification
 {
-    public class ClearKeysNotification : INotification
-    {
-    }
 }

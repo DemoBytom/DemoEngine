@@ -5,7 +5,7 @@
       "environmentVariables": {
         "DEMOENGINE_ENVIRONMENT": "development"
       },
-      "nativeDebugging": true
+      "nativeDebugging": false
     }
   }
 }

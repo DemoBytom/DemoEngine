@@ -10,72 +10,71 @@ using FluentAssertions;
 using Moq;
 using Xunit;
 
-namespace Demo.Engine.Core.UTs.Components.Keyboard
+namespace Demo.Engine.Core.UTs.Components.Keyboard;
+
+public class KeyboardHandleTests
 {
-    public class KeyboardHandleTests
+    private readonly MockRepository _mockRepository;
+
+    private readonly Mock<IKeyboardCache> _mockKeyboardCache;
+    private readonly Memory<bool> _keyboardCache;
+
+    public KeyboardHandleTests()
     {
-        private readonly MockRepository _mockRepository;
+        _mockRepository = new MockRepository(MockBehavior.Strict);
 
-        private readonly Mock<IKeyboardCache> _mockKeyboardCache;
-        private readonly Memory<bool> _keyboardCache;
+        _mockKeyboardCache = _mockRepository.Create<IKeyboardCache>();
+        _keyboardCache = Enumerable.Repeat(false, 256).ToArray().AsMemory();
+        _mockKeyboardCache.SetupGet(o => o.KeysPressed).Returns(_keyboardCache);
+    }
 
-        public KeyboardHandleTests()
+    private KeyboardHandle CreateKeyboardHandle() =>
+        new(_mockKeyboardCache.Object);
+
+    [Fact]
+    public void GetKeyPressed_Only_One_Pressed()
+    {
+        // Arrange
+        var keyboardHandle = CreateKeyboardHandle();
+        const VirtualKeys TESTKEY = VirtualKeys.Q;
+
+        _keyboardCache.Span[(char)TESTKEY] = true;
+
+        // Act
+        foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
         {
-            _mockRepository = new MockRepository(MockBehavior.Strict);
-
-            _mockKeyboardCache = _mockRepository.Create<IKeyboardCache>();
-            _keyboardCache = Enumerable.Repeat(false, 256).ToArray().AsMemory();
-            _mockKeyboardCache.SetupGet(o => o.KeysPressed).Returns(_keyboardCache);
+            var result = keyboardHandle.GetKeyPressed(key);
+            result.Should().Be(key == TESTKEY, $"{key} is {result}");
         }
 
-        private KeyboardHandle CreateKeyboardHandle() =>
-            new(_mockKeyboardCache.Object);
+        // Assert
+        _mockRepository.VerifyAll();
+    }
 
-        [Fact]
-        public void GetKeyPressed_Only_One_Pressed()
-        {
-            // Arrange
-            var keyboardHandle = CreateKeyboardHandle();
-            const VirtualKeys TESTKEY = VirtualKeys.Q;
-
-            _keyboardCache.Span[(char)TESTKEY] = true;
-
-            // Act
-            foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
-            {
-                var result = keyboardHandle.GetKeyPressed(key);
-                result.Should().Be(key == TESTKEY, $"{key} is {result}");
-            }
-
-            // Assert
-            _mockRepository.VerifyAll();
-        }
-
-        [Fact]
-        public void GetKeyPressed_Multiple_Keys_Pressed()
-        {
-            // Arrange
-            var keyboardHandle = CreateKeyboardHandle();
-            var testKeys = new[]{
+    [Fact]
+    public void GetKeyPressed_Multiple_Keys_Pressed()
+    {
+        // Arrange
+        var keyboardHandle = CreateKeyboardHandle();
+        var testKeys = new[]{
                 VirtualKeys.Q,
                 VirtualKeys.W,
                 VirtualKeys.ShiftKey
             };
 
-            foreach (var key in testKeys)
-            {
-                _keyboardCache.Span[(char)key] = true;
-            }
-
-            // Act
-            foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
-            {
-                var result = keyboardHandle.GetKeyPressed(key);
-                result.Should().Be(testKeys.Contains(key), $"{key} is {result}");
-            }
-
-            // Assert
-            _mockRepository.VerifyAll();
+        foreach (var key in testKeys)
+        {
+            _keyboardCache.Span[(char)key] = true;
         }
+
+        // Act
+        foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
+        {
+            var result = keyboardHandle.GetKeyPressed(key);
+            result.Should().Be(testKeys.Contains(key), $"{key} is {result}");
+        }
+
+        // Assert
+        _mockRepository.VerifyAll();
     }
 }
