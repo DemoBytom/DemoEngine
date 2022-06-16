@@ -56,7 +56,7 @@ internal static class Program
                     .AddTransient<IRenderingControl, RenderingForm>()
                     .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
                     .AddTransient<IShaderCompiler, ShaderCompiler>()
-                    .AddTransient<IDebugLayerLogger, DebugLayerLogger>()
+                    .AddScoped<IDebugLayerLogger, DebugLayerLogger>()
                     //tmp
                     //.AddTransient<ICube, Cube>()
                     /*** End Windows Only ***/

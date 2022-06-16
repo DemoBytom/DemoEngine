@@ -23,7 +23,6 @@ public interface IDebugLayerLogger
     /// </summary>
     /// <param name="readFrom">Position in the queue from which reading should begin</param>
     /// <returns>List of messages or empty array</returns>
-
     public DebugLayerMessage[] ReadMessages(ulong readFrom = 0);
 
     /// <summary>
