@@ -106,11 +106,11 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
                 _formSettings.CurrentValue.Width,
                 _formSettings.CurrentValue.Height,
                 Format.B8G8R8A8_UNorm),
-            IsWindowed = true,
+            Windowed = true,
             OutputWindow = Control.Handle,
             SampleDescription = new SampleDescription(1, 0),
             SwapEffect = SwapEffect.FlipDiscard,
-            Usage = Usage.RenderTargetOutput,
+            BufferUsage = Usage.RenderTargetOutput,
             Flags = isTearingSupported
                 ? SwapChainFlags.AllowTearing
                 : SwapChainFlags.None,

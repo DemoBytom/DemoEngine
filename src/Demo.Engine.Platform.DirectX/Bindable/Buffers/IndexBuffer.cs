@@ -25,10 +25,10 @@ public class IndexBuffer<T> : Buffer<T>, IIndexBuffer
             {
                 Usage = ResourceUsage.Default,
                 BindFlags = BindFlags.IndexBuffer,
-                OptionFlags = ResourceOptionFlags.None,
-                CpuAccessFlags = CpuAccessFlags.None,
+                MiscFlags = ResourceOptionFlags.None,
+                CPUAccessFlags = CpuAccessFlags.None,
                 StructureByteStride = sizeInBytes,
-                SizeInBytes = data.Length * sizeInBytes,
+                ByteWidth = data.Length * sizeInBytes,
             })
     {
         _format = format;

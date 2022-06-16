@@ -18,19 +18,13 @@ public abstract class Shader<TShaderType> : IBindable, IDisposable
 
     protected Shader(
         CompiledS compiledS,
-        Func<ID3D11Device, (IntPtr shaderPointer, int shaderLen), TShaderType> func,
+        Func<ID3D11Device, CompiledS, TShaderType> func,
         ID3D11RenderingEngine renderingEngine)
     {
         CompiledShader = compiledS.CompiledShader;
         _renderingEngine = renderingEngine;
 
-        unsafe
-        {
-            fixed (byte* ptr = CompiledShader.Span)
-            {
-                _shader = func(_renderingEngine.Device, ((IntPtr)ptr, CompiledShader.Length));
-            }
-        }
+        _shader = func(_renderingEngine.Device, compiledS);
 
         _shader.DebugName = $"[{GetType().Name}_{CompiledShader.Length}b {Guid.NewGuid()}";
     }

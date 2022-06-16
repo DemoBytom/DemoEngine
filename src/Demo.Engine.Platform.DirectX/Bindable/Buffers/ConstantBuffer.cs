@@ -19,10 +19,10 @@ public abstract class ConstantBuffer<T> : Buffer<T>, IUpdatable<T>
         {
             Usage = ResourceUsage.Dynamic,
             BindFlags = BindFlags.ConstantBuffer,
-            OptionFlags = ResourceOptionFlags.None,
-            CpuAccessFlags = CpuAccessFlags.Write,
+            MiscFlags = ResourceOptionFlags.None,
+            CPUAccessFlags = CpuAccessFlags.Write,
             StructureByteStride = 0,
-            SizeInBytes = Unsafe.SizeOf<T>(),
+            ByteWidth = Unsafe.SizeOf<T>(),
         })
     {
     }

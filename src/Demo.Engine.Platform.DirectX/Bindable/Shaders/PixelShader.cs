@@ -14,7 +14,7 @@ public class PixelShader : Shader<ID3D11PixelShader>
         ID3D11RenderingEngine renderingEngine)
         : base(
             compiledS,
-            (device, shader) => device.CreatePixelShader(shader.shaderPointer, shader.shaderLen),
+            (device, shader) => device.CreatePixelShader(shader.CompiledShader.Span),
             renderingEngine)
     {
     }

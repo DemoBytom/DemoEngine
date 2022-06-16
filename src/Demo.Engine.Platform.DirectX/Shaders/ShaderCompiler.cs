@@ -40,8 +40,8 @@ public class ShaderCompiler : IShaderCompiler
                 );
 
             return compileResult.Failure
-                ? throw new Exception(errorBlob?.ConvertToString())
-                : blob.GetBytes().AsMemory();
+                ? throw new Exception(errorBlob?.AsString())
+                : blob.AsBytes().AsMemory();
         }
         finally
         {

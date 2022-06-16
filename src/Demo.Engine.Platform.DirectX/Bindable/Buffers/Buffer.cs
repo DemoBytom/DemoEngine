@@ -21,7 +21,7 @@ public abstract class Buffer<T> : IBindable, IDisposable
     {
         _renderingEngine = renderingEngine;
         _buffer = _renderingEngine.Device.CreateBuffer(
-            ref data,
+            data,
             bufferDescription);
 
         SetDebugName(bufferDescription);
@@ -29,7 +29,7 @@ public abstract class Buffer<T> : IBindable, IDisposable
 
     protected Buffer(
         ID3D11RenderingEngine renderingEngine,
-        in T[] data,
+        ReadOnlySpan<T> data,
         BufferDescription bufferDescription)
     {
         _renderingEngine = renderingEngine;
@@ -41,7 +41,7 @@ public abstract class Buffer<T> : IBindable, IDisposable
     }
 
     private void SetDebugName(BufferDescription bufferDescription) =>
-        _buffer.DebugName = $"[{GetType().Name}_{bufferDescription.SizeInBytes}b] {Guid.NewGuid()}";
+        _buffer.DebugName = $"[{GetType().Name}_{bufferDescription.ByteWidth}b] {Guid.NewGuid()}";
 
     /// <summary>
     /// Method that binds the buffer (and it's resources) to the rendering pipeline

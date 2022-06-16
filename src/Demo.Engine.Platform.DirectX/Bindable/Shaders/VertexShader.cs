@@ -13,8 +13,8 @@ public class VertexShader : Shader<ID3D11VertexShader>
         CompiledVS compiledVS,
         ID3D11RenderingEngine renderingEngine)
         : base(
-              compiledVS,
-            (device, shader) => device.CreateVertexShader(shader.shaderPointer, shader.shaderLen),
+            compiledVS,
+            (device, shader) => device.CreateVertexShader(shader.CompiledShader.Span),
             renderingEngine)
     {
     }

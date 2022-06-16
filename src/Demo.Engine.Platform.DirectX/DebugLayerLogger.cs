@@ -59,7 +59,7 @@ public sealed class DebugLayerLogger : IDebugLayerLogger, IDisposable
                 "[{@category}:{@id}] {@description}",
                     message.Category.ToString(),
                     ((MessageId)message.Id).ToString(),
-                    UnterminateString(message.DescriptionPointer));
+                    UnterminateString(message.Description));
         }
         _dxgiInfoQueue?.ClearStoredMessages(_dxgiDebugGuid);
     }
@@ -75,7 +75,7 @@ public sealed class DebugLayerLogger : IDebugLayerLogger, IDisposable
         {
             var message = _dxgiInfoQueue!.GetMessage(_dxgiDebugGuid, i);
 
-            var msg = UnterminateString(message.DescriptionPointer);
+            var msg = UnterminateString(message.Description);
 
             messages[i] = new(
                 Category: message.Category.ToString(),
