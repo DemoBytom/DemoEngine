@@ -1,12 +1,8 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Demo.Tools.Common.Extensions.LockSlim;

@@ -1,7 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
 using System.Text;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Requests.Keyboard;

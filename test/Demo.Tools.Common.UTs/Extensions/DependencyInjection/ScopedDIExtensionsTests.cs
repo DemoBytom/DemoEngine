@@ -1,7 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System.Threading;
 using Demo.Tools.Common.Extensions.DependencyInjection;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,9 +57,11 @@ public class ScopedDIExtensionsTests
         counter.ConstructedNo.Should().Be(1);
     }
 
-    public interface Foo1 { }
+    public interface Foo1
+    { }
 
-    public interface Foo2 { }
+    public interface Foo2
+    { }
 
     public class Bar : Foo1, Foo2
     {

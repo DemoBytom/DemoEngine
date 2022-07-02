@@ -1,8 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
-using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Demo.Engine.Core.Components.Keyboard.Internal;
@@ -25,73 +23,62 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
-namespace Demo.Engine;
-
-internal static class Program
+try
 {
-    /// <summary>
-    /// The main entry point for the application.
-    /// </summary>
-    private static async Task<int> Main(string[] args)
-    {
-        try
+    var hostBuilder = new HostBuilder()
+        .CreateDefault(args)
+        .WithSerilog()
+        .UseServiceProviderFactory(new AutofacServiceProviderFactory())
+        .ConfigureServices((hostContext, services)
+        =>
         {
-            var hostBuilder = new HostBuilder()
-                .CreateDefault(args)
-                .WithSerilog()
-                .UseServiceProviderFactory(new AutofacServiceProviderFactory())
-                .ConfigureServices((hostContext, services)
-                =>
-                {
-                    _ = services
-                    .AddHostedService<EngineService>()
-                    .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
-                    .AddSingleton<IKeyboardCache, KeyboardCache>()
-                    .AddScoped<
-                        ID3D11RenderingEngine,
-                        IRenderingEngine,
-                        D3D11RenderingEngine>()
-                    .AddScoped<IMainLoopService, MainLoopService>()
-                    /*** Windows Only ***/
-                    .AddTransient<IRenderingControl, RenderingForm>()
-                    .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
-                    .AddTransient<IShaderCompiler, ShaderCompiler>()
-                    .AddScoped<IDebugLayerLogger, DebugLayerLogger>()
-                    //tmp
-                    //.AddTransient<ICube, Cube>()
-                    /*** End Windows Only ***/
-                    .AddMediatR(
-                        typeof(KeyboardHandler).Assembly);
+            _ = services
+            .AddHostedService<EngineService>()
+            .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
+            .AddSingleton<IKeyboardCache, KeyboardCache>()
+            .AddScoped<
+                ID3D11RenderingEngine,
+                IRenderingEngine,
+                D3D11RenderingEngine>()
+            .AddScoped<IMainLoopService, MainLoopService>()
+            /*** Windows Only ***/
+            .AddTransient<IRenderingControl, RenderingForm>()
+            .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
+            .AddTransient<IShaderCompiler, ShaderCompiler>()
+            .AddScoped<IDebugLayerLogger, DebugLayerLogger>()
+            //tmp
+            //.AddTransient<ICube, Cube>()
+            /*** End Windows Only ***/
+            .AddMediatR(
+                typeof(KeyboardHandler).Assembly);
 
-                    _ = services.AddOptions();
+            _ = services.AddOptions();
 
-                    _ = services
-                        .AddSingleton(x =>
-                            new CompiledVS("Shaders/Triangle/TriangleVS.hlsl", x.GetRequiredService<IShaderCompiler>()))
-                        .AddSingleton(x =>
-                            new CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
-                })
-                .ConfigureContainer<ContainerBuilder>(builder
-                    => builder
-                        .RegisterType<Cube>()
-                        .As<ICube>()
-                        .ExternallyOwned());
+            _ = services
+                .AddSingleton(x =>
+                    new CompiledVS("Shaders/Triangle/TriangleVS.hlsl", x.GetRequiredService<IShaderCompiler>()))
+                .AddSingleton(x =>
+                    new CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
+        })
+        .ConfigureContainer<ContainerBuilder>(builder
+            => builder
+                .RegisterType<Cube>()
+                .As<ICube>()
+                .ExternallyOwned());
 
-            var host = hostBuilder.Build();
+    var host = hostBuilder.Build();
 
-            await host.RunAsync();
-        }
-        catch (Exception ex)
-        {
-            //log fatal
-            Log.Fatal(ex, "FATAL ERROR!");
-            return -1;
-        }
-        finally
-        {
-            Log.CloseAndFlush();
-        }
-
-        return 0;
-    }
+    await host.RunAsync();
 }
+catch (Exception ex)
+{
+    //log fatal
+    Log.Fatal(ex, "FATAL ERROR!");
+    return -1;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
+
+return 0;

@@ -1,9 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
 using Microsoft.Extensions.Logging;

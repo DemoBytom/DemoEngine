@@ -1,9 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;

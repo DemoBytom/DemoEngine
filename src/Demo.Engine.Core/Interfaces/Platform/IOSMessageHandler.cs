@@ -1,8 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
-
 namespace Demo.Engine.Core.Interfaces.Platform;
 
 public interface IOSMessageHandler

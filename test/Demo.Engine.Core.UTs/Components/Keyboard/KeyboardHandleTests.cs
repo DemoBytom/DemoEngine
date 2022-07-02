@@ -1,8 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
-using System.Linq;
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Platform;

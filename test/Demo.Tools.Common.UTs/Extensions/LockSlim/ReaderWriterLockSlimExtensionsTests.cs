@@ -1,11 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Demo.Tools.Common.Extensions.LockSlim;
 using FluentAssertions;
 using Xunit;

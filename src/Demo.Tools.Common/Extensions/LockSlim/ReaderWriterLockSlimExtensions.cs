@@ -1,9 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
-using System.Threading;
-
 namespace Demo.Tools.Common.Extensions.LockSlim;
 
 public static class ReaderWriterLockSlimExtensions
