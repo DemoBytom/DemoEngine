@@ -159,7 +159,7 @@ internal partial class Build : NukeBuild
     public Target VerifyCodeFormat => _ => _
         .Executes(() =>
         {
-            DotNet("format -v n --verify-no-changes");
+            DotNet("format -v n --verify-no-changes --exclude \".\\src\\Demo.Engine\\Program.cs\"");
             // For now we don't run dotnet format on build.
             //DotNet("format -v n");
         });
