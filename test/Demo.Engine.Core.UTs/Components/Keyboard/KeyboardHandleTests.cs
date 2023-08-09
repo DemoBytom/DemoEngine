@@ -5,29 +5,25 @@ using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Platform;
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Demo.Engine.Core.UTs.Components.Keyboard;
 
 public class KeyboardHandleTests
 {
-    private readonly MockRepository _mockRepository;
-
-    private readonly Mock<IKeyboardCache> _mockKeyboardCache;
+    private readonly IKeyboardCache _mockKeyboardCache;
     private readonly Memory<bool> _keyboardCache;
 
     public KeyboardHandleTests()
     {
-        _mockRepository = new MockRepository(MockBehavior.Strict);
-
-        _mockKeyboardCache = _mockRepository.Create<IKeyboardCache>();
+        _mockKeyboardCache = Substitute.For<IKeyboardCache>();
         _keyboardCache = Enumerable.Repeat(false, 256).ToArray().AsMemory();
-        _mockKeyboardCache.SetupGet(o => o.KeysPressed).Returns(_keyboardCache);
+        _mockKeyboardCache.KeysPressed.Returns(_keyboardCache);
     }
 
     private KeyboardHandle CreateKeyboardHandle() =>
-        new(_mockKeyboardCache.Object);
+        new KeyboardHandle(_mockKeyboardCache);
 
     [Fact]
     public void GetKeyPressed_Only_One_Pressed()
@@ -46,7 +42,7 @@ public class KeyboardHandleTests
         }
 
         // Assert
-        _mockRepository.VerifyAll();
+        _ = _mockKeyboardCache.Received().KeysPressed;
     }
 
     [Fact]
@@ -73,6 +69,6 @@ public class KeyboardHandleTests
         }
 
         // Assert
-        _mockRepository.VerifyAll();
+        _ = _mockKeyboardCache.Received().KeysPressed;
     }
 }

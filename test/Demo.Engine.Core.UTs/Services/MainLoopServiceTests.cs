@@ -13,7 +13,7 @@ using Demo.Engine.Core.Services;
 using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Hosting;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Demo.Engine.Core.UTs.Services;
@@ -21,32 +21,28 @@ namespace Demo.Engine.Core.UTs.Services;
 [SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "unit tests don't need those")]
 public class MainLoopServiceTests
 {
-    private readonly MockRepository _mockRepository;
-
-    private readonly Mock<IMediator> _mockMediator;
-    private readonly Mock<IHostApplicationLifetime> _mockHostApplicationLifetime;
-    private readonly Mock<IOSMessageHandler> _mockOSMessageHandler;
-    private readonly Mock<IRenderingEngine> _mockRenderingEngine;
-    private readonly Mock<IDebugLayerLogger> _mockDebugLayer;
+    private readonly IMediator _mockMediator;
+    private readonly IHostApplicationLifetime _mockHostApplicationLifetime;
+    private readonly IOSMessageHandler _mockOSMessageHandler;
+    private readonly IRenderingEngine _mockRenderingEngine;
+    private readonly IDebugLayerLogger _mockDebugLayer;
 
     public MainLoopServiceTests()
     {
-        _mockRepository = new MockRepository(MockBehavior.Strict);
-
-        _mockMediator = _mockRepository.Create<IMediator>();
-        _mockHostApplicationLifetime = _mockRepository.Create<IHostApplicationLifetime>();
-        _mockOSMessageHandler = _mockRepository.Create<IOSMessageHandler>();
-        _mockRenderingEngine = _mockRepository.Create<IRenderingEngine>();
-        _mockDebugLayer = _mockRepository.Create<IDebugLayerLogger>(MockBehavior.Loose);
+        _mockMediator = Substitute.For<IMediator>();
+        _mockHostApplicationLifetime = Substitute.For<IHostApplicationLifetime>();
+        _mockOSMessageHandler = Substitute.For<IOSMessageHandler>();
+        _mockRenderingEngine = Substitute.For<IRenderingEngine>();
+        _mockDebugLayer = Substitute.For<IDebugLayerLogger>();
     }
 
     private MainLoopService CreateService()
-        => new(
-            _mockMediator.Object,
-            _mockHostApplicationLifetime.Object,
-            _mockOSMessageHandler.Object,
-            _mockRenderingEngine.Object,
-            _mockDebugLayer.Object);
+        => new MainLoopService(
+            _mockMediator,
+            _mockHostApplicationLifetime,
+            _mockOSMessageHandler,
+            _mockRenderingEngine,
+            _mockDebugLayer);
 
     [Fact]
     public void RunAsync_Throws_On_UpdateCallback_Null()
@@ -56,6 +52,7 @@ public class MainLoopServiceTests
 
         CancellationToken cancellationToken = default;
         static Task RenderCallback(IRenderingEngine _) => Task.CompletedTask;
+
         // Act
         Func<Task> func = () => service.RunAsync(
             null!,
@@ -64,7 +61,6 @@ public class MainLoopServiceTests
 
         // Assert
         func.Should().ThrowAsync<ArgumentNullException>();
-        _mockRepository.VerifyAll();
     }
 
     [Fact]
@@ -75,6 +71,7 @@ public class MainLoopServiceTests
 
         CancellationToken cancellationToken = default;
         static Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __) => Task.CompletedTask;
+
         // Act
         Func<Task> func = () => service.RunAsync(
             UpdateCallback,
@@ -83,7 +80,6 @@ public class MainLoopServiceTests
 
         // Assert
         func.Should().ThrowAsync<ArgumentNullException>();
-        _mockRepository.VerifyAll();
     }
 
     [Fact]
@@ -98,26 +94,30 @@ public class MainLoopServiceTests
         static Task RenderCallback(IRenderingEngine _) => Task.CompletedTask;
         static Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __) => Task.CompletedTask;
 
-        _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardCharCacheRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardCharCache(new Mock<IKeyboardCache>().Object));
+        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
+        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
+        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
 
         _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardHandleRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardHandle(new Mock<IKeyboardCache>().Object));
+            .Send(
+                Arg.Any<KeyboardCharCacheRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardCache);
 
-        var renderingControllMock = new Mock<IRenderingControl>();
-        _mockRenderingEngine
-            .SetupGet(o => o.Control)
-            .Returns(renderingControllMock.Object);
+        _mockMediator
+            .Send(
+                Arg.Any<KeyboardHandleRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardHandle);
 
-        _mockOSMessageHandler
-            .Setup(o => o.DoEvents(renderingControllMock.Object))
-            .Returns(true);
+        var renderingControlMock = Substitute.For<IRenderingControl>();
+        _mockRenderingEngine.Control.Returns(renderingControlMock);
 
-        _mockHostApplicationLifetime
-            .Setup(o => o.ApplicationStopping)
-            .Returns(new CancellationToken());
+        _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
+
+        _mockHostApplicationLifetime.ApplicationStopping.Returns(new CancellationToken());
 
         // Act
         var sw = Stopwatch.StartNew();
@@ -128,11 +128,10 @@ public class MainLoopServiceTests
         sw.Stop();
 
         // Assert
-        //We let it have a bit of a leeway
+        // We let it have a bit of a leeway
         sw.Elapsed.TotalSeconds.Should().BeInRange(
             TimeSpan.FromSeconds(4.9).TotalSeconds,
             TimeSpan.FromSeconds(5.9).TotalSeconds);
-        _mockRepository.VerifyAll();
     }
 
     [Fact]
@@ -154,27 +153,30 @@ public class MainLoopServiceTests
 
             return Task.CompletedTask;
         }
+        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
+        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
+        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
 
         _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardCharCacheRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardCharCache(new Mock<IKeyboardCache>().Object));
+            .Send(
+                Arg.Any<KeyboardCharCacheRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardCache);
 
         _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardHandleRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardHandle(new Mock<IKeyboardCache>().Object));
+            .Send(
+                Arg.Any<KeyboardHandleRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardHandle);
 
-        var renderingControllMock = new Mock<IRenderingControl>();
-        _mockRenderingEngine
-            .SetupGet(o => o.Control)
-            .Returns(renderingControllMock.Object);
+        var renderingControlMock = Substitute.For<IRenderingControl>();
+        _mockRenderingEngine.Control.Returns(renderingControlMock);
 
-        _mockOSMessageHandler
-            .Setup(o => o.DoEvents(renderingControllMock.Object))
-            .Returns(true);
+        _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
 
-        _mockHostApplicationLifetime
-            .Setup(o => o.ApplicationStopping)
-            .Returns(new CancellationToken());
+        _mockHostApplicationLifetime.ApplicationStopping.Returns(new CancellationToken());
 
         // Act
         await service.RunAsync(
@@ -184,7 +186,6 @@ public class MainLoopServiceTests
 
         // Assert
         iUpdate.Should().Be(6);
-        _mockRepository.VerifyAll();
     }
 
     [Fact]
@@ -208,26 +209,30 @@ public class MainLoopServiceTests
             return Task.CompletedTask;
         }
 
-        _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardCharCacheRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardCharCache(new Mock<IKeyboardCache>().Object));
+        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
+        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
+        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
 
         _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardHandleRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardHandle(new Mock<IKeyboardCache>().Object));
+            .Send(
+                Arg.Any<KeyboardCharCacheRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardCache);
 
-        var renderingControllMock = new Mock<IRenderingControl>();
-        _mockRenderingEngine
-            .SetupGet(o => o.Control)
-            .Returns(renderingControllMock.Object);
+        _mockMediator
+            .Send(
+                Arg.Any<KeyboardHandleRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardHandle);
 
-        _mockOSMessageHandler
-            .Setup(o => o.DoEvents(renderingControllMock.Object))
-            .Returns(true);
+        var renderingControlMock = Substitute.For<IRenderingControl>();
+        _mockRenderingEngine.Control.Returns(renderingControlMock);
 
-        _mockHostApplicationLifetime
-            .Setup(o => o.ApplicationStopping)
-            .Returns(appLifetimeCTS.Token);
+        _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
+
+        _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
 
         // Act
         await service.RunAsync(
@@ -237,7 +242,6 @@ public class MainLoopServiceTests
 
         // Assert
         iUpdate.Should().Be(6);
-        _mockRepository.VerifyAll();
     }
 
     [Fact]
@@ -264,26 +268,30 @@ public class MainLoopServiceTests
             return Task.CompletedTask;
         }
 
-        _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardCharCacheRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardCharCache(new Mock<IKeyboardCache>().Object));
+        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
+        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
+        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
 
         _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardHandleRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardHandle(new Mock<IKeyboardCache>().Object));
+            .Send(
+                Arg.Any<KeyboardCharCacheRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardCache);
 
-        var renderingControllMock = new Mock<IRenderingControl>();
-        _mockRenderingEngine
-            .SetupGet(o => o.Control)
-            .Returns(renderingControllMock.Object);
+        _mockMediator
+            .Send(
+                Arg.Any<KeyboardHandleRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardHandle);
 
-        _mockOSMessageHandler
-            .Setup(o => o.DoEvents(renderingControllMock.Object))
-            .Returns(true);
+        var renderingControlMock = Substitute.For<IRenderingControl>();
+        _mockRenderingEngine.Control.Returns(renderingControlMock);
 
-        _mockHostApplicationLifetime
-            .Setup(o => o.ApplicationStopping)
-            .Returns(appLifetimeCTS.Token);
+        _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
+
+        _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
 
         // Act
         await service.RunAsync(
@@ -294,7 +302,6 @@ public class MainLoopServiceTests
         // Assert
         iUpdate.Should().BeGreaterThan(0);
         iRender.Should().BeGreaterThan(0);
-        _mockRepository.VerifyAll();
     }
 
     [Fact]
@@ -315,26 +322,30 @@ public class MainLoopServiceTests
             return Task.CompletedTask;
         }
 
-        _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardCharCacheRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardCharCache(new Mock<IKeyboardCache>().Object));
+        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
+        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
+        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
 
         _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardHandleRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardHandle(new Mock<IKeyboardCache>().Object));
+            .Send(
+                Arg.Any<KeyboardCharCacheRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardCache);
 
-        var renderingControllMock = new Mock<IRenderingControl>();
-        _mockRenderingEngine
-            .SetupGet(o => o.Control)
-            .Returns(renderingControllMock.Object);
+        _mockMediator
+            .Send(
+                Arg.Any<KeyboardHandleRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardHandle);
 
-        _mockOSMessageHandler
-            .Setup(o => o.DoEvents(renderingControllMock.Object))
-            .Returns(() => iUpdate <= 5);
+        var renderingControlMock = Substitute.For<IRenderingControl>();
+        _mockRenderingEngine.Control.Returns(renderingControlMock);
 
-        _mockHostApplicationLifetime
-            .Setup(o => o.ApplicationStopping)
-            .Returns(appLifetimeCTS.Token);
+        _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(_ => iUpdate <= 5);
+
+        _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
 
         // Act
         await service.RunAsync(
@@ -344,7 +355,6 @@ public class MainLoopServiceTests
 
         // Assert
         iUpdate.Should().Be(6);
-        _mockRepository.VerifyAll();
     }
 
     [Fact]
@@ -365,26 +375,30 @@ public class MainLoopServiceTests
             return Task.CompletedTask;
         }
 
-        _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardCharCacheRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardCharCache(new Mock<IKeyboardCache>().Object));
+        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
+        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
+        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
 
         _mockMediator
-            .Setup(o => o.Send(It.IsAny<KeyboardHandleRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new KeyboardHandle(new Mock<IKeyboardCache>().Object));
+            .Send(
+                Arg.Any<KeyboardCharCacheRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardCache);
 
-        var renderingControllMock = new Mock<IRenderingControl>();
-        _mockRenderingEngine
-            .SetupGet(o => o.Control)
-            .Returns(renderingControllMock.Object);
+        _mockMediator
+            .Send(
+                Arg.Any<KeyboardHandleRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(
+                keyboardHandle);
 
-        _mockOSMessageHandler
-            .Setup(o => o.DoEvents(renderingControllMock.Object))
-            .Returns(true);
+        var renderingControlMock = Substitute.For<IRenderingControl>();
+        _mockRenderingEngine.Control.Returns(renderingControlMock);
 
-        _mockHostApplicationLifetime
-            .Setup(o => o.ApplicationStopping)
-            .Returns(appLifetimeCTS.Token);
+        _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
+
+        _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
 
         // Act
         service.IsRunning.Should().BeFalse();
@@ -395,7 +409,5 @@ public class MainLoopServiceTests
 
         // Assert
         service.IsRunning.Should().BeFalse();
-
-        _mockRepository.VerifyAll();
     }
 }
