@@ -22,7 +22,7 @@ using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.ReportGenerator;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
-using static Nuke.Common.ControlFlow;
+using Serilog;
 using static Nuke.Common.IO.CompressionTasks;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
@@ -49,7 +49,7 @@ namespace BuildScript;
             nameof(Test),
             nameof(Publish)
     },
-    ImportGitHubTokenAs = nameof(GitHubToken),
+    EnableGitHubContext = true,
     ImportSecrets = new[]
     {
             nameof(CoverallsToken)
@@ -79,9 +79,6 @@ internal partial class Build : NukeBuild
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     public readonly string Config = IsLocalBuild ? "debug" : "release";
-
-    [Parameter("GitHub token")]
-    public readonly string GitHubToken = string.Empty;
 
     [Parameter("Self contained application rids")]
     public readonly string[] RIDs = Array.Empty<string>();
@@ -121,7 +118,7 @@ internal partial class Build : NukeBuild
         var resp = Git("rev-parse --is-shallow-repository");
         if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
         {
-            Logger.Info("Unshallowing the repository");
+            Log.Information("Unshallowing the repository");
             Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
         }
 
@@ -261,7 +258,7 @@ internal partial class Build : NukeBuild
         .Executes(() =>
         {
             var gitShow = Git("show -s --format=%H%n%cN%n%ce%n%B");
-            Assert(gitShow.Count >= 4, "wrong GIT show return!");
+            Assert.True(gitShow.Count >= 4, "wrong GIT show return!");
 
             var commitID = gitShow.ElementAt(0).Text;
             var authorName = gitShow.ElementAt(1).Text;
@@ -299,12 +296,12 @@ internal partial class Build : NukeBuild
         if (string.IsNullOrEmpty(rid))
         {
             outputDir = ArtifactsDirectory / projectName;
-            Logger.Info($"Publishing {projectName} into {outputDir}");
+            Log.Information($"Publishing {projectName} into {outputDir}");
         }
         else
         {
             outputDir = ArtifactsDirectory / $"{projectName}.{rid}";
-            Logger.Info($"Publishing {projectName} for {rid} into {outputDir}");
+            Log.Information($"Publishing {projectName} for {rid} into {outputDir}");
         }
 
         DotNetPublish(_ => _

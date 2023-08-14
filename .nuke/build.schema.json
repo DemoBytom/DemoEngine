@@ -22,10 +22,6 @@
           "type": "string",
           "description": "Coveralls token"
         },
-        "GitHubToken": {
-          "type": "string",
-          "description": "GitHub token"
-        },
         "Help": {
           "type": "boolean",
           "description": "Shows the help text for this build assembly"

@@ -3,6 +3,7 @@
 
 using Nuke.Common;
 using Nuke.Common.Git;
+using Serilog;
 using static Nuke.Common.ChangeLog.ChangelogTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
 
@@ -39,7 +40,7 @@ internal partial class Build
         {
             var isRelease = _gitRepository.IsOnReleaseBranch();
             var clean = GitHasCleanWorkingCopy();
-            Logger.Info($"isRelease {isRelease}, clean {clean}");
+            Log.Information($"isRelease {isRelease}, clean {clean}");
         });
 
     public Target FinishFeature => _ => _
