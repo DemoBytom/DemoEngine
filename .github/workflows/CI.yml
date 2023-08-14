@@ -5,7 +5,7 @@
 #
 #     - To turn off auto-generation set:
 #
-#         [GitHubActionsV2 (AutoGenerate = false)]
+#         [GitHubActions (AutoGenerate = false)]
 #
 #     - To trigger manual generation invoke:
 #
@@ -26,7 +26,6 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          lfs: true
       - name: Cache .nuke/temp, ~/.nuget/packages
         uses: actions/cache@v2
         with:
@@ -38,16 +37,16 @@ jobs:
         run: ./build.cmd Clean Compile Test Publish
         env:
           CoverallsToken: ${{ secrets.COVERALLS_TOKEN }}
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-      - uses: actions/upload-artifact@v2
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v1
         with:
           name: coverage.zip
           path: artifacts/coverage.zip
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v1
         with:
           name: Demo.Engine.zip
           path: artifacts/Demo.Engine.zip
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v1
         with:
           name: Demo.Engine.win10-x64.zip
           path: artifacts/Demo.Engine.win10-x64.zip

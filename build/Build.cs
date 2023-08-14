@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using BuildExtensions;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Execution;
@@ -33,27 +32,27 @@ using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 
 namespace BuildScript;
 
-[CheckBuildProjectConfigurations]
 [UnsetVisualStudioEnvironmentVariables]
-[GitHubActionsV2(
+[GitHubActions(
     "CI",
     GitHubActionsImage.WindowsLatest,
     On = new[]
     {
-            GitHubActionsTrigger.Push
+        GitHubActionsTrigger.Push
     },
     InvokedTargets = new[]
     {
-            nameof(Clean),
-            nameof(Compile),
-            nameof(Test),
-            nameof(Publish)
+        nameof(Clean),
+        nameof(Compile),
+        nameof(Test),
+        nameof(Publish)
     },
     EnableGitHubToken = true,
     ImportSecrets = new[]
     {
-            nameof(CoverallsToken)
-    })]
+        nameof(CoverallsToken)
+    },
+    FetchDepth = 0)]
 internal partial class Build : NukeBuild
 {
     /* Install Global Tool
