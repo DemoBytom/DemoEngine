@@ -49,7 +49,7 @@ namespace BuildScript;
             nameof(Test),
             nameof(Publish)
     },
-    EnableGitHubContext = true,
+    EnableGitHubToken = true,
     ImportSecrets = new[]
     {
             nameof(CoverallsToken)
