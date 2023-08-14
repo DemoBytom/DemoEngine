@@ -76,7 +76,7 @@ internal partial class Build : NukeBuild
     public static int Main() => Execute<Build>(x => x.Publish);
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    public readonly string Config = IsLocalBuild ? "debug" : "release";
+    public readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
     [Parameter("Self contained application rids")]
     public readonly string[] RIDs = Array.Empty<string>();
@@ -95,8 +95,6 @@ internal partial class Build : NukeBuild
     [Solution] public readonly Solution Solution = default!;
     [GitRepository] private readonly GitRepository _gitRepository = default!;
 
-    //[GitVersion] private readonly GitVersion _gitVersion = default!;
-    //[GitVersion(Framework = "net5.0", NoFetch = true)]
     private GitVersion _gitVersion = default!;
 
     private static AbsolutePath SourceDirectory => RootDirectory / "src";
@@ -117,22 +115,22 @@ internal partial class Build : NukeBuild
         if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
         {
             Log.Information("Unshallowing the repository");
-            Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
+            _ = Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
         }
 
-        Git("fetch --all --tags --quiet");
+        _ = Git("fetch --all --tags --quiet");
         Environment.SetEnvironmentVariable("IGNORE_NORMALISATION_GIT_HEAD_MOVE", "1");
         _gitVersion = GitVersionTasks
             .GitVersion(s => s
                 .SetNoFetch(false)
                 .SetNoCache(true)
                 .SetVerbosity(GitVersionVerbosity.debug)
-                .SetFramework("net5.0")
+                .SetFramework("net7.0")
                 .DisableProcessLogOutput())
             .Result;
     }
 
-    public Target Clean => _ => _
+    public Target Clean => t => t
         .Before(Restore, Compile, Test, Publish)
         .Executes(() =>
         {
@@ -147,38 +145,28 @@ internal partial class Build : NukeBuild
                     .ForEach(path
                         => path.DeleteDirectory());
             }
-            ArtifactsDirectory.CreateOrCleanDirectory();
+            _ = ArtifactsDirectory.CreateOrCleanDirectory();
         });
 
     public Target Restore => _ => _
-        .Executes(() =>
-        {
-            DotNetRestore(_ => _
-                .SetProjectFile(Solution));
-        });
+        .Executes(() => DotNetRestore(_ => _
+                .SetProjectFile(Solution)));
 
     public Target VerifyCodeFormat => _ => _
-        .Executes(() =>
-        {
-            DotNet("format -v n --verify-no-changes --exclude \".\\src\\Demo.Engine\\Program.cs\"");
-            // For now we don't run dotnet format on build.
-            //DotNet("format -v n");
-        });
+        .Executes(() => DotNet(
+            @"format -v n --verify-no-changes --exclude .\src\Demo.Engine\Program.cs"));
 
     public Target Compile => _ => _
         .DependsOn(Restore, VerifyCodeFormat)
-        .Executes(() =>
-        {
-            DotNetBuild(_ => _
-                .SetProjectFile(Solution)
-                .SetNoRestore(InvokedTargets.Contains(Restore))
-                .SetConfiguration(Config)
-                .SetProperty("Platform", "x64")
-                .SetAssemblyVersion(_gitVersion.AssemblySemVer)
-                .SetFileVersion(_gitVersion.AssemblySemFileVer)
-                .SetInformationalVersion(_gitVersion.InformationalVersion)
-                .EnableNoRestore());
-        });
+        .Executes(() => DotNetBuild(_ => _
+            .SetProjectFile(Solution)
+            .SetNoRestore(InvokedTargets.Contains(Restore))
+            .SetConfiguration(Configuration)
+            .SetProperty("Platform", "x64")
+            .SetAssemblyVersion(_gitVersion.AssemblySemVer)
+            .SetFileVersion(_gitVersion.AssemblySemFileVer)
+            .SetInformationalVersion(_gitVersion.InformationalVersion)
+            .EnableNoRestore()));
 
     public Target Test => _ => _
         .DependsOn(Compile)
@@ -186,33 +174,29 @@ internal partial class Build : NukeBuild
         //.Produces(
         //    ArtifactsDirectory / "*.trx",
         //    ArtifactsDirectory / "*.xml")
-        .Executes(() =>
-        {
-            DotNetTest(_ => _
-                .SetNoRestore(InvokedTargets.Contains(Restore))
-                .SetNoBuild(InvokedTargets.Contains(Compile))
-                .SetConfiguration(Config)
-                .SetProperty("Platform", "x64")
-                .SetProperty("CollectCoverage", propertyValue: true)
-                .SetProperty("CoverletOutputFormat", "opencover")
-                //.SetProperty("ExcludeByFile", "*.Generated.cs")
-                .SetResultsDirectory(ArtifactsDirectory)
-                .CombineWith(TestProjects, (oo, testProj) => oo
-                    .SetProjectFile(testProj)
-                    .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
-                    //.SetLogger($"xunit;LogFileName={testProj.Name}.xml")
-                    .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
-                degreeOfParallelism: TestProjects.Length,
-                completeOnFailure: true);
-        });
+        .Executes(() => DotNetTest(_ => _
+            .SetNoRestore(InvokedTargets.Contains(Restore))
+            .SetNoBuild(InvokedTargets.Contains(Compile))
+            .SetConfiguration(Configuration)
+            .SetProperty("Platform", "x64")
+            .SetProperty("CollectCoverage", propertyValue: true)
+            .SetProperty("CoverletOutputFormat", "opencover")
+            //.SetProperty("ExcludeByFile", "*.Generated.cs")
+            .SetResultsDirectory(ArtifactsDirectory)
+            .CombineWith(TestProjects, (oo, testProj) => oo
+                .SetProjectFile(testProj)
+                .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
+                .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
+            degreeOfParallelism: TestProjects.Length,
+            completeOnFailure: true));
 
-    public Target Coverage => _ => _
+    public Target Coverage => t => t
         .TriggeredBy(Test)
         .DependsOn(Test)
         .Produces(ArtifactsDirectory / "coverage.zip")
         .Executes(() =>
         {
-            ReportGenerator(_ => _
+            _ = ReportGenerator(_ => _
                 .SetFramework("net5.0")
                 .SetReports(ArtifactsDirectory / "*.xml")
                 .SetReportTypes(ReportTypes.HtmlInline)
@@ -220,7 +204,7 @@ internal partial class Build : NukeBuild
 
             if (ScheduledTargets.Contains(UploadCoveralls))
             {
-                ReportGenerator(_ => _
+                _ = ReportGenerator(_ => _
                     .SetFramework("net5.0")
                     .SetReports(ArtifactsDirectory / "*.xml")
                     .SetReportTypes(ReportTypes.Xml)
@@ -251,7 +235,7 @@ internal partial class Build : NukeBuild
             }
         });
 
-    public Target UploadCoveralls => _ => _
+    public Target UploadCoveralls => t => t
         .TriggeredBy(Test)
         .DependsOn(Test, Coverage)
         .OnlyWhenStatic(() => IsServerBuild || Debugger.IsAttached)
@@ -275,7 +259,7 @@ internal partial class Build : NukeBuild
                         .Select(o => o.Text))
                 .Trim();
 
-            CoverallsNet(toolSettings => toolSettings
+            _ = CoverallsNet(toolSettings => toolSettings
                 .SetDryRun(Debugger.IsAttached)
                 .SetRepoToken(CoverallsToken)
                 .SetUserRelativePaths(true)
@@ -307,29 +291,37 @@ internal partial class Build : NukeBuild
             Log.Information($"Publishing {projectName} for {rid} into {outputDir}");
         }
 
-        DotNetPublish(_ => _
-                    .SetProject(Solution.GetProject(projectName))
-                    .SetConfiguration(Config)
-                    .SetProperty("Platform", "x64")
-                    .SetAssemblyVersion(_gitVersion.AssemblySemVer)
-                    .SetFileVersion(_gitVersion.AssemblySemFileVer)
-                    .SetInformationalVersion(_gitVersion.InformationalVersion)
-                    .SetOutput(outputDir)
-                    .When(string.IsNullOrEmpty(rid), _ => _
-                        .SetNoRestore(InvokedTargets.Contains(Restore))
-                        .SetNoBuild(InvokedTargets.Contains(Compile)))
-                    .When(!string.IsNullOrEmpty(rid), _ => _
-                        .SetNoRestore(false)
-                        .SetNoBuild(false)
-                        .SetSelfContained(true)
-                        .SetProperty("PublishSingleFile", true)
-                        /*Trimming is unsupported by windows-forms and has been disabled for .NET 6.0!
-                         * https://github.com/dotnet/runtime/issues/58894
-                         * https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities
-                         * */
-                        .SetProperty("PublishTrimmed", false)
-                        .SetRuntime(rid)
-                        .SetProperty("PublishReadyToRun", true)));
+        _ = DotNetPublish(t => t
+            .SetProject(
+                /* This doesn't work, because Demo.Engine is in a solution folder
+                 * And Solution.GetProject only searches through projects that are directly in the Solution
+                 * */
+                //Solution.GetProject(projectName))
+                project: Solution
+                    .AllProjects
+                    .Single(project
+                        => project.Name.Equals(projectName, StringComparison.Ordinal)))
+            .SetConfiguration(Configuration)
+            .SetProperty("Platform", "x64")
+            .SetAssemblyVersion(_gitVersion.AssemblySemVer)
+            .SetFileVersion(_gitVersion.AssemblySemFileVer)
+            .SetInformationalVersion(_gitVersion.InformationalVersion)
+            .SetOutput(outputDir)
+            .When(string.IsNullOrEmpty(rid), _ => _
+                .SetNoRestore(InvokedTargets.Contains(Restore))
+                .SetNoBuild(InvokedTargets.Contains(Compile)))
+            .When(!string.IsNullOrEmpty(rid), _ => _
+                .SetNoRestore(false)
+                .SetNoBuild(false)
+                .SetSelfContained(true)
+                .SetProperty("PublishSingleFile", true)
+                /*Trimming is unsupported by windows-forms and has been disabled for .NET 6.0!
+                 * https://github.com/dotnet/runtime/issues/58894
+                 * https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities
+                 * */
+                .SetProperty("PublishTrimmed", false)
+                .SetRuntime(rid)
+                .SetProperty("PublishReadyToRun", true)));
 
         outputDir.ZipTo(
             archiveFile: $"{outputDir}.zip",
@@ -337,5 +329,11 @@ internal partial class Build : NukeBuild
             fileMode: FileMode.Create);
     }
 
-    public Target Full => _ => _.DependsOn(Clean, Compile, Test, Publish).Unlisted();
+    public Target Full => _ => _
+        .DependsOn(
+            Clean,
+            Compile,
+            Test,
+            Publish)
+        .Unlisted();
 }
