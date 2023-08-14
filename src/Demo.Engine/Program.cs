@@ -18,7 +18,6 @@ using Demo.Engine.Platform.DirectX.Shaders;
 using Demo.Engine.Platform.Windows;
 using Demo.Engine.Windows.Platform.Netstandard.Win32;
 using Demo.Tools.Common.Extensions.DependencyInjection;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -49,8 +48,8 @@ try
             //tmp
             //.AddTransient<ICube, Cube>()
             /*** End Windows Only ***/
-            .AddMediatR(
-                typeof(KeyboardHandler).Assembly);
+            .AddMediatR(config
+                => config.RegisterServicesFromAssemblyContaining<KeyboardHandler>());
 
             _ = services.AddOptions();
 

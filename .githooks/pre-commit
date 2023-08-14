@@ -3,9 +3,10 @@
 echo "Formatting code!"
 
 files=`git diff --cached --name-only --diff-filter ACMR | xargs`
+if [ -n "$files" ]; then
+    dotnet format -v n --include $files
 
-dotnet format -v n --include $files
-
-git add $files
+    git add $files
+fi
 
 echo 0

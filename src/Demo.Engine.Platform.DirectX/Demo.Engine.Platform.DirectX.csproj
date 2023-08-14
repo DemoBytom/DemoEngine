@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x64</Platforms>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -16,8 +16,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Vortice.D3DCompiler" Version="2.1.19" />
-    <PackageReference Include="Vortice.Direct3D11" Version="2.1.19" />
+    <PackageReference Include="Vortice.D3DCompiler" Version="3.2.0" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.2.0" />
   </ItemGroup>
 
   <ItemGroup>

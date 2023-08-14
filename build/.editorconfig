@@ -1,14 +1,11 @@
 [*.cs]
-dotnet_style_qualification_for_field                        = false:warning
-dotnet_style_qualification_for_property                     = false:warning
-dotnet_style_qualification_for_method                       = false:warning
-dotnet_style_qualification_for_event                        = false:warning
-dotnet_style_require_accessibility_modifiers                = never:warning
-csharp_style_expression_bodied_methods                      = true:silent
-csharp_style_expression_bodied_properties                   = true:warning
-csharp_style_expression_bodied_indexers                     = true:warning
-csharp_style_expression_bodied_accessors                    = true:warning
-csharp_style_unused_value_assignment_preference             = discard_variable:silent
-csharp_style_unused_value_expression_statement_preference   = discard_variable:silent
-csharp_style_expression_bodied_lambdas                      = true:silent
-dotnet_code_quality_unused_parameters = non_public
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_qualification_for_method = false:warning
+dotnet_style_qualification_for_event = false:warning
+dotnet_style_require_accessibility_modifiers = never:warning
+
+csharp_style_expression_bodied_methods = true:silent
+csharp_style_expression_bodied_properties = true:warning
+csharp_style_expression_bodied_indexers = true:warning
+csharp_style_expression_bodied_accessors = true:warning
