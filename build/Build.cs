@@ -22,8 +22,6 @@ using Nuke.Common.Tools.ReportGenerator;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
-using static Nuke.Common.IO.CompressionTasks;
-using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.CoverallsNet.CoverallsNetTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
@@ -52,7 +50,8 @@ namespace BuildScript;
     {
         nameof(CoverallsToken)
     },
-    FetchDepth = 0)]
+    FetchDepth = 0,
+    Lfs = true)]
 internal partial class Build : NukeBuild
 {
     /* Install Global Tool
@@ -103,7 +102,7 @@ internal partial class Build : NukeBuild
     private static AbsolutePath SourceDirectory => RootDirectory / "src";
     private static AbsolutePath TestDirectory => RootDirectory / "test";
     private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
-    private Project[] TestProjects => Solution.GetProjects("*.UTs").ToArray();
+    private Project[] TestProjects => Solution.GetAllProjects("*.UTs").ToArray();
 
     //private const string MASTER_BRANCH = "master";
     private const string DEVELOP_BRANCH = "develop";
@@ -139,10 +138,16 @@ internal partial class Build : NukeBuild
         {
             if (!Debugger.IsAttached)
             {
-                SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
-                TestDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
+                SourceDirectory
+                    .GlobDirectories("**/bin", "**/obj")
+                    .ForEach(path
+                        => path.DeleteDirectory());
+                TestDirectory
+                    .GlobDirectories("**/bin", "**/obj")
+                    .ForEach(path
+                        => path.DeleteDirectory());
             }
-            EnsureCleanDirectory(ArtifactsDirectory);
+            ArtifactsDirectory.CreateOrCleanDirectory();
         });
 
     public Target Restore => _ => _
@@ -222,8 +227,7 @@ internal partial class Build : NukeBuild
                     .SetTargetDirectory(ArtifactsDirectory / "coveralls"));
             }
 
-            CompressZip(
-                directory: ArtifactsDirectory / "coverage",
+            (ArtifactsDirectory / "coverage").ZipTo(
                 archiveFile: ArtifactsDirectory / "coverage.zip",
                 fileMode: FileMode.Create);
         });
@@ -327,8 +331,7 @@ internal partial class Build : NukeBuild
                         .SetRuntime(rid)
                         .SetProperty("PublishReadyToRun", true)));
 
-        CompressZip(
-            directory: outputDir,
+        outputDir.ZipTo(
             archiveFile: $"{outputDir}.zip",
             compressionLevel: CompressionLevel.Optimal,
             fileMode: FileMode.Create);
