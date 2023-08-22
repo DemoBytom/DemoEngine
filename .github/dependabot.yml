@@ -1,27 +1,31 @@
 version: 2
 updates:
 # Maintanin updates for NuGet
-- package-ecosystem: nuget
-  directory: "/"
-  schedule:
-    interval: daily
-    time: "04:00"
-    timezone: "Europe/Warsaw"
-  open-pull-requests-limit: 10
-  reviewers:
-  - DemoBytom
-  labels:
-  - "\U0001F527dependencies"
-  target-branch: "develop"
-# Maintain updates for GitHub Actions
-- package-ecosystem: "github-actions"
-  directory: "/"
-  schedule:
-    interval: "daily"
-    time: "04:00"
-    timezone: "Europe/Warsaw"
-  reviewers:
-  - DemoBytom
-  labels:
-  - "\U0001F527dependencies"
-  target-branch: "develop"
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: daily
+      time: "04:00"
+      timezone: "Europe/Warsaw"
+    open-pull-requests-limit: 10
+    reviewers:
+      - DemoBytom
+    labels:
+      - "\U0001F527dependencies"
+    target-branch: "develop"
+    env:
+      COVERALLS_TOKEN: ${{ secrets.DEPENDABOT_COVERALLS_TOKEN }}
+  # Maintain updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "04:00"
+      timezone: "Europe/Warsaw"
+    reviewers:
+      - DemoBytom
+    labels:
+      - "\U0001F527dependencies"
+    target-branch: "develop"
+    env:
+      COVERALLS_TOKEN: ${{ secrets.DEPENDABOT_COVERALLS_TOKEN }}
