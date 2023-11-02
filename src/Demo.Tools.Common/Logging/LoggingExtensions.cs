@@ -20,7 +20,7 @@ public static class LoggingExtensions
     public static LoggingContext<T> LogScopeInitialization<T>(this ILogger<T> logger) => new(logger);
 }
 
-public class LoggingContext<T> : IDisposable
+public struct LoggingContext<T> : IDisposable
 {
     private bool _disposedValue = false;
     private readonly ILogger<T> _logger;
@@ -35,7 +35,7 @@ public class LoggingContext<T> : IDisposable
 
     #region IDisposable
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {

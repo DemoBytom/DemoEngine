@@ -2,6 +2,7 @@
   <PropertyGroup>
     <LangVersion>11.0</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>RCS1090</NoWarn>
     <Authors>Michał Dembski</Authors>
     <Features>strict</Features>
