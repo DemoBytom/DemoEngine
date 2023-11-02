@@ -3,6 +3,7 @@
     <!--Preview to access field keyword in Semi-Auto Properties-->
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>RCS1090</NoWarn>
     <Authors>Michał Dembski</Authors>
     <Features>strict</Features>

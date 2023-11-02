@@ -9,17 +9,12 @@ using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Extensions;
-using Demo.Engine.Platform.DirectX;
-using Demo.Engine.Platform.DirectX.Interfaces;
-using Demo.Engine.Platform.DirectX.Models;
-using Demo.Engine.Platform.DirectX.Shaders;
+using Demo.Engine.Platform.DirectX12;
 using Demo.Engine.Platform.Windows;
 using Demo.Engine.Windows.Platform.Netstandard.Win32;
-using Demo.Tools.Common.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -37,15 +32,19 @@ try
             .AddHostedService<EngineService>()
             .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
             .AddSingleton<IKeyboardCache, KeyboardCache>()
+            //DirectX 11
+            //.AddScoped<
+            //    ID3D11RenderingEngine,
+            //    IRenderingEngine,
+            //    D3D11RenderingEngine>()
             .AddScoped<
-                ID3D11RenderingEngine,
                 IRenderingEngine,
-                D3D11RenderingEngine>()
+                D3D12RenderingEngine>()
             .AddScoped<IMainLoopService, MainLoopService>()
             /*** Windows Only ***/
             .AddTransient<IRenderingControl, RenderingForm>()
             .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
-            .AddTransient<IShaderCompiler, ShaderCompiler>()
+            //.AddTransient<IShaderCompiler, ShaderCompiler>()
             .AddScoped<IDebugLayerLogger, DebugLayerLogger>()
             //tmp
             //.AddTransient<ICube, Cube>()
@@ -55,17 +54,18 @@ try
 
             _ = services.AddOptions();
 
-            _ = services
-                .AddSingleton(x =>
-                    new CompiledVS("Shaders/Triangle/TriangleVS.hlsl", x.GetRequiredService<IShaderCompiler>()))
-                .AddSingleton(x =>
-                    new CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
+            //_ = services
+            //    .AddSingleton(x =>
+            //        new CompiledVS("Shaders/Triangle/TriangleVS.hlsl", x.GetRequiredService<IShaderCompiler>()))
+            //    .AddSingleton(x =>
+            //        new CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
         })
         .ConfigureContainer<ContainerBuilder>(builder
             => builder
                 .RegisterType<Cube>()
                 .As<ICube>()
-                .ExternallyOwned());
+                .ExternallyOwned())
+        ;
 
     var host = hostBuilder.Build();
 
