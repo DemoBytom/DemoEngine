@@ -283,5 +283,9 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
         }
     }
 
+    public void LogDebugMessages()
+    {
+    }
+
     #endregion IDisposable Support
 }
