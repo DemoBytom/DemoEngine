@@ -7,6 +7,12 @@
       "commands": [
         "nuke"
       ]
+    },
+    "coveralls.net": {
+      "version": "4.0.1",
+      "commands": [
+        "csmacnz.Coveralls"
+      ]
     }
   }
 }
