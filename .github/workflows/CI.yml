@@ -49,8 +49,8 @@ jobs:
         with:
           name: Demo.Engine.zip
           path: artifacts/Demo.Engine.zip
-      - name: 'Publish: Demo.Engine.win10-x64.zip'
+      - name: 'Publish: Demo.Engine.win-x64.zip'
         uses: actions/upload-artifact@v3
         with:
-          name: Demo.Engine.win10-x64.zip
-          path: artifacts/Demo.Engine.win10-x64.zip
+          name: Demo.Engine.win-x64.zip
+          path: artifacts/Demo.Engine.win-x64.zip
