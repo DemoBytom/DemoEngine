@@ -18,7 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
-    <PackageReference Include="Vortice.Mathematics" Version="1.7.4" />
+    <PackageReference Include="Vortice.Mathematics" Version="1.7.6" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Demo.Tools.Common\Demo.Tools.Common.csproj" />
