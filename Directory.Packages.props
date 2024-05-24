@@ -16,7 +16,7 @@
     <PackageVersion  Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
     <PackageVersion  Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
     
-    <PackageVersion  Include="Vortice.Mathematics" Version="1.7.6" />
+    <PackageVersion  Include="Vortice.Mathematics" Version="1.7.8" />
     <PackageVersion  Include="Vortice.D3DCompiler" Version="3.3.4" />
     <PackageVersion  Include="Vortice.Direct3D11" Version="3.3.4" />
 
