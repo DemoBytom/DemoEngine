@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -16,10 +16,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nuke.Common" Version="8.0.0" />
-    <PackageReference Include="ReportGenerator" Version="5.2.0" />
-    <PackageReference Include="GitVersion.Tool" Version="5.12.0" ExcludeAssets="all" />
-    <PackageReference Include="coveralls.net" Version="4.0.1" ExcludeAssets="all" />
+    <PackageReference Include="Nuke.Common" />
+    <PackageReference Include="ReportGenerator" />
+    <PackageReference Include="GitVersion.Tool" ExcludeAssets="all" />
+    <PackageReference Include="coveralls.net" ExcludeAssets="all" />
   </ItemGroup>
 
 </Project>
