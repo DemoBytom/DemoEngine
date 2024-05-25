@@ -1,10 +1,12 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Platform;
+using Demo.Engine.Platform.Windows;
 using Demo.Engine.Platform.Windows.WindowMessage;
 using Demo.Tools.Common.Logging;
 using MediatR;
@@ -83,6 +85,12 @@ public partial class RenderingForm : Form, IRenderingControl
         }
     }
 
+    protected override void OnResizeEnd(EventArgs e)
+        => base.OnResizeEnd(e);
+
+    protected override void OnMaximizedBoundsChanged(EventArgs e)
+        => base.OnMaximizedBoundsChanged(e);
+
     /// <summary>
     /// Width of the drawable area
     /// </summary>
@@ -132,6 +140,26 @@ public partial class RenderingForm : Form, IRenderingControl
                 {
                     var c = (char)wparam;
                     _mediator.Publish(new CharNotification(c)).GetAwaiter().GetResult();
+                    break;
+                }
+
+                case WindowMessageTypes.Size:
+                {
+                    var lparam = m.LParam.ToInt32();
+
+                    //LOWORD
+                    var width = Helpers.LOWORD(lparam);
+
+                    //HIWORD
+                    var height = Helpers.HIWORD(lparam);
+
+                    var resizingRequest = m.WParam.ToInt64();
+
+                    if (height != ClientSize.Height || width != ClientSize.Width)
+                    {
+                    }
+                    Debug.WriteLine(
+                        $"New: {width}x{height} vs {ClientSize.Width}x{ClientSize.Height}, requestType {resizingRequest}");
                     break;
                 }
             }

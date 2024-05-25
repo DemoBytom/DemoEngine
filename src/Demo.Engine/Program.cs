@@ -45,7 +45,8 @@ try
             .AddTransient<IRenderingControl, RenderingForm>()
             .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
             //.AddTransient<IShaderCompiler, ShaderCompiler>()
-            .AddScoped<IDebugLayerLogger, DebugLayerLogger>()
+            //.AddSingleton<IDebugLayerLogger, DebugLayerLogger>()
+            .AddDirectX12()
             //tmp
             //.AddTransient<ICube, Cube>()
             /*** End Windows Only ***/
