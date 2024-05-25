@@ -10,6 +10,9 @@ using Vortice.DXGI.Debug;
 
 namespace Demo.Engine.Platform.DirectX12;
 
+/// <summary>
+/// DirectX Context
+/// </summary>
 public sealed class DebugLayerLogger
     : IDebugLayerLogger,
       IDisposable
@@ -107,7 +110,7 @@ public sealed class DebugLayerLogger
                 // TODO: dispose managed state (managed objects)
                 if (_dxgiDebug is not null)
                 {
-                    _dxgiDebug!.ReportLiveObjects(
+                    _dxgiDebug.ReportLiveObjects(
                         apiid: _dxgiGuid,
                         flags: ReportLiveObjectFlags.Detail
                              | ReportLiveObjectFlags.IgnoreInternal);
