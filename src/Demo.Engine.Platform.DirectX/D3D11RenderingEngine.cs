@@ -203,7 +203,7 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
             //* Matrix4x4.CreatePerspective(1, Control.DrawHeight / (float)Control.DrawWidth, 0.1f, 10f));
             * Matrix4x4.CreatePerspectiveFieldOfView(
                 FOV_RAD,
-                (float)Control.DrawWidth / Control.DrawHeight,
+                (float)Control.DrawWidth.Value / Control.DrawHeight.Value,
                 0.1f,
                 10f));
 

@@ -6,6 +6,7 @@ using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Platform;
+using Demo.Engine.Core.ValueObjects;
 using Demo.Engine.Platform.Windows;
 using Demo.Engine.Platform.Windows.WindowMessage;
 using Demo.Tools.Common.Logging;
@@ -94,12 +95,12 @@ public partial class RenderingForm : Form, IRenderingControl
     /// <summary>
     /// Width of the drawable area
     /// </summary>
-    public int DrawWidth => ClientRectangle.Width;
+    public Width DrawWidth => ClientRectangle.Width;
 
     /// <summary>
     /// Height of the drawable area
     /// </summary>
-    public int DrawHeight => ClientRectangle.Height;
+    public Height DrawHeight => ClientRectangle.Height;
 
     public RectangleF DrawingArea => ClientRectangle;
 

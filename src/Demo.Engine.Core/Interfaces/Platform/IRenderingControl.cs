@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Drawing;
+using Demo.Engine.Core.ValueObjects;
 
 namespace Demo.Engine.Core.Interfaces.Platform;
 
@@ -19,12 +20,12 @@ public interface IRenderingControl : IDisposable
     /// <summary>
     /// Width of the drawable area
     /// </summary>
-    int DrawWidth { get; }
+    Width DrawWidth { get; }
 
     /// <summary>
     /// Height of the drawable area
     /// </summary>
-    int DrawHeight { get; }
+    Height DrawHeight { get; }
 
     RectangleF DrawingArea { get; }
 }

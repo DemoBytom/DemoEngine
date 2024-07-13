@@ -1,11 +1,13 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics;
 using System.Numerics;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
+using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SharpGen.Runtime;
@@ -132,6 +134,8 @@ public class D3D12RenderingEngine : IRenderingEngine
             type: CommandListType.Direct,
             commandListFlags: CommandListFlags.None);
 
+        _swapChainWidth = _renderSettings.Width;
+        _swapChainHeight = _renderSettings.Height;
         using (var swapChain = _dxgiFactory.CreateSwapChainForHwnd(
             CommandQueue,
             Control.Handle,
@@ -173,6 +177,14 @@ public class D3D12RenderingEngine : IRenderingEngine
 
     public void BeginScene(Color4 color)
     {
+        // Check if resize is required
+        if ((_swapChainWidth != Control.DrawWidth
+            || _swapChainHeight != Control.DrawHeight)
+            && Control.DrawWidth != 0
+            && Control.DrawHeight != 0)
+        {
+            Resize(Control.DrawWidth, Control.DrawHeight);
+        }
     }
 
     public void BeginScene()
@@ -191,6 +203,27 @@ public class D3D12RenderingEngine : IRenderingEngine
 
         return !result.Failure
             || result.Code != Vortice.DXGI.ResultCode.DeviceRemoved.Code;
+    }
+
+    private Width _swapChainWidth = 0;
+    private Height _swapChainHeight = 0;
+
+    private void Resize(
+        Width width,
+        Height height)
+    {
+        Debug.WriteLine($"Resizing SC from {_swapChainWidth}x{_swapChainHeight} to {width}x{height}");
+        Flush(FRAME_BUFFER_COUNT);
+        _ = _swapChain.ResizeBuffers(
+            bufferCount: FRAME_BUFFER_COUNT,
+            width: (uint)width.Value,
+            height: (uint)height.Value,
+            newFormat: Format.Unknown,
+            swapChainFlags: SwapChainFlags.AllowModeSwitch
+                | SwapChainFlags.AllowTearing);
+
+        _swapChainWidth = width.Value;
+        _swapChainHeight = height.Value;
     }
 
     private void SignalAndWait()
