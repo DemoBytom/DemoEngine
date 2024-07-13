@@ -19,8 +19,6 @@ updates:
       update-types:
       - "minor"
       - "patch"
-    security-updates-nuget-packages:
-      applies-to: security-updates
 # Maintain updates for GitHub Actions
 - package-ecosystem: "github-actions"
   directory: "/"
