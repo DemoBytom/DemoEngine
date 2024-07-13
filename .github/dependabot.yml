@@ -13,6 +13,14 @@ updates:
   labels:
   - "\U0001F527dependencies"
   target-branch: "develop"
+  groups:
+    nuget-packages:
+      applies-to: version-updates
+      update-types:
+      - "minor"
+      - "patch"
+    security-updates:
+      applies-to: security-updates
 # Maintain updates for GitHub Actions
 - package-ecosystem: "github-actions"
   directory: "/"
