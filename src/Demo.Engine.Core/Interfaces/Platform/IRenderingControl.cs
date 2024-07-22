@@ -17,6 +17,8 @@ public interface IRenderingControl : IDisposable
 
     bool IsDisposed { get; }
 
+    bool IsFullscreen { get; }
+
     /// <summary>
     /// Width of the drawable area
     /// </summary>
@@ -28,4 +30,6 @@ public interface IRenderingControl : IDisposable
     Height DrawHeight { get; }
 
     RectangleF DrawingArea { get; }
+
+    public void SetFullscreen(bool isFullscreen);
 }

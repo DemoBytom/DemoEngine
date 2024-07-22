@@ -25,4 +25,6 @@ public interface IRenderingEngine : IDisposable
     Matrix4x4 ViewProjectionMatrix { get; }
 
     public void LogDebugMessages();
+
+    public void SetFullscreen(bool fullscreen);
 }

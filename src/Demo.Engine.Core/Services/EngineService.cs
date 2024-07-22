@@ -50,6 +50,8 @@ public class EngineService : ServiceBase
     private float _r, _g, _b = 0.0f;
 
     private float _sin = 0.0f;
+    private bool _fullscreen = false;
+    private bool _f11Pressed = false;
 
     //private bool _dontCreate = false;
     private Task Update(
@@ -71,6 +73,18 @@ public class EngineService : ServiceBase
         if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
         {
             _loopCancellationTokenSource.Cancel();
+        }
+        if (keyboardHandle.GetKeyPressed(VirtualKeys.F11))
+        {
+            if (!_f11Pressed)
+            {
+                _fullscreen = !_fullscreen;
+            }
+            _f11Pressed = true;
+        }
+        else
+        {
+            _f11Pressed = false;
         }
 
         if (keyboardHandle.GetKeyPressed(VirtualKeys.Back)
@@ -153,6 +167,11 @@ public class EngineService : ServiceBase
         renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
         renderingEngine.Draw(_drawables);
         _ = renderingEngine.EndScene();
+
+        if (renderingEngine.Control.IsFullscreen != _fullscreen)
+        {
+            renderingEngine.SetFullscreen(_fullscreen);
+        }
 
         return Task.CompletedTask;
     }
