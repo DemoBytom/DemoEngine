@@ -205,6 +205,14 @@ public class D3D12RenderingEngine : IRenderingEngine
             || result.Code != Vortice.DXGI.ResultCode.DeviceRemoved.Code;
     }
 
+    public void SetFullscreen(bool isFullscreen)
+    {
+        if (isFullscreen != Control.IsFullscreen)
+        {
+            Control.SetFullscreen(isFullscreen);
+        }
+    }
+
     private Width _swapChainWidth = 0;
     private Height _swapChainHeight = 0;
 

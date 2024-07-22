@@ -22,10 +22,14 @@ public partial class RenderingForm : Form, IRenderingControl
     private readonly IOptionsMonitor<RenderSettings> _formSettings;
 
     private Point _currentNonFullscreenPosition;
-    private readonly bool _allowUserResizing;
+    private Size? _currentNonFullScreenSize;
+    private FormWindowState _currentNonFullscreenState;
+    private bool _allowUserResizing;
 
     //private readonly ILogger<RenderingForm> _logger;
     private readonly IMediator _mediator;
+
+    public bool IsFullscreen { get; private set; }
 
     public RenderingForm(
         ILogger<RenderingForm> logger,
@@ -43,47 +47,10 @@ public partial class RenderingForm : Form, IRenderingControl
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
         ResizeRedraw = true;
 
-        //_previousWindowState = FormWindowState.Normal;
         _currentNonFullscreenPosition = DesktopLocation;
+        _currentNonFullscreenState = FormWindowState.Normal;
 
-        var fullscreen = _formSettings.CurrentValue.Fullscreen;
-
-        //Current screen
-        var screen = Screen.FromControl(this);
-        var screenBouds = screen.Bounds;
-
-        if (fullscreen)
-        {
-            _currentNonFullscreenPosition = DesktopLocation;
-            TopMost = true;
-            _allowUserResizing = false;
-            Location = new Point(0, 0);
-
-            ClientSize = new Size(
-                screenBouds.Width,
-                screenBouds.Height);
-
-            WindowState = FormWindowState.Maximized;
-            FormBorderStyle = FormBorderStyle.None;
-            formSettings.CurrentValue.Width = ClientSize.Width;
-            formSettings.CurrentValue.Height = ClientSize.Height;
-        }
-        else
-        {
-            TopMost = false;
-            _allowUserResizing = _formSettings.CurrentValue.AllowResizing;
-            DesktopLocation = new Point(
-                Math.Max(0, _currentNonFullscreenPosition.X),
-                Math.Max(0, _currentNonFullscreenPosition.Y));
-
-            ClientSize = new Size(
-                Math.Min(screenBouds.Width, _formSettings.CurrentValue.Width),
-                Math.Min(screenBouds.Height, _formSettings.CurrentValue.Height));
-            WindowState = FormWindowState.Normal;
-            FormBorderStyle = _allowUserResizing
-                ? FormBorderStyle.Sizable
-                : FormBorderStyle.FixedToolWindow;
-        }
+        SetFullscreen(_formSettings.CurrentValue.Fullscreen);
     }
 
     protected override void OnResizeEnd(EventArgs e)
@@ -103,6 +70,56 @@ public partial class RenderingForm : Form, IRenderingControl
     public Height DrawHeight => ClientRectangle.Height;
 
     public RectangleF DrawingArea => ClientRectangle;
+
+    public void SetFullscreen(
+        bool fullscreen)
+    {
+        //Current screen
+        var screen = Screen.FromControl(this);
+        var screenBouds = screen.Bounds;
+
+        if (fullscreen)
+        {
+            _currentNonFullscreenPosition = DesktopLocation;
+            _currentNonFullScreenSize = ClientSize;
+            _currentNonFullscreenState = WindowState;
+
+            TopMost = true;
+            _allowUserResizing = false;
+            Location = new Point(screen.Bounds.X, screen.Bounds.Y);
+            //new Point(0, 0);
+
+            ClientSize = new Size(
+                screenBouds.Width,
+                screenBouds.Height);
+
+            WindowState = FormWindowState.Normal;
+            FormBorderStyle = FormBorderStyle.None;
+            _formSettings.CurrentValue.Width = ClientSize.Width;
+            _formSettings.CurrentValue.Height = ClientSize.Height;
+        }
+        else
+        {
+            TopMost = false;
+            _allowUserResizing = _formSettings.CurrentValue.AllowResizing;
+            DesktopLocation = new Point(
+                Math.Max(0, _currentNonFullscreenPosition.X),
+                Math.Max(0, _currentNonFullscreenPosition.Y));
+
+            ClientSize = _currentNonFullScreenSize ?? new Size(
+                Math.Min(screenBouds.Width, _formSettings.CurrentValue.Width),
+                Math.Min(screenBouds.Height, _formSettings.CurrentValue.Height));
+            WindowState = _currentNonFullscreenState;
+            FormBorderStyle = _allowUserResizing
+                ? FormBorderStyle.Sizable
+                : FormBorderStyle.FixedToolWindow;
+
+            _formSettings.CurrentValue.Width = ClientSize.Width;
+            _formSettings.CurrentValue.Height = ClientSize.Height;
+        }
+
+        IsFullscreen = fullscreen;
+    }
 
     protected override void WndProc(ref Message m)
     {

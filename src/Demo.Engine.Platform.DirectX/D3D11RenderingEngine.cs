@@ -287,5 +287,9 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
     {
     }
 
+    public void SetFullscreen(bool fullscreen)
+    {
+    }
+
     #endregion IDisposable Support
 }
