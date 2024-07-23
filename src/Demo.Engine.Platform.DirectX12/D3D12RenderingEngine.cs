@@ -38,6 +38,7 @@ public class D3D12RenderingEngine : IRenderingEngine
 
     private readonly IDXGISwapChain3 _swapChain;
     private readonly ID3D12Resource2[] _buffers = new ID3D12Resource2[FRAME_BUFFER_COUNT];
+    private int _currentBufferIndex = 0;
 
     public IRenderingControl Control { get; }
 
@@ -196,9 +197,39 @@ public class D3D12RenderingEngine : IRenderingEngine
     public void BeginScene()
         => BeginScene(new Color4(red: 0, green: 0, blue: 0, alpha: 1));
 
+    private void BeginFrame()
+    {
+        _currentBufferIndex = _swapChain.CurrentBackBufferIndex;
+
+        var barrier = ResourceBarrier.BarrierTransition(
+            resource: _buffers[_currentBufferIndex],
+            stateBefore: ResourceStates.Present,
+            stateAfter: ResourceStates.RenderTarget,
+            subresource: 0,
+            flags: ResourceBarrierFlags.None);
+
+        _commandList.ResourceBarrier(barrier);
+    }
+
+    private void EndFrame()
+    {
+        var barrier = ResourceBarrier.BarrierTransition(
+            resource: _buffers[_currentBufferIndex],
+            stateBefore: ResourceStates.RenderTarget,
+            stateAfter: ResourceStates.Present,
+            subresource: 0,
+            flags: ResourceBarrierFlags.None);
+
+        _commandList.ResourceBarrier(barrier);
+    }
+
     public void Draw(IEnumerable<IDrawable> drawables)
     {
         InitCommandList();
+        BeginFrame();
+        //TODO draw
+
+        EndFrame();
 
         ExecutedCommandList();
     }
