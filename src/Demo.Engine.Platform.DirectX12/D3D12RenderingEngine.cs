@@ -37,6 +37,7 @@ public class D3D12RenderingEngine : IRenderingEngine
     private readonly ID3D12GraphicsCommandList7 _commandList;
 
     private readonly IDXGISwapChain3 _swapChain;
+    private readonly ID3D12Resource2[] _buffers = new ID3D12Resource2[FRAME_BUFFER_COUNT];
 
     public IRenderingControl Control { get; }
 
@@ -170,6 +171,11 @@ public class D3D12RenderingEngine : IRenderingEngine
 
             _swapChain = swapChain.QueryInterface<IDXGISwapChain3>();
         }
+        // get buffers
+        if (!GetBuffers())
+        {
+            throw new InvalidOperationException("Error getting buffers!");
+        }
 
         //Show controll:
         Control.Show();
@@ -221,17 +227,45 @@ public class D3D12RenderingEngine : IRenderingEngine
         Height height)
     {
         Debug.WriteLine($"Resizing SC from {_swapChainWidth}x{_swapChainHeight} to {width}x{height}");
-        Flush(FRAME_BUFFER_COUNT);
+
+        ReleaseBuffers();
+
+        FlushBuffers();
         _ = _swapChain.ResizeBuffers(
             bufferCount: FRAME_BUFFER_COUNT,
             width: (uint)width.Value,
             height: (uint)height.Value,
             newFormat: Format.Unknown,
             swapChainFlags: SwapChainFlags.AllowModeSwitch
-                | SwapChainFlags.AllowTearing);
+                          | SwapChainFlags.AllowTearing);
 
         _swapChainWidth = width.Value;
         _swapChainHeight = height.Value;
+
+        _ = GetBuffers();
+    }
+
+    private bool GetBuffers()
+    {
+        for (var i = 0; i < FRAME_BUFFER_COUNT; ++i)
+        {
+            if (!_swapChain.GetBuffer<ID3D12Resource2>(i, out var buffer).Success)
+            {
+                return false;
+            }
+
+            _buffers[i] = buffer!;
+        }
+
+        return true;
+    }
+
+    private void ReleaseBuffers()
+    {
+        for (var i = 0; i < FRAME_BUFFER_COUNT; ++i)
+        {
+            _buffers[i].Dispose();
+        }
     }
 
     private void SignalAndWait()
@@ -247,9 +281,9 @@ public class D3D12RenderingEngine : IRenderingEngine
         _ = _fenceEvent.WaitOne();
     }
 
-    private void Flush(int count)
+    private void FlushBuffers()
     {
-        for (var i = 0; i < count; ++i)
+        for (var i = 0; i < FRAME_BUFFER_COUNT; ++i)
         {
             SignalAndWait();
         }
@@ -279,7 +313,9 @@ public class D3D12RenderingEngine : IRenderingEngine
                 //Dispose managed resources
 
                 //Flush all buffers that might be waiting in the queue
-                Flush(FRAME_BUFFER_COUNT);
+                FlushBuffers();
+
+                ReleaseBuffers();
 
                 _ = _swapChain.GetFullscreenState(out var fullscreenState);
                 if (fullscreenState == true)
