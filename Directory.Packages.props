@@ -10,7 +10,7 @@
     <PackageVersion  Include="Serilog.Sinks.Console" Version="6.0.0" />
     <PackageVersion  Include="Serilog.Sinks.Debug" Version="3.0.0" />
 
-    <PackageVersion  Include="MediatR" Version="12.3.0" />
+    <PackageVersion  Include="MediatR" Version="12.4.0" />
     <PackageVersion  Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageVersion  Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageVersion  Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
