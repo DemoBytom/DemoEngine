@@ -18,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="Vortice.D3DCompiler" />
     <PackageReference Include="Vortice.Direct3D11" />
+    <PackageReference Include="Vortice.Mathematics" />
   </ItemGroup>
 
   <ItemGroup>
