@@ -19,6 +19,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="System.Text.Json" />
     <PackageReference Include="Vortice.Mathematics" />
   </ItemGroup>
   <ItemGroup>
