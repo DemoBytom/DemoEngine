@@ -38,7 +38,7 @@ public class D3D12RenderingEngine : IRenderingEngine
 
     private readonly IDXGISwapChain3 _swapChain;
     private readonly ID3D12Resource2[] _buffers = new ID3D12Resource2[FRAME_BUFFER_COUNT];
-    private int _currentBufferIndex = 0;
+    private uint _currentBufferIndex = 0;
 
     public IRenderingControl Control { get; }
 
@@ -280,7 +280,7 @@ public class D3D12RenderingEngine : IRenderingEngine
     {
         for (var i = 0; i < FRAME_BUFFER_COUNT; ++i)
         {
-            if (!_swapChain.GetBuffer<ID3D12Resource2>(i, out var buffer).Success)
+            if (!_swapChain.GetBuffer<ID3D12Resource2>((uint)i, out var buffer).Success)
             {
                 return false;
             }

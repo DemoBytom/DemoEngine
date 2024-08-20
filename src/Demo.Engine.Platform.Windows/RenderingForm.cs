@@ -1,6 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.ComponentModel;
 using System.Diagnostics;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Models.Options;
@@ -29,6 +30,7 @@ public partial class RenderingForm : Form, IRenderingControl
     //private readonly ILogger<RenderingForm> _logger;
     private readonly IMediator _mediator;
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool IsFullscreen { get; private set; }
 
     public RenderingForm(
