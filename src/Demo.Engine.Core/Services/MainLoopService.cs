@@ -52,7 +52,7 @@ public class MainLoopService : IMainLoopService
         //TODO proper main loop instead of simple while
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
-
+        Console.WriteLine("Run async");
         while (
             _oSMessageHandler.DoEvents(_renderingEngine.Control)
             && !_applicationLifetime.ApplicationStopping.IsCancellationRequested
@@ -67,6 +67,7 @@ public class MainLoopService : IMainLoopService
 
             _debugLayerLogger.LogMessages();
         }
+        Console.WriteLine("finished running");
         IsRunning = false;
     }
 }

@@ -81,6 +81,8 @@ public partial class RenderingForm : Form, IRenderingControl
                 ? FormBorderStyle.Sizable
                 : FormBorderStyle.FixedToolWindow;
         }
+
+        Console.WriteLine("Created Rendering Form!");
     }
 
     /// <summary>

@@ -6,6 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Platforms>x64</Platforms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
 
@@ -17,6 +18,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DefineConstants />
   </PropertyGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="SharpGen.Runtime.COM" />
+  </ItemGroup>
 
 
   <ItemGroup>
