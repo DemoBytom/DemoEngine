@@ -50,9 +50,9 @@ public struct RawRectangle
         Bottom = bottom;
     }
 
-    public bool IsEmpty =>
-        Left == 0 &&
-        Right == 0 &&
-        Top == 0 &&
-        Bottom == 0;
+    public readonly bool IsEmpty()
+        => Left == 0
+        && Right == 0
+        && Top == 0
+        && Bottom == 0;
 }
