@@ -28,11 +28,9 @@
 //    public static extern bool GetClientRect(IntPtr hWnd, out RawRectangle lpRect);
 //}
 
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Demo.Engine.Core.Maths.Interop;
 using Vortice.Mathematics;
-
-[assembly: DisableRuntimeMarshalling]
 
 namespace Demo.Engine.Platform.Windows;
 
@@ -53,95 +51,41 @@ internal static unsafe partial class User32
     public static partial nint DispatchMessageW(NativeMessage* lpMsg);
 
     [LibraryImport("user32")]
-    public static partial RawBool GetClientRect(nint hWnd, RawRect* lpRect);
+    public static partial RawBool GetClientRect(nint hWnd, RawRectangle* lpRect);
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public partial struct NativeMessage
+internal ref struct NativeMessage
 {
-    public nint hwnd;
-    public uint msg;
-    public nuint wParam;
-    public nint lParam;
-    public uint time;
+    /// <summary>
+    /// A handle to the window whose window procedure receives the message. This member is NULL when the message is a thread message.
+    /// </summary>
+    public nint HWnd;
+
+    /// <summary>
+    /// The message identifier. Applications can only use the low word; the high word is reserved by the system.
+    /// </summary>
+    public uint Message;
+
+    /// <summary>
+    /// Additional information about the message. The exact meaning depends on the value of the message member.
+    /// </summary>
+    public nuint WParam;
+
+    /// <summary>
+    /// Additional information about the message. The exact meaning depends on the value of the message member.
+    /// </summary>
+    public nint LParam;
+
+    /// <summary>
+    /// The time at which the message was posted.
+    /// </summary>
+    public uint Time;
+
+    /// <summary>
+    /// The cursor position, in screen coordinates, when the message was posted.
+    /// </summary>
     public Int2 pt;
-}
-
-/// <summary>
-/// Defines an integer rectangle (Left, Top, Right, Bottom)
-/// </summary>
-[StructLayout(LayoutKind.Sequential, Pack = 4)]
-public readonly record struct RawRect
-{
-    public RawRect(int left, int top, int right, int bottom)
-    {
-        Left = left;
-        Top = top;
-        Right = right;
-        Bottom = bottom;
-    }
-
-    /// <summary>
-    /// The left position.
-    /// </summary>
-    public readonly int Left;
-
-    /// <summary>
-    /// The top position.
-    /// </summary>
-    public readonly int Top;
-
-    /// <summary>
-    /// The right position
-    /// </summary>
-    public readonly int Right;
-
-    /// <summary>
-    /// The bottom position.
-    /// </summary>
-    public readonly int Bottom;
-
-    /// <summary>
-    /// Performs an implicit conversion from <see cre ="RawRect"/> to <see cref="RectI" />.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>The result of the conversion.</returns>
-    public static implicit operator RectI(in RawRect value) => RectI.FromLTRB(value.Left, value.Top, value.Right, value.Bottom);
-
-    /// <summary>
-    /// Performs an implicit conversion from <see cre ="RectI"/> to <see cref="RawRect" />.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>The result of the conversion.</returns>
-#pragma warning disable RCS1242 // Do not pass non-read-only struct by read-only reference
-    public static implicit operator RawRect(in RectI value) => new(value.Left, value.Top, value.Right, value.Bottom);
-#pragma warning restore RCS1242 // Do not pass non-read-only struct by read-only reference
-
-    /// <summary>
-    /// Performs an implicit conversion from <see cre ="RawRect"/> to <see cref="System.Drawing.Rectangle" />.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>The result of the conversion.</returns>
-    public static implicit operator System.Drawing.Rectangle(in RawRect value) => System.Drawing.Rectangle.FromLTRB(value.Left, value.Top, value.Right, value.Bottom);
-
-    /// <summary>
-    /// Performs an implicit conversion from <see cre ="System.Drawing.Rectangle"/> to <see cref="RawRect" />.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>The result of the conversion.</returns>
-    public static implicit operator RawRect(System.Drawing.Rectangle value) => new(value.Left, value.Top, value.Right, value.Bottom);
-
-    //#if WINDOWS
-    //    public static implicit operator RawRect(in global::Windows.Foundation.Rect value) => value.Left > int.MaxValue
-    //            ? throw new ArgumentOutOfRangeException(nameof(value.Left))
-    //            : value.Top > int.MaxValue
-    //            ? throw new ArgumentOutOfRangeException(nameof(value.Top))
-    //            : value.Right > int.MaxValue
-    //            ? throw new ArgumentOutOfRangeException(nameof(value.Right))
-    //            : value.Bottom > int.MaxValue
-    //            ? throw new ArgumentOutOfRangeException(nameof(value.Bottom))
-    //            : new((int)value.Left, (int)value.Top, (int)value.Right, (int)value.Bottom);
-    //#endif
 }
 
 // Copyright (c) 2010-2014 SharpDX - Alexandre Mutel

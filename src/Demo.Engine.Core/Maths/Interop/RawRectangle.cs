@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Demo.Engine.Windows.Maths.Interop;
+namespace Demo.Engine.Core.Maths.Interop;
 
 [DebuggerDisplay("Left: {Left}, Top: {Top}, Right: {Right}, Bottom: {Bottom}")]
 [StructLayout(LayoutKind.Sequential, Pack = 4)]
@@ -50,9 +50,9 @@ public struct RawRectangle
         Bottom = bottom;
     }
 
-    public bool IsEmpty =>
-        Left == 0 &&
-        Right == 0 &&
-        Top == 0 &&
-        Bottom == 0;
+    public readonly bool IsEmpty()
+        => Left == 0
+        && Right == 0
+        && Top == 0
+        && Bottom == 0;
 }

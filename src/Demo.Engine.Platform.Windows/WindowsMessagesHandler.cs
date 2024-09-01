@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 using Demo.Engine.Core.Interfaces.Platform;
-using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
+using Demo.Engine.Platform.Windows.WindowMessage;
 using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Platform.Windows;
@@ -25,9 +25,10 @@ public class WindowsMessagesHandler : IOSMessageHandler
             if (localHandle != IntPtr.Zero)
             {
                 NativeMessage msg;
-                while (User32.PeekMessageW(&msg, IntPtr.Zero, 0, 0, 0))
+                while (User32.PeekMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0, wRemoveMsg: 0))
                 {
-                    var getMessageW = User32.GetMessageW(&msg, IntPtr.Zero, 0, 0);
+                    var getMessageW = User32.GetMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0);
+
                     if ((int)getMessageW == -1)
                     {
                         _logger.LogError(
@@ -37,19 +38,16 @@ public class WindowsMessagesHandler : IOSMessageHandler
                         return false;
                     }
 
-                    if (msg.msg == (uint)WindowMessageTypes.Destroy)
+                    if (msg.Message == (uint)WindowMessageTypes.Destroy)
                     {
                         isControlAlive = false;
                     }
 
-                    //var message = new Message() { HWnd = msg.HWnd, LParam = msg.LParam, Msg = msg.Msg, WParam = msg.WParam };
-                    var message = new Message
-                    {
-                        HWnd = msg.hwnd,
-                        LParam = msg.lParam,
-                        Msg = (int)msg.msg,
-                        WParam = (nint)msg.wParam,
-                    };
+                    var message = Message.Create(
+                        hWnd: msg.HWnd,
+                        msg: (int)(nint)msg.Message,
+                        wparam: (nint)msg.WParam,
+                        lparam: msg.LParam);
 
                     if (!Application.FilterMessage(ref message))
                     {
