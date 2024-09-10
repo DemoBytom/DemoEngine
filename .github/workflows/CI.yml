@@ -23,12 +23,12 @@ jobs:
     name: windows-latest
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           lfs: true
           fetch-depth: 0
       - name: 'Cache: .nuke/temp, ~/.nuget/packages'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             .nuke/temp
@@ -40,17 +40,17 @@ jobs:
           CoverallsToken: ${{ secrets.COVERALLS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 'Publish: coverage.zip'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage.zip
           path: artifacts/coverage.zip
       - name: 'Publish: Demo.Engine.zip'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Demo.Engine.zip
           path: artifacts/Demo.Engine.zip
       - name: 'Publish: Demo.Engine.win-x64.zip'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Demo.Engine.win-x64.zip
           path: artifacts/Demo.Engine.win-x64.zip
