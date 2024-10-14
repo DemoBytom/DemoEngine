@@ -23,7 +23,7 @@ public abstract class DrawableBase<T> : IDrawable, IDisposable
 
     private static readonly HashSet<Guid> _references = new();
 
-    protected static int? IndexCount { get; private set; }
+    protected static uint? IndexCount { get; private set; }
 
     internal DrawableBase(
         ID3D11RenderingEngine renderingEngine,

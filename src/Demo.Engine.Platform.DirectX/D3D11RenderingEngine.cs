@@ -101,8 +101,8 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
         {
             BufferCount = 2,
             BufferDescription = new ModeDescription(
-                _formSettings.CurrentValue.Width,
-                _formSettings.CurrentValue.Height,
+                (uint)_formSettings.CurrentValue.Width,
+                (uint)_formSettings.CurrentValue.Height,
                 Format.B8G8R8A8_UNorm),
             Windowed = true,
             OutputWindow = Control.Handle,
@@ -163,8 +163,8 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
             () => Device.CreateTexture2D(
                 new Texture2DDescription
                 {
-                    Width = _formSettings.CurrentValue.Width,
-                    Height = _formSettings.CurrentValue.Height,
+                    Width = (uint)_formSettings.CurrentValue.Width,
+                    Height = (uint)_formSettings.CurrentValue.Height,
                     MipLevels = 1,
                     ArraySize = 1,
                     Format = Format.D32_Float,
@@ -221,8 +221,8 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
     {
         var result = _debugLayerLogger.WrapCallInMessageExceptionHandler(
             () => _swapChain.Present(
-                _formSettings.CurrentValue.VSync
-                    ? 1 : 0,
+                (uint)(_formSettings.CurrentValue.VSync
+                    ? 1 : 0),
                 PresentFlags.None));
 
         return !result.Failure
@@ -266,7 +266,7 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
                 DeviceContext.Flush();
                 DeviceContext.Dispose();
                 Device.Dispose();
-                _swapChain.GetFullscreenState(out var fullscreen);
+                _ = _swapChain.GetFullscreenState(out var fullscreen);
                 if (fullscreen == true)
                 {
                     _ = _swapChain.SetFullscreenState(false);
