@@ -22,7 +22,7 @@ public abstract class ConstantBuffer<T> : Buffer<T>, IUpdatable<T>
             MiscFlags = ResourceOptionFlags.None,
             CPUAccessFlags = CpuAccessFlags.Write,
             StructureByteStride = 0,
-            ByteWidth = Unsafe.SizeOf<T>(),
+            ByteWidth = (uint)Unsafe.SizeOf<T>(),
         })
     {
     }

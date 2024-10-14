@@ -9,12 +9,12 @@ namespace Demo.Engine.Platform.DirectX.Bindable.Buffers;
 public class VertexBuffer<T> : Buffer<T>
     where T : unmanaged
 {
-    private readonly int _sizeInBytes;
+    private readonly uint _sizeInBytes;
 
     public VertexBuffer(
         ID3D11RenderingEngine renderingEngine,
         ReadOnlySpan<T> data,
-        int sizeInBytes)
+        uint sizeInBytes)
         : base(
             renderingEngine,
             data,
@@ -25,7 +25,7 @@ public class VertexBuffer<T> : Buffer<T>
                 MiscFlags = ResourceOptionFlags.None,
                 CPUAccessFlags = CpuAccessFlags.None,
                 StructureByteStride = sizeInBytes,
-                ByteWidth = data.Length * sizeInBytes,
+                ByteWidth = (uint)data.Length * sizeInBytes,
             })
         => _sizeInBytes = sizeInBytes;
 

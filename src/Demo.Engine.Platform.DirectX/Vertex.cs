@@ -22,7 +22,7 @@ public readonly struct Vertex
     public Vector3 Position { get; }
     public Color Color { get; }
 
-    public static readonly int SizeInBytes = Unsafe.SizeOf<Vertex>();
-    public static readonly int PositionSizeInBytes = Unsafe.SizeOf<Vector3>();
+    public static readonly uint SizeInBytes = (uint)Unsafe.SizeOf<Vertex>();
+    public static readonly uint PositionSizeInBytes = (uint)Unsafe.SizeOf<Vector3>();
     public static readonly int ColorSizeInBytes = Unsafe.SizeOf<Color>();
 }

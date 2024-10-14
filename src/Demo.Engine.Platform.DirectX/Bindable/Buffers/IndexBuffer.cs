@@ -11,12 +11,12 @@ public class IndexBuffer<T> : Buffer<T>, IIndexBuffer
     where T : unmanaged
 {
     private readonly Format _format;
-    public int IndexCount { get; }
+    public uint IndexCount { get; }
 
     public IndexBuffer(
         ID3D11RenderingEngine renderingEngine,
         in T[] data,
-        int sizeInBytes,
+        uint sizeInBytes,
         Format format = Format.R16_UInt)
         : base(
             renderingEngine,
@@ -28,11 +28,11 @@ public class IndexBuffer<T> : Buffer<T>, IIndexBuffer
                 MiscFlags = ResourceOptionFlags.None,
                 CPUAccessFlags = CpuAccessFlags.None,
                 StructureByteStride = sizeInBytes,
-                ByteWidth = data.Length * sizeInBytes,
+                ByteWidth = (uint)data.Length * sizeInBytes,
             })
     {
         _format = format;
-        IndexCount = data.Length;
+        IndexCount = (uint)data.Length;
     }
 
     public override void Bind() => _renderingEngine.DeviceContext
