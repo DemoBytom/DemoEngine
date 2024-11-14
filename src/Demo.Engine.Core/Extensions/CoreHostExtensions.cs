@@ -4,8 +4,9 @@
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-namespace Microsoft.Extensions.Hosting;
+namespace Demo.Engine.Core.Extensions;
 
 public static class CoreHostExtensions
 {

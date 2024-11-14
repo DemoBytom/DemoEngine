@@ -5,7 +5,7 @@ using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Platform;
-using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
+using Demo.Engine.Platform.Windows.WindowMessage;
 using Demo.Tools.Common.Logging;
 using MediatR;
 using Microsoft.Extensions.Logging;

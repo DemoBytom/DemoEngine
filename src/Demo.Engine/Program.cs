@@ -4,6 +4,7 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Demo.Engine.Core.Components.Keyboard.Internal;
+using Demo.Engine.Core.Extensions;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
@@ -11,6 +12,7 @@ using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Services;
+using Demo.Engine.Extensions;
 using Demo.Engine.Platform.DirectX;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Demo.Engine.Platform.DirectX.Models;
