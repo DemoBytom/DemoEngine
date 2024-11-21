@@ -4,7 +4,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Demo.Engine.Windows.Maths.Interop;
+namespace Demo.Engine.Core.Maths.Interop;
 
 [DebuggerDisplay("Left: {Left}, Top: {Top}, Right: {Right}, Bottom: {Bottom}")]
 [StructLayout(LayoutKind.Sequential, Pack = 4)]

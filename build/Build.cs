@@ -38,18 +38,18 @@ namespace BuildScript;
     [
         GitHubActionsTrigger.Push
     ],
-    InvokedTargets = new[]
-    {
+    InvokedTargets =
+    [
         nameof(Clean),
         nameof(Compile),
         nameof(Test),
         nameof(Publish)
-    },
+    ],
     EnableGitHubToken = true,
-    ImportSecrets = new[]
-    {
+    ImportSecrets =
+    [
         nameof(CoverallsToken)
-    },
+    ],
     FetchDepth = 0,
     Lfs = true)]
 internal partial class Build : NukeBuild
@@ -124,9 +124,8 @@ internal partial class Build : NukeBuild
             .GitVersion(s => s
                 .SetNoFetch(false)
                 .SetNoCache(true)
-                .SetVerbosity(GitVersionVerbosity.debug)
-                .SetFramework("net8.0")
-                .DisableProcessLogOutput())
+                .DisableProcessOutputLogging()
+                )
             .Result;
     }
 
@@ -153,6 +152,9 @@ internal partial class Build : NukeBuild
                 .SetProjectFile(Solution)));
 
 #pragma warning disable CA1822 // Mark members as static
+
+    /* Top level statements in program.cs still cause issues with dotnet format
+     * https://github.com/dotnet/format/issues/1567 */
 
     public Target VerifyCodeFormat => _ => _
         .Executes(() => DotNet(
@@ -183,7 +185,7 @@ internal partial class Build : NukeBuild
             .SetNoBuild(InvokedTargets.Contains(Compile))
             .SetConfiguration(Configuration)
             .SetProperty("Platform", "x64")
-            .SetProperty("CollectCoverage", propertyValue: true)
+            .SetProperty("CollectCoverage", true)
             .SetProperty("CoverletOutputFormat", "opencover")
             //.SetProperty("ExcludeByFile", "*.Generated.cs")
             .SetResultsDirectory(ArtifactsDirectory)
@@ -201,7 +203,6 @@ internal partial class Build : NukeBuild
         .Executes(() =>
         {
             _ = ReportGenerator(_ => _
-                .SetFramework("net5.0")
                 .SetReports(ArtifactsDirectory / "*.xml")
                 .SetReportTypes(ReportTypes.HtmlInline)
                 .SetTargetDirectory(ArtifactsDirectory / "coverage"));
@@ -209,7 +210,6 @@ internal partial class Build : NukeBuild
             if (ScheduledTargets.Contains(UploadCoveralls))
             {
                 _ = ReportGenerator(_ => _
-                    .SetFramework("net5.0")
                     .SetReports(ArtifactsDirectory / "*.xml")
                     .SetReportTypes(ReportTypes.Xml)
                     .SetTargetDirectory(ArtifactsDirectory / "coveralls"));
@@ -274,11 +274,9 @@ internal partial class Build : NukeBuild
                 .SetCommitEmail(authorMail)
                 .SetCommitMessage(commitBody)
                 .SetInput(ArtifactsDirectory / "coveralls")
-                .SetProcessArgumentConfigurator(argumentConfigurator =>
-                    argumentConfigurator
-                        .Add("--jobId")
-                        .Add(CoverallsJobID)
-                        .Add("--reportgenerator"))
+                .SetJobId(CoverallsJobID)
+                .SetProcessAdditionalArguments(
+                    "--reportgenerator")
                 );
         });
 
@@ -298,11 +296,11 @@ internal partial class Build : NukeBuild
 
         _ = DotNetPublish(t => t
             .SetProject(
-                /* This doesn't work, because Demo.Engine is in a solution folder
-                 * And Solution.GetProject only searches through projects that are directly in the Solution
-                 * */
-                //Solution.GetProject(projectName))
-                project: Solution
+    /* This doesn't work, because Demo.Engine is in a solution folder
+     * And Solution.GetProject only searches through projects that are directly in the Solution
+     * */
+    //Solution.GetProject(projectName))
+    v: Solution
                     .AllProjects
                     .Single(project
                         => project.Name.Equals(projectName, StringComparison.Ordinal)))

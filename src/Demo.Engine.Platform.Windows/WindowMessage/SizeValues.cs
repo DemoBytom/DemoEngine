@@ -1,7 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-namespace Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
+namespace Demo.Engine.Platform.Windows.WindowMessage;
 
 internal enum SizeValues
 {

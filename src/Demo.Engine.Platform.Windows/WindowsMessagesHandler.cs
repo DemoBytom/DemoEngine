@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 using Demo.Engine.Core.Interfaces.Platform;
-using Demo.Engine.Platform.NetStandard.Win32.WindowMessage;
+using Demo.Engine.Platform.Windows.WindowMessage;
 using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Platform.Windows;

@@ -2,7 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Runtime.InteropServices;
-using Demo.Engine.Windows.Maths.Interop;
+using Demo.Engine.Core.Maths.Interop;
 
 namespace Demo.Engine.Platform.Windows;
 

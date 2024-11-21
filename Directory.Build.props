@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
-    <LangVersion>11.0</LangVersion>
+    <!--Preview to access field keyword in Semi-Auto Properties-->
+    <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <NoWarn>RCS1090</NoWarn>
     <Authors>Michał Dembski</Authors>

@@ -1,9 +1,10 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using Microsoft.Extensions.Hosting;
 using Serilog;
 
-namespace Microsoft.Extensions.Hosting;
+namespace Demo.Engine.Extensions;
 
 public static class HostExtensions
 {
