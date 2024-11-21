@@ -31,3 +31,15 @@ updates:
   labels:
   - "\U0001F527dependencies"
   target-branch: "develop"
+# Maintain updates for .NET SDK
+- package-ecosystem: "dotnet-sdk"
+  directory: "/"
+  schedule:
+    interval: "daily"
+    time: "04:00"
+    timezone: "Europe/Warsaw"
+  reviewers:
+  - DemoBytom
+  labels:
+  - "\U0001F527dependencies"
+  target-branch: "develop"
