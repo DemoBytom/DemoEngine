@@ -17,12 +17,14 @@ public static class LoggingExtensions
     /// <typeparam name="T"></typeparam>
     /// <param name="logger"></param>
     /// <returns></returns>
-    public static LoggingContext<T> LogScopeInitialization<T>(this ILogger<T> logger) => new(logger);
+    public static LoggingContext<T> LogScopeInitialization<T>(
+        this ILogger<T> logger)
+        => new(logger);
 }
 
-public class LoggingContext<T> : IDisposable
+public readonly ref struct LoggingContext<T>
+    : IDisposable
 {
-    private bool _disposedValue = false;
     private readonly ILogger<T> _logger;
     private readonly string _className;
 
@@ -33,26 +35,6 @@ public class LoggingContext<T> : IDisposable
         _logger.LogDebug("{class} initialization {state}", _className, "started");
     }
 
-    #region IDisposable
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                _logger.LogDebug("{class} initialization {state}", _className, "completed");
-            }
-
-            _disposedValue = true;
-        }
-    }
-
     public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    #endregion IDisposable
+        => _logger.LogDebug("{class} initialization {state}", _className, "completed");
 }
