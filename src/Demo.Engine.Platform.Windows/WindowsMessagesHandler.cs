@@ -16,7 +16,7 @@ public class WindowsMessagesHandler : IOSMessageHandler
         ILogger<WindowsMessagesHandler> logger)
         => _logger = logger;
 
-    public bool DoEvents(IRenderingControl control)
+    public unsafe bool DoEvents(IRenderingControl control)
     {
         var isControlAlive = !control.IsDisposed;
         if (isControlAlive)
@@ -24,26 +24,35 @@ public class WindowsMessagesHandler : IOSMessageHandler
             var localHandle = control.Handle;
             if (localHandle != IntPtr.Zero)
             {
-                while (User32.PeekMessage(out _, IntPtr.Zero, 0, 0, 0) != 0)
+                NativeMessage msg;
+                while (User32.PeekMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0, wRemoveMsg: 0))
                 {
-                    if (User32.GetMessage(out var msg, IntPtr.Zero, 0, 0) == -1)
+                    var getMessageW = User32.GetMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0);
+
+                    if ((int)getMessageW == -1)
                     {
                         _logger.LogError(
                             "An error occured in main loop while processing windows messages. Error: {errorCode}",
                             Marshal.GetLastWin32Error());
+
                         return false;
                     }
 
-                    if (msg.Msg == (int)WindowMessageTypes.Destroy)
+                    if (msg.Message == (uint)WindowMessageTypes.Destroy)
                     {
                         isControlAlive = false;
                     }
 
-                    //var message = new Message() { HWnd = msg.HWnd, LParam = msg.LParam, Msg = msg.Msg, WParam = msg.WParam };
-                    if (!Application.FilterMessage(ref msg))
+                    var message = Message.Create(
+                        hWnd: msg.HWnd,
+                        msg: (int)(nint)msg.Message,
+                        wparam: (nint)msg.WParam,
+                        lparam: msg.LParam);
+
+                    if (!Application.FilterMessage(ref message))
                     {
-                        _ = User32.TranslateMessage(ref msg);
-                        _ = User32.DispatchMessage(ref msg);
+                        _ = User32.TranslateMessage(&msg);
+                        _ = User32.DispatchMessageW(&msg);
                     }
                 }
             }

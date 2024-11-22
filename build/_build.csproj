@@ -11,6 +11,7 @@
     <NukeScriptDirectory>..</NukeScriptDirectory>
     <NukeTelemetryVersion>1</NukeTelemetryVersion>
     <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;ARM64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +19,6 @@
     <PackageReference Include="ReportGenerator" />
     <PackageReference Include="GitVersion.Tool" ExcludeAssets="all" />
     <PackageReference Include="coveralls.net" ExcludeAssets="all" />
-    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
 </Project>
