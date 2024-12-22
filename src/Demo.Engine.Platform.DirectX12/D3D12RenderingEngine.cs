@@ -40,6 +40,9 @@ public class D3D12RenderingEngine : IRenderingEngine
     private readonly ID3D12Resource2[] _buffers = new ID3D12Resource2[FRAME_BUFFER_COUNT];
     private uint _currentBufferIndex = 0;
 
+    private readonly ID3D12DescriptorHeap _renderTargetViewDescriptorHeap;
+    private readonly CpuDescriptorHandle[] _rendertargetViewHandles = new CpuDescriptorHandle[FRAME_BUFFER_COUNT];
+
     public IRenderingControl Control { get; }
 
     public Matrix4x4 ViewProjectionMatrix => throw new NotImplementedException();
@@ -172,6 +175,41 @@ public class D3D12RenderingEngine : IRenderingEngine
 
             _swapChain = swapChain.QueryInterface<IDXGISwapChain3>();
         }
+        //Create RTV Heap
+        var result = Device.CreateDescriptorHeap(
+            new DescriptorHeapDescription
+            {
+                Type = DescriptorHeapType.RenderTargetView,
+                DescriptorCount = FRAME_BUFFER_COUNT,
+                Flags = DescriptorHeapFlags.None,
+                NodeMask = 0
+            },
+            out var rtvd);
+
+        if (result
+            is { Failure: true }
+            || rtvd is null)
+        {
+            throw new InvalidOperationException("Error creating render target view");
+        }
+
+        _renderTargetViewDescriptorHeap = rtvd;
+
+        var firstHandle = _renderTargetViewDescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+
+        var handleIncrement = Device.GetDescriptorHandleIncrementSize(
+            DescriptorHeapType.RenderTargetView);
+
+        for (var i = 0;
+            i < FRAME_BUFFER_COUNT;
+            ++i)
+        {
+            _rendertargetViewHandles[i] = new CpuDescriptorHandle(
+                other: firstHandle,
+                offsetInDescriptors: i,
+                descriptorIncrementSize: handleIncrement);
+        }
+
         // get buffers
         if (!GetBuffers())
         {
@@ -181,6 +219,8 @@ public class D3D12RenderingEngine : IRenderingEngine
         //Show controll:
         Control.Show();
     }
+
+    private Color4 _clearColor = new(red: 0.0f, green: 0.0f, blue: 0.0f, alpha: 1.0f);
 
     public void BeginScene(Color4 color)
     {
@@ -192,6 +232,8 @@ public class D3D12RenderingEngine : IRenderingEngine
         {
             Resize(Control.DrawWidth, Control.DrawHeight);
         }
+
+        _clearColor = color;
     }
 
     public void BeginScene()
@@ -209,6 +251,15 @@ public class D3D12RenderingEngine : IRenderingEngine
             flags: ResourceBarrierFlags.None);
 
         _commandList.ResourceBarrier(barrier);
+
+        //draw to render target?
+        _commandList.ClearRenderTargetView(
+            _rendertargetViewHandles[_currentBufferIndex],
+            _clearColor);
+
+        _commandList.OMSetRenderTargets(
+            renderTargetDescriptor: _rendertargetViewHandles[_currentBufferIndex],
+            depthStencilDescriptor: null);
     }
 
     private void EndFrame()
@@ -286,6 +337,20 @@ public class D3D12RenderingEngine : IRenderingEngine
             }
 
             _buffers[i] = buffer!;
+
+            Device.CreateRenderTargetView(
+                _buffers[i],
+                new RenderTargetViewDescription
+                {
+                    Format = Format.R8G8B8A8_UNorm,
+                    ViewDimension = RenderTargetViewDimension.Texture2D,
+                    Texture2D = new Texture2DRenderTargetView
+                    {
+                        MipSlice = 0,
+                        PlaneSlice = 0,
+                    },
+                },
+                _rendertargetViewHandles[i]);
         }
 
         return true;
@@ -347,6 +412,8 @@ public class D3D12RenderingEngine : IRenderingEngine
                 FlushBuffers();
 
                 ReleaseBuffers();
+
+                _renderTargetViewDescriptorHeap.Dispose();
 
                 _ = _swapChain.GetFullscreenState(out var fullscreenState);
                 if (fullscreenState == true)
