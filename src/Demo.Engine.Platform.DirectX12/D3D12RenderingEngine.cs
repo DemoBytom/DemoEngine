@@ -18,7 +18,7 @@ using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX12;
 
-public class D3D12RenderingEngine : IRenderingEngine
+public class D3D12RenderingEngine : ID3D12RenderingEngine
 {
     private const int FRAME_BUFFER_COUNT = 2;
 
@@ -34,7 +34,6 @@ public class D3D12RenderingEngine : IRenderingEngine
     private readonly AutoResetEvent _fenceEvent;
 
     private readonly ID3D12CommandAllocator _commandAllocator;
-    private readonly ID3D12GraphicsCommandList7 _commandList;
 
     private readonly IDXGISwapChain3 _swapChain;
     private readonly ID3D12Resource2[] _buffers = new ID3D12Resource2[FRAME_BUFFER_COUNT];
@@ -51,6 +50,7 @@ public class D3D12RenderingEngine : IRenderingEngine
 
     public ID3D12Device10 Device { get; }
     public ID3D12CommandQueue CommandQueue { get; }
+    public ID3D12GraphicsCommandList7 CommandList { get; }
 
     public D3D12RenderingEngine(
         ILogger<D3D12RenderingEngine> logger,
@@ -135,7 +135,7 @@ public class D3D12RenderingEngine : IRenderingEngine
 
         _commandAllocator = Device.CreateCommandAllocator<ID3D12CommandAllocator>(
             type: CommandListType.Direct);
-        _commandList = Device.CreateCommandList1<ID3D12GraphicsCommandList7>(
+        CommandList = Device.CreateCommandList1<ID3D12GraphicsCommandList7>(
             type: CommandListType.Direct,
             commandListFlags: CommandListFlags.None);
 
@@ -250,14 +250,14 @@ public class D3D12RenderingEngine : IRenderingEngine
             subresource: 0,
             flags: ResourceBarrierFlags.None);
 
-        _commandList.ResourceBarrier(barrier);
+        CommandList.ResourceBarrier(barrier);
 
         //draw to render target?
-        _commandList.ClearRenderTargetView(
+        CommandList.ClearRenderTargetView(
             _rendertargetViewHandles[_currentBufferIndex],
             _clearColor);
 
-        _commandList.OMSetRenderTargets(
+        CommandList.OMSetRenderTargets(
             renderTargetDescriptor: _rendertargetViewHandles[_currentBufferIndex],
             depthStencilDescriptor: null);
     }
@@ -271,7 +271,7 @@ public class D3D12RenderingEngine : IRenderingEngine
             subresource: 0,
             flags: ResourceBarrierFlags.None);
 
-        _commandList.ResourceBarrier(barrier);
+        CommandList.ResourceBarrier(barrier);
     }
 
     public void Draw(IEnumerable<IDrawable> drawables)
@@ -279,6 +279,10 @@ public class D3D12RenderingEngine : IRenderingEngine
         InitCommandList();
         BeginFrame();
         //TODO draw
+        foreach (var drawable in drawables)
+        {
+            drawable.Draw();
+        }
 
         EndFrame();
 
@@ -344,7 +348,7 @@ public class D3D12RenderingEngine : IRenderingEngine
                 {
                     Format = Format.R8G8B8A8_UNorm,
                     ViewDimension = RenderTargetViewDimension.Texture2D,
-                    Texture2D = new Texture2DRenderTargetView
+                    Texture2D =
                     {
                         MipSlice = 0,
                         PlaneSlice = 0,
@@ -388,14 +392,14 @@ public class D3D12RenderingEngine : IRenderingEngine
     private void InitCommandList()
     {
         _commandAllocator.Reset();
-        _commandList.Reset(_commandAllocator);
+        CommandList.Reset(_commandAllocator);
     }
 
     private void ExecutedCommandList()
     {
-        _commandList.Close();
+        CommandList.Close();
 
-        CommandQueue.ExecuteCommandList(_commandList);
+        CommandQueue.ExecuteCommandList(CommandList);
 
         SignalAndWait();
     }
@@ -422,7 +426,7 @@ public class D3D12RenderingEngine : IRenderingEngine
                 }
                 _swapChain.Dispose();
 
-                _commandList.Dispose();
+                CommandList.Dispose();
                 _commandAllocator.Dispose();
                 _fenceEvent.Dispose();
                 _fence.Dispose();
@@ -433,6 +437,8 @@ public class D3D12RenderingEngine : IRenderingEngine
             //free unmanaged resources
 
             _disposedValue = true;
+
+            _logger.LogInformation("Destroyed engine!");
         }
     }
 

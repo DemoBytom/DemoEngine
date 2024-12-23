@@ -12,7 +12,11 @@ public static class RegistrationExtensions
     public static IServiceCollection AddDirectX12(
         this IServiceCollection services)
         => services
-            .AddSingleton<IRenderingEngine, D3D12RenderingEngine>()
-            .AddSingleton<IDebugLayerLogger, DebugLayerLogger>()
+            .AddScoped<D3D12RenderingEngine>()
+            .AddScoped<IRenderingEngine>(sp
+                => sp.GetRequiredService<D3D12RenderingEngine>())
+            .AddScoped<ID3D12RenderingEngine>(sp
+                => sp.GetRequiredService<D3D12RenderingEngine>())
+            .AddScoped<IDebugLayerLogger, DebugLayerLogger>()
         ;
 }

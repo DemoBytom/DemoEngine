@@ -78,7 +78,8 @@ public sealed class DebugLayerLogger : IDebugLayerLogger, IDisposable
             messages[i] = new(
                 Category: message.Category.ToString(),
                 Id: ((MessageId)message.Id).ToString(),
-                Message: msg);
+                Message: msg,
+                LogLevel: SeverityToLogLevel(message.Severity));
         }
 
         return messages;

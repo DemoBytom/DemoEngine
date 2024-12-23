@@ -33,7 +33,7 @@ public class EngineService : ServiceBase
     {
         using var scope = _scopeFactory.CreateScope();
         _sp = scope.ServiceProvider;
-        _drawables = Array.Empty<ICube>(); /* new[]
+        _drawables = []; /* new[]
             {
                     scope.ServiceProvider.GetRequiredService<ICube>(),
                     //scope.ServiceProvider.GetRequiredService<ICube>()
@@ -73,6 +73,13 @@ public class EngineService : ServiceBase
         if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
         {
             _loopCancellationTokenSource.Cancel();
+            foreach (var drawable in _drawables)
+            {
+                (drawable as IDisposable)?.Dispose();
+            }
+
+            _drawables = [];
+            return Task.CompletedTask;
         }
         if (keyboardHandle.GetKeyPressed(VirtualKeys.F11))
         {
@@ -94,7 +101,7 @@ public class EngineService : ServiceBase
 
             _drawables = _drawables.Length > 0
                 ? _drawables[1..]
-                : Array.Empty<ICube>();
+                : [];
 
             d?.Dispose();
 
@@ -185,6 +192,13 @@ public class EngineService : ServiceBase
             if (disposing)
             {
                 _loopCancellationTokenSource.Dispose();
+                foreach (var drawable in _drawables)
+                {
+                    if (drawable is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                }
             }
 
             _disposedValue = true;

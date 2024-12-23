@@ -65,7 +65,8 @@ public sealed class DebugLayerLogger
             messages[i] = new(
                 message.Category.ToString(),
                 Id: ((MessageId)message.Id).ToString(),
-                Message: message.Description.UnterminateString());
+                Message: message.Description.UnterminateString(),
+                LogLevel: message.Severity.ToLogLevel());
         }
 
         return messages;
@@ -73,11 +74,51 @@ public sealed class DebugLayerLogger
 
     public T WrapCallInMessageExceptionHandler<T>(
         Func<T> func)
-        => func();
+    {
+        var pinned = _dxgiInfoQueue?.GetNumStoredMessages(_dxgiGuid) ?? 0;
+        try
+        {
+            return func();
+        }
+        catch (Exception)
+        {
+            var messages = ReadMessages(pinned);
+            foreach (var message in messages)
+            {
+                _logger.Log(
+                    message.LogLevel,
+                    "[{@category}:{@id}] {@description}",
+                        message.Category,
+                        message.Id,
+                        message.Message);
+            }
+            throw;
+        }
+    }
 
     public void WrapCallInMessageExceptionHandler(
         Action act)
-        => act();
+    {
+        var pinned = _dxgiInfoQueue?.GetNumStoredMessages(_dxgiGuid) ?? 0;
+        try
+        {
+            act();
+        }
+        catch (Exception)
+        {
+            var messages = ReadMessages(pinned);
+            foreach (var message in messages)
+            {
+                _logger.Log(
+                    message.LogLevel,
+                    "[{@category}:{@id}] {@description}",
+                        message.Category,
+                        message.Id,
+                        message.Message);
+            }
+            throw;
+        }
+    }
 
     public void LogMessages()
     {

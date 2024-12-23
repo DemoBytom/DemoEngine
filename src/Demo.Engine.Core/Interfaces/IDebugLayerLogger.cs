@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Demo.Engine.Core.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Core.Interfaces;
 
@@ -55,4 +56,8 @@ public interface IDebugLayerLogger
 /// <param name="Category">A category of the message, like device creation or destruction</param>
 /// <param name="Id">Entity that produced the log message</param>
 /// <param name="Message">Logged message</param>
-public record DebugLayerMessage(string Category, string Id, string Message);
+public record DebugLayerMessage(
+    string Category,
+    string Id,
+    string Message,
+    LogLevel LogLevel);

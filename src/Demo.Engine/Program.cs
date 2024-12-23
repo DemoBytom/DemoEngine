@@ -9,6 +9,7 @@ using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Extensions;
@@ -37,14 +38,15 @@ try
             //    ID3D11RenderingEngine,
             //    IRenderingEngine,
             //    D3D11RenderingEngine>()
-            .AddScoped<
-                IRenderingEngine,
-                D3D12RenderingEngine>()
+            //.AddScoped<
+            //    ID3D12RenderingEngine,
+            //    IRenderingEngine,
+            //    D3D12RenderingEngine>()
             .AddScoped<IMainLoopService, MainLoopService>()
             /*** Windows Only ***/
             .AddTransient<IRenderingControl, RenderingForm>()
             .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
-            //.AddTransient<IShaderCompiler, ShaderCompiler>()
+            .AddTransient<IShaderCompiler, Demo.Engine.Platform.DirectX12.Shaders.ShaderCompiler>()
             //.AddSingleton<IDebugLayerLogger, DebugLayerLogger>()
             .AddDirectX12()
             //tmp
@@ -55,11 +57,11 @@ try
 
             _ = services.AddOptions();
 
-            //_ = services
-            //    .AddSingleton(x =>
-            //        new CompiledVS("Shaders/Triangle/TriangleVS.hlsl", x.GetRequiredService<IShaderCompiler>()))
-            //    .AddSingleton(x =>
-            //        new CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
+            _ = services
+                .AddSingleton(x =>
+                    new Demo.Engine.Platform.DirectX12.Shaders.CompiledVS("Shaders/Triangle/TriangleVS.hlsl", x.GetRequiredService<IShaderCompiler>()))
+                .AddSingleton(x =>
+                    new Demo.Engine.Platform.DirectX12.Shaders.CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
         })
         .ConfigureContainer<ContainerBuilder>(builder
             => builder
