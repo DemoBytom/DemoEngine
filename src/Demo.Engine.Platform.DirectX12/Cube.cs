@@ -37,6 +37,7 @@ public class Cube
     private readonly VertexBufferView _vertexBufferView;
     private bool _disposedValue;
     private ID3D12RootSignature? _rootSignature;
+    private readonly ID3D12PipelineState _pipelineState;
 
     public Cube(
         IDebugLayerLogger debugLayerLogger,
@@ -103,33 +104,44 @@ public class Cube
             sizeInBytes: (uint)_cubeVertices.Length * Vertex.SizeInBytes,
             strideInBytes: Vertex.SizeInBytes);
 
-        _ = PrepareRenderingPipeline();
+        var gfxPipelineStateDesc = PrepareRenderingPipeline();
+
+        _pipelineState = _renderingEngine.Device.CreateGraphicsPipelineState(gfxPipelineStateDesc);
     }
 
     public GraphicsPipelineStateDescription PrepareRenderingPipeline()
     {
-        var rootSignatureFlags =
+        const RootSignatureFlags ROOT_SIGNATURE_FLAGS =
             RootSignatureFlags.AllowInputAssemblerInputLayout
-            | RootSignatureFlags.DenyVertexShaderRootAccess
+            //| RootSignatureFlags.DenyVertexShaderRootAccess
             ;
 
-        RootDescriptor1 rootDescriptor1 = new(
+        var vertexShaderRootDescriptor = new RootDescriptor1(
             shaderRegister: 0,
+            registerSpace: 0,
+            flags: RootDescriptorFlags.DataStaticWhileSetAtExecute);
+
+        var pixelShaderRootDescriptor = new RootDescriptor1(
+            shaderRegister: 1,
             registerSpace: 0,
             flags: RootDescriptorFlags.DataStaticWhileSetAtExecute);
 
         _rootSignature = _renderingEngine.Device.CreateRootSignature(
             new RootSignatureDescription1(
-                flags: rootSignatureFlags,
+                flags: ROOT_SIGNATURE_FLAGS,
                 parameters: [
-                    new RootParameter1(
+                    new (
                         parameterType: RootParameterType.ConstantBufferView,
-                        rootDescriptor: rootDescriptor1,
-                        visibility: ShaderVisibility.Vertex)
+                        rootDescriptor: vertexShaderRootDescriptor,
+                        visibility: ShaderVisibility.Vertex),
+                    new(
+                        parameterType: RootParameterType.ConstantBufferView,
+                        rootDescriptor: pixelShaderRootDescriptor,
+                        visibility: ShaderVisibility.Pixel),
                     ])
         );
 
-        var vertexData = VertexData();
+        var vertexLayout = VertexLayout();
 
         var gpsd = new
         GraphicsPipelineStateDescription()
@@ -137,13 +149,80 @@ public class Cube
             RootSignature = _rootSignature,
             InputLayout = new InputLayoutDescription
             {
-                Elements = vertexData,
+                Elements = vertexLayout,
             },
             IndexBufferStripCutValue = IndexBufferStripCutValue.Disabled,
             VertexShader = _compiledVS.CompiledShader,
-            // TODO: Rasterizer
             PixelShader = _compiledPS.CompiledShader,
-            // TODO: Output Merger
+            DomainShader = null,
+            HullShader = null,
+            GeometryShader = null,
+            // Rasterizer
+            PrimitiveTopologyType = PrimitiveTopologyType.Triangle,
+            RasterizerState = new RasterizerDescription()
+            {
+                FillMode = FillMode.Solid,
+                CullMode = CullMode.None,
+                FrontCounterClockwise = true,
+                DepthBias = 0,
+                DepthBiasClamp = 0.0f,
+                SlopeScaledDepthBias = 0.0f,
+                DepthClipEnable = false,
+                MultisampleEnable = false,
+                AntialiasedLineEnable = false,
+                ForcedSampleCount = 0,
+            },
+            StreamOutput = new StreamOutputDescription
+            {
+                //nulls
+            },
+            RenderTargetFormats =
+            [
+                Format.R8G8B8A8_UNorm
+            ],
+            DepthStencilFormat = Format.Unknown,
+            BlendState = new BlendDescription(
+                Blend.Zero,
+                Blend.Zero,
+                Blend.Zero,
+                Blend.Zero),
+            //BlendDescription.Opaque,
+            DepthStencilState = new DepthStencilDescription
+            {
+                DepthEnable = false,
+                DepthFunc = ComparisonFunction.Always,
+                DepthWriteMask = DepthWriteMask.Zero,
+                StencilEnable = false,
+                StencilReadMask = 0,
+                StencilWriteMask = 0,
+                FrontFace = new DepthStencilOperationDescription
+                {
+                    StencilFunc = ComparisonFunction.Always,
+                    StencilDepthFailOp = StencilOperation.Keep,
+                    StencilFailOp = StencilOperation.Keep,
+                    StencilPassOp = StencilOperation.Keep,
+                },
+                BackFace = new DepthStencilOperationDescription
+                {
+                    StencilFunc = ComparisonFunction.Always,
+                    StencilDepthFailOp = StencilOperation.Keep,
+                    StencilFailOp = StencilOperation.Keep,
+                    StencilPassOp = StencilOperation.Keep,
+                },
+            },
+            SampleMask = 0xFFFFFFFF,
+            SampleDescription = new SampleDescription
+            {
+                Count = 1,
+                Quality = 0,
+            },
+            NodeMask = 0,
+            CachedPSO = new CachedPipelineState
+            {
+                CachedBlobSizeInBytes = 0,
+                CachedBlob = (nint)null,
+            },
+            Flags = PipelineStateFlags.None,
         };
 
         return gpsd;
@@ -158,7 +237,11 @@ public class Cube
         //        srcBuffer: _uploadBuffer,
         //        srcOffset: 0,
         //        numBytes: 1024);
+        // PSO
+        _renderingEngine.CommandList.SetPipelineState(_pipelineState);
+        _renderingEngine.CommandList.SetGraphicsRootSignature(_rootSignature);
 
+        // Input Assembler
         _renderingEngine.CommandList.IASetVertexBuffers(
             slot: 0,
             vertexBufferView: _vertexBufferView);
@@ -179,7 +262,7 @@ public class Cube
     {
     }
 
-    private static InputElementDescription[] VertexData()
+    private static InputElementDescription[] VertexLayout()
     {
         var vertexLayout = new InputElementDescription[] {
             new (
@@ -211,9 +294,10 @@ public class Cube
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects)
+                _pipelineState.Dispose();
+                _rootSignature?.Dispose();
                 _vertexBuffer.Dispose();
                 _uploadBuffer.Dispose();
-                _rootSignature?.Dispose();
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer

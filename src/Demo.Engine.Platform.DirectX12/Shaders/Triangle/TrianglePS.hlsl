@@ -1,4 +1,4 @@
-cbuffer colorsBuffer : register(b0)
+cbuffer colorsBuffer : register(b1)
 {
     float4 f1;
     float4 f2;
