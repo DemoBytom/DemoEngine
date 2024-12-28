@@ -33,11 +33,11 @@ public class EngineService : ServiceBase
     {
         using var scope = _scopeFactory.CreateScope();
         _sp = scope.ServiceProvider;
-        _drawables = []; /* new[]
-            {
+        _drawables =
+            [
                     scope.ServiceProvider.GetRequiredService<ICube>(),
                     //scope.ServiceProvider.GetRequiredService<ICube>()
-            };*/
+            ];
         var mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
 
         await mainLoop.RunAsync(
@@ -119,23 +119,23 @@ public class EngineService : ServiceBase
             System.Diagnostics.Debug.WriteLine("Cube added!!");
         }
 
-        if (_drawables.Length == 2)
-        {
-            foreach (var drawable in _drawables)
-            {
-                (drawable as IDisposable)?.Dispose();
-            }
+        //if (_drawables.Length == 2)
+        //{
+        //    foreach (var drawable in _drawables)
+        //    {
+        //        (drawable as IDisposable)?.Dispose();
+        //    }
 
-            _drawables = Array.Empty<ICube>();
-        }
-        else if (_drawables.Length < 2 && _sp is not null /*&& _dontCreate == false*/)
-        {
-            _drawables = new List<ICube>(_drawables)
-                {
-                    _sp.GetRequiredService<ICube>()
-                }.ToArray();
-            //_dontCreate = true;
-        }
+        //    _drawables = Array.Empty<ICube>();
+        //}
+        //else if (_drawables.Length < 2 && _sp is not null /*&& _dontCreate == false*/)
+        //{
+        //    _drawables = new List<ICube>(_drawables)
+        //        {
+        //            _sp.GetRequiredService<ICube>()
+        //        }.ToArray();
+        //    //_dontCreate = true;
+        //}
 
         //Share the rainbow
         _r = MathF.Sin((_sin + 0) * MathF.PI / 180);

@@ -44,7 +44,20 @@ public class D3D12RenderingEngine : ID3D12RenderingEngine
 
     public IRenderingControl Control { get; }
 
-    public Matrix4x4 ViewProjectionMatrix => throw new NotImplementedException();
+    private const int FOV = 90;
+    private const float FOV_RAD = FOV * (MathF.PI / 180);
+
+    public Matrix4x4 ViewProjectionMatrix
+        => Matrix4x4.Transpose(
+            // View matrix - Camera
+            Matrix4x4.CreateLookAt(new Vector3(0.0f, 0.0f, 4.0f), new Vector3(0.0f, 0.0f, 0.0f), Vector3.UnitY)
+            // Projection matrix - perspective
+            //* Matrix4x4.CreatePerspective(1, Control.DrawHeight / (float)Control.DrawWidth, 0.1f, 10f));
+            * Matrix4x4.CreatePerspectiveFieldOfView(
+                FOV_RAD,
+                (float)Control.DrawWidth.Value / Control.DrawHeight.Value,
+                0.1f,
+                10f));
 
     public RawBool IsTearingSupported { get; }
 
@@ -389,13 +402,13 @@ public class D3D12RenderingEngine : ID3D12RenderingEngine
         }
     }
 
-    private void InitCommandList()
+    public void InitCommandList()
     {
         _commandAllocator.Reset();
         CommandList.Reset(_commandAllocator);
     }
 
-    private void ExecutedCommandList()
+    public void ExecutedCommandList()
     {
         CommandList.Close();
 
