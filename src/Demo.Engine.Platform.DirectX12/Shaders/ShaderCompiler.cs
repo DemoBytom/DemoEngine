@@ -9,12 +9,11 @@ using Compiler = Vortice.D3DCompiler.Compiler;
 
 namespace Demo.Engine.Platform.DirectX12.Shaders;
 
-public class ShaderCompiler : IShaderCompiler
+public class ShaderCompiler(
+    ILogger<ShaderCompiler> logger)
+    : IShaderCompiler
 {
-    private readonly ILogger<ShaderCompiler> _logger;
-
-    public ShaderCompiler(ILogger<ShaderCompiler> logger) =>
-        _logger = logger;
+    private readonly ILogger<ShaderCompiler> _logger = logger;
 
     public ReadOnlyMemory<byte> CompileShader(string path, ShaderStage shaderStage, string entryPoint = "main")
     {
@@ -29,12 +28,12 @@ public class ShaderCompiler : IShaderCompiler
         try
         {
             var compileResult = Compiler.Compile(
-                shader,
-                entryPoint,
-                filename,
-                shaderProfile,
-                out blob,
-                out errorBlob
+                shaderSource: shader,
+                entryPoint: entryPoint,
+                sourceName: filename,
+                profile: shaderProfile,
+                blob: out blob,
+                errorBlob: out errorBlob
                 );
 
             return compileResult.Failure

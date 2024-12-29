@@ -18,7 +18,7 @@ using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX12;
 
-public class D3D12RenderingEngine : ID3D12RenderingEngine
+internal class D3D12RenderingEngine : ID3D12RenderingEngine
 {
     private const int FRAME_BUFFER_COUNT = 2;
 

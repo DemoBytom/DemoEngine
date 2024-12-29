@@ -7,7 +7,7 @@ using Vortice.Mathematics;
 namespace Demo.Engine.Platform.DirectX12;
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-public readonly record struct CubeFacesColors(
+internal readonly record struct CubeFacesColors(
     Color4 Face1,
     Color4 Face2,
     Color4 Face3,
@@ -16,18 +16,18 @@ public readonly record struct CubeFacesColors(
     Color4 Face6)
     : ISizeInBytes<CubeFacesColors>
 {
-    public static unsafe int SizeInBytes => sizeof(CubeFacesColors);
+    public static unsafe uint SizeInBytes => (uint)sizeof(CubeFacesColors);
 }
 
-public interface ISizeInBytes<TSelf>
+internal interface ISizeInBytes<TSelf>
     where TSelf : unmanaged, ISizeInBytes<TSelf>
 {
-    public static abstract int SizeInBytes { get; }
+    public static abstract uint SizeInBytes { get; }
 }
 
-public static class SizeHelper
+internal static class SizeHelper
 {
-    public static int GetSize<T>()
+    internal static uint GetSize<T>()
         where T : unmanaged, ISizeInBytes<T>
         => T.SizeInBytes;
 }

@@ -35,8 +35,8 @@ public class Cube
         new( new ( 1.0f,  1.0f,  1.0f), new ( 000, 000, 255, 255)  ),
     };
 
-    private readonly ushort[] _indices = new ushort[]
-    {
+    private readonly ushort[] _indices =
+    [
             //Cube
             4,5,6, 6,5,7,
             5,1,7, 7,1,3,
@@ -44,7 +44,7 @@ public class Cube
             0,4,2, 2,4,6,
             6,7,2, 2,7,3,
             5,4,1, 1,4,0
-    };
+    ];
 
     private readonly CubeFacesColors _colors = new(
         Face1: new Color4(255, 000, 000, 255),
@@ -269,7 +269,7 @@ public class Cube
                 Format.R8G8B8A8_UNorm
             ],
             DepthStencilFormat = Format.Unknown,
-            BlendState = BlendDescription.NonPremultiplied,
+            BlendState = BlendDescription.Opaque,
             //BlendDescription.Opaque,
             DepthStencilState = new DepthStencilDescription
             {

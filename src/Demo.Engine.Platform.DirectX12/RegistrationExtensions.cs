@@ -3,6 +3,8 @@
 
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Interfaces.Rendering.Shaders;
+using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Demo.Engine.Platform.DirectX12;
@@ -18,5 +20,9 @@ public static class RegistrationExtensions
             .AddScoped<ID3D12RenderingEngine>(sp
                 => sp.GetRequiredService<D3D12RenderingEngine>())
             .AddScoped<IDebugLayerLogger, DebugLayerLogger>()
+            // shaders
+            .AddSingleton<IShaderCompiler, ShaderCompiler>()
+            //Cube
+            .AddScoped<ICube, Cube>()
         ;
 }

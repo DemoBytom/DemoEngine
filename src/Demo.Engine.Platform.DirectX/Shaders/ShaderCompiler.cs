@@ -16,7 +16,10 @@ public class ShaderCompiler : IShaderCompiler
     public ShaderCompiler(ILogger<ShaderCompiler> logger) =>
         _logger = logger;
 
-    public ReadOnlyMemory<byte> CompileShader(string path, ShaderStage shaderStage, string entryPoint = "main")
+    public ReadOnlyMemory<byte> CompileShader(
+        string path,
+        ShaderStage shaderStage,
+        string entryPoint = "main")
     {
         var shader = File.ReadAllText(path);
 

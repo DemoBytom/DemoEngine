@@ -13,7 +13,7 @@ namespace Demo.Engine.Platform.DirectX12;
 /// <summary>
 /// DirectX Context
 /// </summary>
-public sealed class DebugLayerLogger
+internal sealed class DebugLayerLogger
     : IDebugLayerLogger,
       IDisposable
 {

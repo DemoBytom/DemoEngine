@@ -24,6 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Demo.Engine.UTs"/>
     <ProjectReference Include="..\Demo.Engine.Core\Demo.Engine.Core.csproj" />
   </ItemGroup>
 

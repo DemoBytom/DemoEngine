@@ -1,14 +1,12 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Extensions;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
-using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Services;
@@ -46,7 +44,7 @@ try
             /*** Windows Only ***/
             .AddTransient<IRenderingControl, RenderingForm>()
             .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
-            .AddTransient<IShaderCompiler, Demo.Engine.Platform.DirectX12.Shaders.ShaderCompiler>()
+            //.AddTransient<IShaderCompiler, Demo.Engine.Platform.DirectX12.Shaders.ShaderCompiler>()
             //.AddSingleton<IDebugLayerLogger, DebugLayerLogger>()
             .AddDirectX12()
             //tmp
@@ -63,11 +61,11 @@ try
                 .AddSingleton(x =>
                     new Demo.Engine.Platform.DirectX12.Shaders.CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
         })
-        .ConfigureContainer<ContainerBuilder>(builder
-            => builder
-                .RegisterType<Cube>()
-                .As<ICube>()
-                .ExternallyOwned())
+        //.ConfigureContainer<ContainerBuilder>(builder
+        //    => builder
+        //        .RegisterType<Cube>()
+        //        .As<ICube>()
+        //        .ExternallyOwned())
         ;
 
     var host = hostBuilder.Build();

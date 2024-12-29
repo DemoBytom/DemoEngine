@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 namespace Demo.Engine.Platform.DirectX12;
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly struct MatricesBuffer
+internal readonly struct MatricesBuffer
 {
     public MatricesBuffer(
         Matrix4x4 modelToWorldMatrix,

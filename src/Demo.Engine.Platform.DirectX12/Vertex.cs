@@ -2,21 +2,18 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX12;
 
-[StructLayout(LayoutKind.Sequential)]
-public readonly struct Vertex(
-    Vector3 position,
-    Color color)
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+internal readonly record struct Vertex(
+    Vector3 Position,
+    Color Color)
+    : ISizeInBytes<Vertex>
 {
-    public Vector3 Position { get; } = position;
-    public Color Color { get; } = color;
-
-    public static readonly uint SizeInBytes = (uint)Unsafe.SizeOf<Vertex>();
-    public static readonly uint PositionSizeInBytes = (uint)Unsafe.SizeOf<Vector3>();
-    public static readonly uint ColorSizeInBytes = (uint)Unsafe.SizeOf<Color>();
+    public static unsafe uint SizeInBytes { get; } = (uint)sizeof(Vertex);
+    public static unsafe uint PositionSizeInBytes { get; } = (uint)sizeof(Vector3);
+    public static unsafe uint ColorSizeInBytes { get; } = (uint)sizeof(Color);
 }
