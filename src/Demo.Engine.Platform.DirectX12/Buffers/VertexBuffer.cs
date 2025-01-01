@@ -4,6 +4,7 @@
 using Vortice.Direct3D12;
 
 namespace Demo.Engine.Platform.DirectX12.Buffers;
+
 internal class VertexBuffer<TVertices>
     : IDisposable
     where TVertices : unmanaged, ISizeInBytes<TVertices>

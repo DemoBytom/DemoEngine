@@ -20,7 +20,7 @@ namespace Demo.Engine.Platform.DirectX12;
 
 internal class D3D12RenderingEngine : ID3D12RenderingEngine
 {
-    private const int FRAME_BUFFER_COUNT = 2;
+    //private const int FRAME_BUFFER_COUNT = 2;
 
     private bool _disposedValue;
     private readonly ILogger<D3D12RenderingEngine> _logger;
@@ -29,18 +29,32 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
 
     private readonly IDXGIFactory7 _dxgiFactory;
 
-    private readonly ID3D12Fence1 _fence;
-    private ulong _frameCount;
-    private readonly AutoResetEvent _fenceEvent;
+    //private readonly ID3D12Fence1 _fence;
+    //private ulong _frameCount;
+    //private readonly AutoResetEvent _fenceEvent;
 
-    private readonly ID3D12CommandAllocator _commandAllocator;
+    //private readonly ID3D12CommandAllocator _commandAllocator;
 
     private readonly IDXGISwapChain3 _swapChain;
-    private readonly ID3D12Resource2[] _buffers = new ID3D12Resource2[FRAME_BUFFER_COUNT];
+    private readonly ID3D12Resource2[] _buffers = new ID3D12Resource2[RenderingCommand.FRAME_BUFFER_COUNT];
     private uint _currentBufferIndex = 0;
 
+    // TODO: remove old RTV!
     private readonly ID3D12DescriptorHeap _renderTargetViewDescriptorHeap;
-    private readonly CpuDescriptorHandle[] _rendertargetViewHandles = new CpuDescriptorHandle[FRAME_BUFFER_COUNT];
+
+    private readonly CpuDescriptorHandle[] _rendertargetViewHandles = new CpuDescriptorHandle[RenderingCommand.FRAME_BUFFER_COUNT];
+    // end remove old RTV!
+
+    private readonly RenderingCommand _d3d12Command;
+    private readonly bool[] _deferredReleasesFlag = new bool[RenderingCommand.FRAME_BUFFER_COUNT];
+    private readonly List<IDisposable>[] _deferredReleases;
+
+    private readonly Lock _lock = new();
+
+    private readonly DescriptorHeapAlocator _rtvDescriptorHeapAllocator;
+    private readonly DescriptorHeapAlocator _dsvDescriptorHeapAllocator;
+    private readonly DescriptorHeapAlocator _rsvDescriptorHeapAllocator;
+    private readonly DescriptorHeapAlocator _uavDescriptorHeapAllocator;
 
     public IRenderingControl Control { get; }
 
@@ -61,9 +75,9 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
 
     public RawBool IsTearingSupported { get; }
 
-    public ID3D12Device10 Device { get; }
-    public ID3D12CommandQueue CommandQueue { get; }
-    public ID3D12GraphicsCommandList7 CommandList { get; }
+    public ID3D12Device14 Device { get; }
+    public ID3D12CommandQueue CommandQueue => _d3d12Command.CommandQueue;
+    public ID3D12GraphicsCommandList10 CommandList => _d3d12Command.CommandList;
 
     public D3D12RenderingEngine(
         ILogger<D3D12RenderingEngine> logger,
@@ -77,6 +91,12 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         _renderSettings = renderSettings.Value;
         const bool DEBUG = false;
 
+        _deferredReleases = new List<IDisposable>[RenderingCommand.FRAME_BUFFER_COUNT];
+        for (var i = 0; i < RenderingCommand.FRAME_BUFFER_COUNT; ++i)
+        {
+            _deferredReleases[i] = [];
+        }
+
         //Initialize D3D12
 
         if (!D3D12.IsSupported(FeatureLevel.Level_12_0))
@@ -88,74 +108,36 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         _dxgiFactory = DXGI.CreateDXGIFactory2<IDXGIFactory7>(
             debug: DEBUG);
 
-        ID3D12Device10? d3d12Device = default;
+        IsTearingSupported = _dxgiFactory.PresentAllowTearing;
 
-        for (uint adapterIndex = 0;
-            _dxgiFactory
-                .EnumAdapters1(
-                    adapterIndex,
-                    out var adapter)
-                .Success;
-            ++adapterIndex)
-        {
-            var desc = adapter.Description1;
+        Device = CreateDevice<ID3D12Device14>(_dxgiFactory);
 
-            // don't select the basic renderer driver adapter
-            if ((desc.Flags & AdapterFlags.Software) != AdapterFlags.None)
-            {
-                adapter.Dispose();
-                continue;
-            }
+        //CommandQueue = Device.CreateCommandQueue(
+        //  type: CommandListType.Direct,
+        //  priority: CommandQueuePriority.High,
+        //  flags: CommandQueueFlags.None,
+        //  nodeMask: 0);
+        //CommandQueue.Name = "Graphics Queue";
 
-            if (D3D12
-                .D3D12CreateDevice(
-                    adapter: adapter,
-                    minFeatureLevel: FeatureLevel.Level_11_0,
-                    device: out d3d12Device)
-                .Success)
-            {
-                adapter.Dispose();
-                break;
-            }
-        }
+        _d3d12Command = new RenderingCommand(
+            Device,
+            CommandListType.Direct);
 
-        using (var factory5 = _dxgiFactory.QueryInterfaceOrNull<IDXGIFactory5>())
-        {
-            if (factory5 is not null)
-            {
-                IsTearingSupported = factory5.PresentAllowTearing;
-            }
-        }
+        //_fence = Device.CreateFence<ID3D12Fence1>(
+        //    initialValue: _frameCount,
+        //    flags: FenceFlags.None);
+        //_fenceEvent = new AutoResetEvent(false);
 
-        if (d3d12Device is null)
-        {
-            throw new PlatformNotSupportedException("Cannot create ID3D12Device!");
-        }
-
-        Device = d3d12Device;
-
-        CommandQueue = Device.CreateCommandQueue(
-          type: CommandListType.Direct,
-          priority: CommandQueuePriority.High,
-          flags: CommandQueueFlags.None,
-          nodeMask: 0);
-        CommandQueue.Name = "Graphics Queue";
-
-        _fence = Device.CreateFence<ID3D12Fence1>(
-            initialValue: _frameCount,
-            flags: FenceFlags.None);
-        _fenceEvent = new AutoResetEvent(false);
-
-        _commandAllocator = Device.CreateCommandAllocator<ID3D12CommandAllocator>(
-            type: CommandListType.Direct);
-        CommandList = Device.CreateCommandList1<ID3D12GraphicsCommandList7>(
-            type: CommandListType.Direct,
-            commandListFlags: CommandListFlags.None);
+        //_commandAllocator = Device.CreateCommandAllocator<ID3D12CommandAllocator>(
+        //    type: CommandListType.Direct);
+        //CommandList = Device.CreateCommandList1<ID3D12GraphicsCommandList10>(
+        //    type: CommandListType.Direct,
+        //    commandListFlags: CommandListFlags.None);
 
         _swapChainWidth = _renderSettings.Width;
         _swapChainHeight = _renderSettings.Height;
         using (var swapChain = _dxgiFactory.CreateSwapChainForHwnd(
-            CommandQueue,
+            _d3d12Command.CommandQueue,
             Control.Handle,
             desc: new SwapChainDescription1
             {
@@ -170,7 +152,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
                 },
                 BufferUsage = Usage.Backbuffer
                             | Usage.RenderTargetOutput,
-                BufferCount = FRAME_BUFFER_COUNT,
+                BufferCount = RenderingCommand.FRAME_BUFFER_COUNT,
                 Scaling = Scaling.Stretch,
                 SwapEffect = SwapEffect.FlipDiscard,
                 AlphaMode = AlphaMode.Ignore,
@@ -188,12 +170,35 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
 
             _swapChain = swapChain.QueryInterface<IDXGISwapChain3>();
         }
+
         //Create RTV Heap
+        _rtvDescriptorHeapAllocator = new(this, DescriptorHeapType.RenderTargetView);
+        _dsvDescriptorHeapAllocator = new(this, DescriptorHeapType.DepthStencilView);
+        _rsvDescriptorHeapAllocator = new(this, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+        _uavDescriptorHeapAllocator = new(this, DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+
+        var descriptorAllocatorsCreated = true;
+        descriptorAllocatorsCreated &= _rtvDescriptorHeapAllocator.Initialize(capacity: 512, isShaderVisible: false);
+        descriptorAllocatorsCreated &= _dsvDescriptorHeapAllocator.Initialize(capacity: 512, isShaderVisible: false);
+        descriptorAllocatorsCreated &= _rsvDescriptorHeapAllocator.Initialize(capacity: 4096, isShaderVisible: true);
+        descriptorAllocatorsCreated &= _uavDescriptorHeapAllocator.Initialize(capacity: 512, isShaderVisible: false);
+
+        _rtvDescriptorHeapAllocator.DescriptorHeap.NameObject("RTV Descriptor Heap", logger);
+        _dsvDescriptorHeapAllocator.DescriptorHeap.NameObject("DSV Descriptor Heap", logger);
+        _rsvDescriptorHeapAllocator.DescriptorHeap.NameObject("RSV Descriptor Heap", logger);
+        _uavDescriptorHeapAllocator.DescriptorHeap.NameObject("UAV Descriptor Heap", logger);
+
+        if (!descriptorAllocatorsCreated)
+        {
+            throw new InvalidOperationException(
+                "Couldn' create descriptor heap allocator!");
+        }
+
         var result = Device.CreateDescriptorHeap(
             new DescriptorHeapDescription
             {
                 Type = DescriptorHeapType.RenderTargetView,
-                DescriptorCount = FRAME_BUFFER_COUNT,
+                DescriptorCount = RenderingCommand.FRAME_BUFFER_COUNT,
                 Flags = DescriptorHeapFlags.None,
                 NodeMask = 0
             },
@@ -214,7 +219,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
             DescriptorHeapType.RenderTargetView);
 
         for (var i = 0;
-            i < FRAME_BUFFER_COUNT;
+            i < RenderingCommand.FRAME_BUFFER_COUNT;
             ++i)
         {
             _rendertargetViewHandles[i] = new CpuDescriptorHandle(
@@ -233,6 +238,73 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         Control.Show();
     }
 
+    private static TAdapter CreateAdapter<TAdapter, TDXGIFactory>(
+        TDXGIFactory dxgiFactory,
+        FeatureLevel minimumFeatureLevel,
+        out FeatureLevel maxSupportedFeatureLevel)
+        where TAdapter : IDXGIAdapter
+        where TDXGIFactory : IDXGIFactory6
+    {
+        for (uint adapterIndex = 0;
+            dxgiFactory.EnumAdapterByGpuPreference(
+                index: adapterIndex,
+                gpuPreference: GpuPreference.HighPerformance,
+                adapter: out TAdapter? adapter)
+            .Success(in adapter);
+            ++adapterIndex)
+        {
+            if (adapter is IDXGIAdapter1 adapter1
+                // don't select the basic renderer driver adapter
+                && (adapter1.Description1.Flags & AdapterFlags.Software) != AdapterFlags.None)
+            {
+                adapter.Dispose();
+                continue;
+            }
+
+            if (D3D12
+                .D3D12CreateDevice<ID3D12Device>(
+                    adapter: adapter,
+                    minFeatureLevel: minimumFeatureLevel,
+                    device: out var device)
+                .Success(
+                    in device))
+            {
+                maxSupportedFeatureLevel = device.CheckMaxSupportedFeatureLevel();
+
+                device.Dispose();
+
+                return adapter;
+            }
+        }
+
+        throw new PlatformNotSupportedException("No suitable adapter found!");
+    }
+
+    private TDevice CreateDevice<TDevice>(
+        IDXGIFactory7 dxgiFactory,
+        FeatureLevel minimumFeatureLevel = FeatureLevel.Level_11_0)
+        where TDevice : ID3D12Device
+    {
+        using var adapter = CreateAdapter<IDXGIAdapter4, IDXGIFactory7>(
+            dxgiFactory,
+            minimumFeatureLevel,
+            out var maxSupportedFeatureLevel);
+
+        if (D3D12
+            .D3D12CreateDevice(
+                adapter: adapter,
+                minFeatureLevel: maxSupportedFeatureLevel,
+                device: out TDevice? device)
+            .Success(in device))
+        {
+            device.NameObject("Main device", _logger);
+            _logger.LogDebug("Created device supporting {featureLevel}", maxSupportedFeatureLevel);
+            return device;
+        }
+
+        throw new PlatformNotSupportedException("Cannot create ID3D12Device!");
+    }
+
     private Color4 _clearColor = new(red: 0.0f, green: 0.0f, blue: 0.0f, alpha: 1.0f);
 
     public void BeginScene(Color4 color)
@@ -249,6 +321,12 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         _clearColor = color;
     }
 
+    public int CurrentFrameIndex()
+        => _d3d12Command.FrameIndex;
+
+    public void SetDeferredReleasesFlag()
+        => _deferredReleasesFlag[CurrentFrameIndex()] = true;
+
     public void BeginScene()
         => BeginScene(new Color4(red: 0, green: 0, blue: 0, alpha: 1));
 
@@ -263,14 +341,14 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
             subresource: 0,
             flags: ResourceBarrierFlags.None);
 
-        CommandList.ResourceBarrier(barrier);
+        _d3d12Command.CommandList.ResourceBarrier(barrier);
 
         //draw to render target?
-        CommandList.ClearRenderTargetView(
+        _d3d12Command.CommandList.ClearRenderTargetView(
             _rendertargetViewHandles[_currentBufferIndex],
             _clearColor);
 
-        CommandList.OMSetRenderTargets(
+        _d3d12Command.CommandList.OMSetRenderTargets(
             renderTargetDescriptor: _rendertargetViewHandles[_currentBufferIndex],
             depthStencilDescriptor: null);
     }
@@ -284,13 +362,49 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
             subresource: 0,
             flags: ResourceBarrierFlags.None);
 
-        CommandList.ResourceBarrier(barrier);
+        _d3d12Command.CommandList.ResourceBarrier(barrier);
+    }
+
+    private void ProcessDeferredReleases(int frameIndex)
+    {
+        lock (_lock)
+        {
+            _deferredReleasesFlag[frameIndex] = false;
+
+            _rtvDescriptorHeapAllocator.ProcessDeferredFree(frameIndex);
+            _dsvDescriptorHeapAllocator.ProcessDeferredFree(frameIndex);
+            _rsvDescriptorHeapAllocator.ProcessDeferredFree(frameIndex);
+            _uavDescriptorHeapAllocator.ProcessDeferredFree(frameIndex);
+
+            var disposables = _deferredReleases[frameIndex];
+            foreach (var disposable in disposables)
+            {
+                disposable.Dispose();
+            }
+
+            disposables.Clear();
+        }
+    }
+
+    public void DeferredRelease(IDisposable disposable)
+    {
+        var frameIndex = CurrentFrameIndex();
+        lock (_lock)
+        {
+            _deferredReleases[frameIndex].Add(disposable);
+            SetDeferredReleasesFlag();
+        }
     }
 
     public void Draw(IEnumerable<IDrawable> drawables)
     {
         InitCommandList();
         BeginFrame();
+        var frameIndex = CurrentFrameIndex();
+        if (_deferredReleasesFlag[frameIndex])
+        {
+            ProcessDeferredReleases(frameIndex);
+        }
         //TODO draw
         foreach (var drawable in drawables)
         {
@@ -331,7 +445,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
 
         FlushBuffers();
         _ = _swapChain.ResizeBuffers(
-            bufferCount: FRAME_BUFFER_COUNT,
+            bufferCount: RenderingCommand.FRAME_BUFFER_COUNT,
             width: (uint)width.Value,
             height: (uint)height.Value,
             newFormat: Format.Unknown,
@@ -346,7 +460,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
 
     private bool GetBuffers()
     {
-        for (var i = 0; i < FRAME_BUFFER_COUNT; ++i)
+        for (var i = 0; i < RenderingCommand.FRAME_BUFFER_COUNT; ++i)
         {
             if (!_swapChain.GetBuffer<ID3D12Resource2>((uint)i, out var buffer).Success)
             {
@@ -375,47 +489,20 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
 
     private void ReleaseBuffers()
     {
-        for (var i = 0; i < FRAME_BUFFER_COUNT; ++i)
+        for (var i = 0; i < RenderingCommand.FRAME_BUFFER_COUNT; ++i)
         {
             _buffers[i].Dispose();
         }
     }
 
-    public void SignalAndWait()
-    {
-        _ = CommandQueue.Signal(
-            fence: _fence,
-            value: ++_frameCount);
-
-        _ = _fence.SetEventOnCompletion(
-            value: _frameCount,
-            waitHandle: _fenceEvent);
-
-        _ = _fenceEvent.WaitOne();
-    }
-
-    private void FlushBuffers()
-    {
-        for (var i = 0; i < FRAME_BUFFER_COUNT; ++i)
-        {
-            SignalAndWait();
-        }
-    }
+    private void FlushBuffers() =>
+        _d3d12Command.FlushFrames();
 
     public void InitCommandList()
-    {
-        _commandAllocator.Reset();
-        CommandList.Reset(_commandAllocator);
-    }
+        => _d3d12Command.BeginFrame();
 
     public void ExecuteCommandList()
-    {
-        CommandList.Close();
-
-        CommandQueue.ExecuteCommandList(CommandList);
-
-        SignalAndWait();
-    }
+        => _d3d12Command.EndFrame();
 
     protected void Disposing(bool disposing)
     {
@@ -423,7 +510,37 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         {
             if (disposing)
             {
-                //Dispose managed resources
+                // Must be released before resources that depend on those (like a swap chain)
+                for (
+                    var frameIndex = 0;
+                    frameIndex < RenderingCommand.FRAME_BUFFER_COUNT;
+                    ++frameIndex)
+                {
+                    ProcessDeferredReleases(frameIndex);
+                }
+
+                // Dispose managed resources
+                //// Not sure if I need to do
+                ////    the deferred releasing here..
+
+                //_rtvDescriptorHeapAllocator.DeferredRelease();
+                //_dsvDescriptorHeapAllocator.DeferredRelease();
+                //_rsvDescriptorHeapAllocator.DeferredRelease();
+                //_uavDescriptorHeapAllocator.DeferredRelease();
+
+                //// make sure everything is actually released
+                //for (
+                //    var frameIndex = 0;
+                //    frameIndex < RenderingCommand.FRAME_BUFFER_COUNT;
+                //    ++frameIndex)
+                //{
+                //    ProcessDeferredReleases(frameIndex);
+                //}
+
+                _rtvDescriptorHeapAllocator.Dispose();
+                _dsvDescriptorHeapAllocator.Dispose();
+                _rsvDescriptorHeapAllocator.Dispose();
+                _uavDescriptorHeapAllocator.Dispose();
 
                 //Flush all buffers that might be waiting in the queue
                 FlushBuffers();
@@ -439,11 +556,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
                 }
                 _swapChain.Dispose();
 
-                CommandList.Dispose();
-                _commandAllocator.Dispose();
-                _fenceEvent.Dispose();
-                _fence.Dispose();
-                CommandQueue.Dispose();
+                _d3d12Command.Dispose();
                 Device.Dispose();
                 _dxgiFactory.Dispose();
             }

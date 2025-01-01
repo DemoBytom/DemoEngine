@@ -1,0 +1,309 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+
+using System.Diagnostics.CodeAnalysis;
+using Vortice.Direct3D12;
+
+namespace Demo.Engine.Platform.DirectX12;
+
+internal class DescriptorHeapAlocator
+    : IDisposable
+{
+    public CpuDescriptorHandle CPU_Start { get; private set; }
+
+    public GpuDescriptorHandle? GPU_Start { get; private set; }
+
+    /// <summary>
+    /// Size of the heap
+    /// </summary>
+    public uint Capacity { get; private set; }
+
+    /// <summary>
+    /// How many descriptors have been allocated
+    /// </summary>
+    public uint Size { get; private set; } = 0;
+
+    /// <summary>
+    /// How big a descriptor is for the heap on this system
+    /// </summary>
+    public uint DescriptorSize { get; private set; } = 0;
+
+    public DescriptorHeapType HeapType { get; }
+
+    public ID3D12DescriptorHeap? DescriptorHeap { get; private set; }
+    private bool _disposedValue;
+
+    private int[] _freeHandles = [];
+
+    private readonly List<int>[] _deferredFreeIndices;
+
+    [MemberNotNullWhen(true, nameof(GPU_Start))]
+    public bool IsShaderVisible { get; private set; }
+
+    private readonly Lock _lock = new();
+    private readonly ID3D12RenderingEngine _d3D12RenderingEngine;
+
+    public DescriptorHeapAlocator(
+        ID3D12RenderingEngine d3D12RenderingEngine,
+        DescriptorHeapType heapType)
+    {
+        _d3D12RenderingEngine = d3D12RenderingEngine;
+        HeapType = heapType;
+        _deferredFreeIndices = new List<int>[RenderingCommand.FRAME_BUFFER_COUNT];
+        for (var i = 0; i < RenderingCommand.FRAME_BUFFER_COUNT; ++i)
+        {
+            _deferredFreeIndices[i] = [];
+        }
+    }
+
+    public bool Initialize(
+        uint capacity,
+        bool isShaderVisible)
+    {
+        lock (_lock)
+        {
+            ArgumentOutOfRangeException.ThrowIfZero(
+                capacity);
+
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(
+                value: capacity,
+                other: (uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2);
+
+            if (HeapType == DescriptorHeapType.Sampler)
+            {
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(
+                    value: capacity,
+                    other: (uint)D3D12.MaxShaderVisibleSamplerHeapSize);
+            }
+
+            if (HeapType
+                is DescriptorHeapType.DepthStencilView
+                or DescriptorHeapType.RenderTargetView)
+            {
+                isShaderVisible = false;
+            }
+
+            Capacity = capacity;
+            Size = 0;
+
+            DescriptorHeap?.Dispose();
+
+            var descriptorHeapDescription = new DescriptorHeapDescription(
+                type: HeapType,
+                descriptorCount: Capacity,
+                flags: isShaderVisible
+                    ? DescriptorHeapFlags.ShaderVisible
+                    : DescriptorHeapFlags.None,
+                nodeMask: 0);
+
+            var result = _d3D12RenderingEngine.Device.CreateDescriptorHeap(
+                descriptorHeapDescription,
+                out var descriptorHeap);
+
+            if (result
+                is { Failure: true }
+                || descriptorHeap is null)
+            {
+                //todo: log
+                throw new InvalidOperationException("Error creating descriptor heap!");
+            }
+
+            DescriptorHeap = descriptorHeap;
+
+            _freeHandles = new int[capacity];
+            for (var i = 0; i < capacity; ++i)
+            {
+                _freeHandles[i] = i;
+            }
+
+            for (var i = 0; i < RenderingCommand.FRAME_BUFFER_COUNT; ++i)
+            {
+                if (_deferredFreeIndices[i].Count > 0)
+                {
+                    throw new InvalidOperationException(
+                        "Not all resources were freed before reinitializing descriptor heap!");
+                }
+            }
+
+            DescriptorSize = _d3D12RenderingEngine.Device.GetDescriptorHandleIncrementSize(
+                HeapType);
+            CPU_Start = DescriptorHeap.GetCPUDescriptorHandleForHeapStart();
+            GPU_Start = isShaderVisible
+                ? DescriptorHeap.GetGPUDescriptorHandleForHeapStart()
+                : null;
+
+            IsShaderVisible = isShaderVisible;
+
+            return true;
+        }
+    }
+
+    public DescriptorHandle Allocate()
+    {
+        lock (_lock)
+        {
+            ValidateHeapIsNotNull();
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(
+                Size, Capacity);
+
+            var index = _freeHandles[Size];
+
+            ++Size;
+
+            var handle = new DescriptorHandle(
+                cpu: new CpuDescriptorHandle(
+                    CPU_Start,
+                    index,
+                    DescriptorSize),
+                gpu: IsShaderVisible
+                    ? new GpuDescriptorHandle(
+                        GPU_Start.Value,
+                        index,
+                        DescriptorSize)
+                    : null,
+                heapAlocator: this,
+                index: index);
+
+            return handle;
+        }
+    }
+
+    public void Free(
+        int frameIndex,
+        in DescriptorHandle descriptorHandle)
+    {
+        lock (_lock)
+        {
+            ValidateHeapIsNotNull();
+            ArgumentOutOfRangeException.ThrowIfZero(Size);
+
+            if (descriptorHandle.Container != this)
+            {
+                throw new InvalidOperationException(
+                    "Given descriptor handle wasn't allocated by this heap allocator!");
+            }
+
+            // TODO add logging
+            if (!descriptorHandle.IsValid)
+            {
+                throw new InvalidOperationException(
+                    "Invalid descriptor handle!");
+            }
+            if (descriptorHandle.CPU.Value.Ptr < CPU_Start.Ptr)
+            {
+                throw new InvalidOperationException(
+                    "Invalid CPU pointer!");
+            }
+            if ((descriptorHandle.CPU.Value.Ptr - CPU_Start.Ptr) % DescriptorSize != 0)
+            {
+                throw new InvalidOperationException(
+                    "Invalid CPU pointer offset!");
+            }
+
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(
+                (uint)descriptorHandle.Index,
+                Capacity);
+
+            var index = (uint)(descriptorHandle.CPU.Value.Ptr - CPU_Start.Ptr) / DescriptorSize;
+
+            if (descriptorHandle.Index != index)
+            {
+                throw new InvalidOperationException(
+                    "Invalid heap descriptor index!");
+            }
+
+            _deferredFreeIndices[frameIndex].Add((int)index);
+        }
+    }
+
+    private void ValidateHeapIsNotNull()
+    {
+        if (DescriptorHeap is null)
+        {
+            throw new InvalidOperationException(
+                "Descriptor heap wasn't initialized properly!");
+        }
+    }
+
+    public void DeferredRelease()
+    {
+        if (DescriptorHeap is not null)
+        {
+            DescriptorHeap.Disposed += (_, _)
+                => DescriptorHeap = null;
+
+            _d3D12RenderingEngine.DeferredRelease(
+                DescriptorHeap);
+        }
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                DescriptorHeap?.Dispose();
+            }
+
+            _disposedValue = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    internal void ProcessDeferredFree(int frameIndex)
+    {
+        lock (_lock)
+        {
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(
+                frameIndex,
+                RenderingCommand.FRAME_BUFFER_COUNT);
+
+            var indices = _deferredFreeIndices[frameIndex];
+            foreach (var index in indices)
+            {
+                // free
+                --Size;
+                _freeHandles[Size] = index;
+            }
+            indices.Clear();
+        }
+    }
+
+    internal readonly struct DescriptorHandle
+    {
+        public CpuDescriptorHandle? CPU { get; }
+        public GpuDescriptorHandle? GPU { get; }
+        public DescriptorHeapAlocator Container { get; }
+        public int Index { get; }
+
+        [MemberNotNullWhen(true, nameof(CPU))]
+        public readonly bool IsValid => CPU is not null;
+
+        [MemberNotNullWhen(true, nameof(GPU))]
+        public readonly bool IsSHaderVisible => GPU is not null;
+
+        public DescriptorHandle()
+            => throw new InvalidOperationException(
+                "Descriptor Handle cannot be created without proper descriptor handles!");
+
+        public DescriptorHandle(
+            CpuDescriptorHandle cpu,
+            GpuDescriptorHandle? gpu,
+            DescriptorHeapAlocator heapAlocator,
+            int index)
+        {
+            CPU = cpu;
+            GPU = gpu;
+
+            Container = heapAlocator;
+            Index = index;
+        }
+    }
+}

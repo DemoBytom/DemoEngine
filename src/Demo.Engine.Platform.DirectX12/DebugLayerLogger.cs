@@ -42,6 +42,21 @@ internal sealed class DebugLayerLogger
             }
 
             _dxgiInfoQueue = DXGI.DXGIGetDebugInterface1<IDXGIInfoQueue>();
+
+            _dxgiInfoQueue.SetBreakOnSeverity(
+                _dxgiGuid,
+                InfoQueueMessageSeverity.Corruption,
+                true);
+
+            _dxgiInfoQueue.SetBreakOnSeverity(
+                _dxgiGuid,
+                InfoQueueMessageSeverity.Warning,
+                true);
+
+            _dxgiInfoQueue.SetBreakOnSeverity(
+                _dxgiGuid,
+                InfoQueueMessageSeverity.Error,
+                true);
         }
     }
 
@@ -148,6 +163,21 @@ internal sealed class DebugLayerLogger
         {
             if (disposing)
             {
+                _dxgiInfoQueue?.SetBreakOnSeverity(
+                    _dxgiGuid,
+                    InfoQueueMessageSeverity.Corruption,
+                    false);
+
+                _dxgiInfoQueue?.SetBreakOnSeverity(
+                    _dxgiGuid,
+                    InfoQueueMessageSeverity.Warning,
+                    false);
+
+                _dxgiInfoQueue?.SetBreakOnSeverity(
+                    _dxgiGuid,
+                    InfoQueueMessageSeverity.Error,
+                    false);
+
                 // TODO: dispose managed state (managed objects)
                 if (_dxgiDebug is not null)
                 {

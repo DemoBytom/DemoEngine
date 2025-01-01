@@ -8,12 +8,17 @@ namespace Demo.Engine.Platform.DirectX12;
 
 public interface ID3D12RenderingEngine : IRenderingEngine
 {
-    public ID3D12Device10 Device { get; }
+    public ID3D12Device14 Device { get; }
 
-    public ID3D12GraphicsCommandList7 CommandList { get; }
+    public ID3D12GraphicsCommandList10 CommandList { get; }
 
     public void InitCommandList();
 
     public void ExecuteCommandList();
-    void SignalAndWait();
+
+    public int CurrentFrameIndex();
+
+    public void SetDeferredReleasesFlag();
+
+    void DeferredRelease(IDisposable disposable);
 }
