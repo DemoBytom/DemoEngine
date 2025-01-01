@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Platform.DirectX12.Buffers;
 using Demo.Engine.Platform.DirectX12.Shaders;
 using SharpGen.Runtime;
 using Vortice.Direct3D;
@@ -53,12 +54,10 @@ public class Cube
         Face4: new Color4(000, 125, 125, 255),
         Face5: new Color4(125, 125, 000, 255),
         Face6: new Color4(125, 000, 125, 255));
+    private readonly VertexBuffer<Vertex> _vertexBuffer;
 
-    private readonly ID3D12Resource _uploadBuffer;
-    private readonly ID3D12Resource _vertexBuffer;
     private readonly ID3D12Resource _indexBuffer;
     private readonly ID3D12Resource _vsConstantBuffer;
-    private readonly VertexBufferView _vertexBufferView;
     private readonly IndexBufferView _indexBufferView;
     private bool _disposedValue;
     private ID3D12RootSignature? _rootSignature;
@@ -82,46 +81,9 @@ public class Cube
         _compiledVS = compiledVS;
         _compiledPS = compiledPS;
 
-        var uploadBufferProperties = new HeapProperties(
-            type: HeapType.Upload,
-            cpuPageProperty: CpuPageProperty.Unknown,
-            memoryPoolPreference: MemoryPool.Unknown,
-            creationNodeMask: 0,
-            visibleNodeMask: 0);
-
-        var defaultBufferProperties = new HeapProperties(
-            type: HeapType.Default,
-            cpuPageProperty: CpuPageProperty.Unknown,
-            memoryPoolPreference: MemoryPool.Unknown,
-            creationNodeMask: 0,
-            visibleNodeMask: 0);
-
-        var resourceDescription = new ResourceDescription(
-            dimension: ResourceDimension.Buffer,
-            alignment: D3D12.DefaultResourcePlacementAlignment,
-            width: Vertex.SizeInBytes * (ulong)_cubeVertices.Length,
-            height: 1,
-            depthOrArraySize: 1,
-            mipLevels: 1,
-            format: Format.Unknown,
-            sampleCount: 1,
-            sampleQuality: 0,
-            layout: TextureLayout.RowMajor,
-            flags: ResourceFlags.None);
-
-        _uploadBuffer = _renderingEngine.Device.CreateCommittedResource(
-            heapProperties: uploadBufferProperties,
-            heapFlags: HeapFlags.None,
-            description: resourceDescription,
-            initialResourceState: ResourceStates.Common,
-            optimizedClearValue: null);
-
-        _vertexBuffer = _renderingEngine.Device.CreateCommittedResource(
-            heapProperties: defaultBufferProperties,
-            heapFlags: HeapFlags.None,
-            description: resourceDescription,
-            initialResourceState: ResourceStates.Common,
-            optimizedClearValue: null);
+        _vertexBuffer = new VertexBuffer<Vertex>(
+            _renderingEngine,
+            _cubeVertices);
 
         _indexBuffer = _renderingEngine.Device.CreateCommittedResource(
             heapType: HeapType.Upload,
@@ -146,20 +108,6 @@ public class Cube
             ResourceDescription.Buffer((ulong)MatricesBuffer.SizeInBytes),
             ResourceStates.GenericRead);
 
-        var bufferData = _uploadBuffer.Map<Vertex>(
-            0,
-            _cubeVertices.Length);
-        //ReadOnlySpan<char> src = "Hello World";
-        ReadOnlySpan<Vertex> src = _cubeVertices.AsSpan();
-        src.CopyTo(bufferData);
-
-        _uploadBuffer.Unmap(0);
-
-        _vertexBufferView = new VertexBufferView(
-            bufferLocation: _vertexBuffer.GPUVirtualAddress,
-            sizeInBytes: (uint)_cubeVertices.Length * Vertex.SizeInBytes,
-            strideInBytes: Vertex.SizeInBytes);
-
         _indexBufferView = new IndexBufferView(
             bufferLocation: _indexBuffer.GPUVirtualAddress,
             sizeInBytes: sizeof(short) * (uint)_indices.Length,
@@ -173,20 +121,8 @@ public class Cube
 
         _psConstantBuffer = _renderingEngine.Device.CreateCommittedResource(
             HeapType.Upload,
-            ResourceDescription.Buffer((ulong)CubeFacesColors.SizeInBytes),
+            ResourceDescription.Buffer(CubeFacesColors.SizeInBytes),
             ResourceStates.GenericRead);
-
-        _renderingEngine.InitCommandList();
-
-        _renderingEngine.CommandList
-           .CopyBufferRegion(
-               dstBuffer: _vertexBuffer,
-               dstOffset: 0,
-               srcBuffer: _uploadBuffer,
-               srcOffset: 0,
-               numBytes: Vertex.SizeInBytes * (ulong)_cubeVertices.Length);
-
-        _renderingEngine.ExecutedCommandList();
 
         var gfxPipelineStateDesc = PrepareRenderingPipeline();
 
@@ -338,7 +274,7 @@ public class Cube
             Unsafe.CopyBlock(
                 updatePS.GetPointerUnsafe(),
                 dataPtr,
-                (uint)CubeFacesColors.SizeInBytes);
+                CubeFacesColors.SizeInBytes);
         }
         _psConstantBuffer.Unmap(0);
 
@@ -356,9 +292,7 @@ public class Cube
             _psConstantBuffer.GPUVirtualAddress);
 
         // Input Assembler
-        _renderingEngine.CommandList.IASetVertexBuffers(
-            slot: 0,
-            vertexBufferView: _vertexBufferView);
+        _vertexBuffer.Bind();
 
         _renderingEngine.CommandList.IASetIndexBuffer(
             _indexBufferView);
@@ -442,7 +376,6 @@ public class Cube
                 _psConstantBuffer.Dispose();
                 _vertexBuffer.Dispose();
                 _indexBuffer.Dispose();
-                _uploadBuffer.Dispose();
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer

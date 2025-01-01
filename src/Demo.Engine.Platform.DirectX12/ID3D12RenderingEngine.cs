@@ -14,5 +14,6 @@ public interface ID3D12RenderingEngine : IRenderingEngine
 
     public void InitCommandList();
 
-    public void ExecutedCommandList();
+    public void ExecuteCommandList();
+    void SignalAndWait();
 }

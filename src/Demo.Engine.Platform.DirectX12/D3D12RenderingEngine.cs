@@ -299,7 +299,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
 
         EndFrame();
 
-        ExecutedCommandList();
+        ExecuteCommandList();
     }
 
     public bool EndScene()
@@ -381,7 +381,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         }
     }
 
-    private void SignalAndWait()
+    public void SignalAndWait()
     {
         _ = CommandQueue.Signal(
             fence: _fence,
@@ -408,7 +408,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         CommandList.Reset(_commandAllocator);
     }
 
-    public void ExecutedCommandList()
+    public void ExecuteCommandList()
     {
         CommandList.Close();
 
