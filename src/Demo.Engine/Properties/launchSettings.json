@@ -6,6 +6,13 @@
         "DEMOENGINE_ENVIRONMENT": "development"
       },
       "nativeDebugging": false
+    },
+    "Demo.Engine-mixed-debug": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DEMOENGINE_ENVIRONMENT": "development"
+      },
+      "nativeDebugging": true
     }
   }
 }

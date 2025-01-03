@@ -13,8 +13,8 @@ public class ShaderCompiler : IShaderCompiler
 {
     private readonly ILogger<ShaderCompiler> _logger;
 
-    public ShaderCompiler(ILogger<ShaderCompiler> logger) =>
-        _logger = logger;
+    public ShaderCompiler(ILogger<ShaderCompiler> logger)
+        => _logger = logger;
 
     public ReadOnlyMemory<byte> CompileShader(
         string path,

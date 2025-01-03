@@ -187,6 +187,7 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
     }
 
     public IRenderingControl Control { get; }
+    public IRenderingSurface RenderingSurface => throw new NotImplementedException();
 
     private const int FOV = 90;
     private const float FOV_RAD = FOV * (MathF.PI / 180);
@@ -206,6 +207,8 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
                 (float)Control.DrawWidth.Value / Control.DrawHeight.Value,
                 0.1f,
                 10f));
+
+    public IReadOnlyCollection<IRenderingSurface> RenderingSurfaces => throw new NotImplementedException();
 
     public void BeginScene() => BeginScene(new Color4(0, 0, 0, 1));
 
@@ -229,15 +232,16 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
             || result.Code != Vortice.DXGI.ResultCode.DeviceRemoved.Code;
     }
 
-    public void Draw(IEnumerable<IDrawable> drawables) =>
+    public void Draw(IEnumerable<IDrawable> drawables)
         //bind render target
-        _debugLayerLogger.WrapCallInMessageExceptionHandler(
+        => _debugLayerLogger.WrapCallInMessageExceptionHandler(
             () =>
             {
                 DeviceContext.OMSetRenderTargets(_renderTargetView, _depthStencilView);
                 foreach (var drawable in drawables)
                 {
-                    drawable.Draw();
+                    IRenderingSurface renderingSurface = null!;
+                    drawable.Draw(renderingSurface);
                 }
             });
 
@@ -290,6 +294,16 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
     public void SetFullscreen(bool fullscreen)
     {
     }
+
+    public void BeginScene(Guid renderingSurfaceId, Color4 color) => throw new NotImplementedException();
+
+    public bool EndScene(Guid renderingSurfaceId) => throw new NotImplementedException();
+
+    public void BeginScene(Guid renderingSurfaceId) => throw new NotImplementedException();
+
+    public void Draw(Guid renderingSurfaceId, IEnumerable<IDrawable> drawables) => throw new NotImplementedException();
+
+    public void Draw(Color4 color, Guid renderingSurfaceId, IEnumerable<IDrawable> drawables) => throw new NotImplementedException();
 
     #endregion IDisposable Support
 }

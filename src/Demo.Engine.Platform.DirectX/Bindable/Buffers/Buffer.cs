@@ -39,8 +39,8 @@ public abstract class Buffer<T> : IBindable, IDisposable
         SetDebugName(bufferDescription);
     }
 
-    private void SetDebugName(BufferDescription bufferDescription) =>
-        _buffer.DebugName = $"[{GetType().Name}_{bufferDescription.ByteWidth}b] {Guid.NewGuid()}";
+    private void SetDebugName(BufferDescription bufferDescription)
+        => _buffer.DebugName = $"[{GetType().Name}_{bufferDescription.ByteWidth}b] {Guid.NewGuid()}";
 
     /// <summary>
     /// Method that binds the buffer (and it's resources) to the rendering pipeline

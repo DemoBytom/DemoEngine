@@ -3,6 +3,7 @@
 
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Demo.Engine.Platform.DirectX12.Buffers;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX12;

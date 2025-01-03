@@ -13,11 +13,12 @@ namespace Demo.Engine.Core.Services;
 
 public class MainLoopService : IMainLoopService
 {
+    private readonly IMediator _mediator;
     private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly IOSMessageHandler _oSMessageHandler;
     private readonly IRenderingEngine _renderingEngine;
     private readonly IDebugLayerLogger _debugLayerLogger;
-    private readonly IMediator _mediator;
+    private readonly IFpsTimer _fpsTimer;
 
     public bool IsRunning { get; private set; }
 
@@ -26,18 +27,20 @@ public class MainLoopService : IMainLoopService
         IHostApplicationLifetime applicationLifetime,
         IOSMessageHandler oSMessageHandler,
         IRenderingEngine renderingEngine,
-        IDebugLayerLogger debugLayerLogger)
+        IDebugLayerLogger debugLayerLogger,
+        IFpsTimer fpsTimer)
     {
+        _mediator = mediator;
         _applicationLifetime = applicationLifetime;
         _oSMessageHandler = oSMessageHandler;
         _renderingEngine = renderingEngine;
         _debugLayerLogger = debugLayerLogger;
-        _mediator = mediator;
+        _fpsTimer = fpsTimer;
     }
 
     public async Task RunAsync(
-        Func<KeyboardHandle, KeyboardCharCache, Task> updateCallback,
-        Func<IRenderingEngine, Task> renderCallback,
+        Func<IRenderingSurface, KeyboardHandle, KeyboardCharCache, ValueTask> updateCallback,
+        Func<IRenderingEngine, Guid, ValueTask> renderCallback,
         CancellationToken cancellationToken = default)
     {
         if (updateCallback is null)
@@ -52,17 +55,34 @@ public class MainLoopService : IMainLoopService
         //TODO proper main loop instead of simple while
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
+        var doEventsOk = true;
         while (
-            _oSMessageHandler.DoEvents(_renderingEngine.Control)
+            doEventsOk
             && !_applicationLifetime.ApplicationStopping.IsCancellationRequested
             && !cancellationToken.IsCancellationRequested
             )
         {
             IsRunning = true;
-            await updateCallback(
-                keyboardHandle,
-                keyboardCharCache);
-            await renderCallback(_renderingEngine);
+
+            foreach (var renderingSurface in _renderingEngine.RenderingSurfaces)
+            {
+                doEventsOk &= _oSMessageHandler.DoEvents(renderingSurface.RenderingControl);
+                if (!doEventsOk)
+                {
+                    break;
+                }
+
+                await updateCallback(
+                    renderingSurface,
+                    keyboardHandle,
+                    keyboardCharCache);
+
+                _fpsTimer.Start();
+                await renderCallback(
+                    _renderingEngine,
+                    renderingSurface.ID);
+                _fpsTimer.Stop();
+            }
 
             _debugLayerLogger.LogMessages();
         }

@@ -3,6 +3,7 @@
 
 using System.Runtime.CompilerServices;
 using Demo.Engine.Platform.DirectX12;
+using Demo.Engine.Platform.DirectX12.Buffers;
 using FluentAssertions;
 
 namespace Demo.Engine.UTs;

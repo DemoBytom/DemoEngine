@@ -33,8 +33,8 @@ public class ThreadJob
         }
     }
 
-    private void Attempt() =>
-        Attempted = Attempted
+    private void Attempt()
+        => Attempted = Attempted
             ? throw new Exception($"{ThreadId} ALREADY ATTEMPTED!")
             : true;
 }

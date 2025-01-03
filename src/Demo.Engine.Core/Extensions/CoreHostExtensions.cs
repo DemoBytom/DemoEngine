@@ -21,8 +21,8 @@ public static class CoreHostExtensions
     public static IHostBuilder CreateDefault(
         this IHostBuilder hostBuilder,
         string[] args,
-        string appsettingsFile = "appsettings.json") =>
-    hostBuilder
+        string appsettingsFile = "appsettings.json")
+        => hostBuilder
         .UseContentRoot(Directory.GetCurrentDirectory())
         .ConfigureHostConfiguration((configHost) =>
         {

@@ -1,10 +1,11 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-namespace Demo.Engine.Core.Interfaces.Rendering;
+namespace Demo.Engine.Core.Interfaces;
 
-public interface IDrawable
+public interface IFpsTimer
 {
-    void Draw(
-        IRenderingSurface renderingSurface);
+    void Start();
+
+    void Stop();
 }

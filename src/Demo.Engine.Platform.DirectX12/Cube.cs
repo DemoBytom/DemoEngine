@@ -7,6 +7,7 @@ using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Platform.DirectX12.Buffers;
 using Demo.Engine.Platform.DirectX12.Shaders;
+using Microsoft.Extensions.Logging;
 using SharpGen.Runtime;
 using Vortice.Direct3D;
 using Vortice.Direct3D12;
@@ -15,10 +16,11 @@ using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX12;
 
-public class Cube
+internal class Cube
     : ICube,
       IDisposable
 {
+    private readonly ILogger<Cube> _logger;
     private readonly IDebugLayerLogger _debugLayerLogger;
     private readonly ID3D12RenderingEngine _renderingEngine;
     private readonly CompiledVS _compiledVS;
@@ -54,6 +56,7 @@ public class Cube
         Face4: new Color4(000, 125, 125, 255),
         Face5: new Color4(125, 125, 000, 255),
         Face6: new Color4(125, 000, 125, 255));
+
     private readonly VertexBuffer<Vertex> _vertexBuffer;
 
     private readonly ID3D12Resource _indexBuffer;
@@ -69,12 +72,14 @@ public class Cube
     private readonly ID3D12PipelineState _pipelineState;
     private readonly ID3D12Resource _psConstantBuffer;
 
-    public Cube(
+    internal Cube(
+        ILogger<Cube> logger,
         IDebugLayerLogger debugLayerLogger,
         ID3D12RenderingEngine renderingEngine,
         CompiledVS compiledVS,
         CompiledPS compiledPS)
     {
+        _logger = logger;
         _debugLayerLogger = debugLayerLogger;
         _renderingEngine = renderingEngine;
 
@@ -202,7 +207,7 @@ public class Cube
             },
             RenderTargetFormats =
             [
-                Format.R8G8B8A8_UNorm
+                Common.DEFAULT_RENDER_TARGET_FORMAT,
             ],
             DepthStencilFormat = Format.Unknown,
             BlendState = BlendDescription.Opaque,
@@ -248,7 +253,8 @@ public class Cube
         return gpsd;
     }
 
-    public unsafe void Draw()
+    public unsafe void Draw(
+        IRenderingSurface renderingSurface)
     {
         // Update VS constant buffer
         var updateVS = _vsConstantBuffer.Map<MatricesBuffer>(
@@ -300,7 +306,7 @@ public class Cube
         _renderingEngine.CommandList.IASetPrimitiveTopology(
             PrimitiveTopology.TriangleList);
         // Rasterizer
-        var drawingArea = _renderingEngine.Control.DrawingArea;
+        var drawingArea = renderingSurface.RenderingControl.DrawingArea;
         _renderingEngine.CommandList.RSSetViewports(new Viewport(
             x: drawingArea.X,
             y: drawingArea.Y,
@@ -310,8 +316,8 @@ public class Cube
             maxDepth: 0.0f));
 
         _renderingEngine.CommandList.RSSetScissorRect(
-            width: _renderingEngine.Control.DrawWidth.Value,
-            height: _renderingEngine.Control.DrawHeight.Value);
+            width: renderingSurface.RenderingControl.DrawWidth.Value,
+            height: renderingSurface.RenderingControl.DrawHeight.Value);
 
         _renderingEngine.CommandList.DrawIndexedInstanced(
             indexCountPerInstance: (uint)_indices.Length,
@@ -322,6 +328,7 @@ public class Cube
     }
 
     public void Update(
+        IRenderingSurface renderingSurface,
         Vector3 position,
         float rotationAngleInRadians)
     {
@@ -334,7 +341,7 @@ public class Cube
              * Matrix4x4.CreateTranslation(position)
              );
 
-        var viewProjectionMatrix = _renderingEngine.ViewProjectionMatrix;
+        var viewProjectionMatrix = renderingSurface.ViewProjectionMatrix;
         _matricesBuffer = new MatricesBuffer(worldMatrix, viewProjectionMatrix);
     }
 
@@ -367,6 +374,7 @@ public class Cube
     {
         if (!_disposedValue)
         {
+            _logger.LogTrace("Disposing Cube!");
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects)
@@ -381,6 +389,8 @@ public class Cube
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
             // TODO: set large fields to null
             _disposedValue = true;
+
+            _logger.LogTrace("Disposed Cube!");
         }
     }
 

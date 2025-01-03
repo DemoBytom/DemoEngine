@@ -22,4 +22,19 @@ internal static class ResultHelper
 #pragma warning restore IDE0060 // Remove unused parameter
 #pragma warning restore RCS1163 // Unused parameter
         => result.Success;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool Failure<T>(
+        this Result result,
+#pragma warning disable RCS1163 // Unused parameter
+#pragma warning disable IDE0060 // Remove unused parameter
+        [NotNullWhen(false)] ref readonly T? outResource,
+#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning restore RCS1163 // Unused parameter
+        [NotNullWhen(true)] out int? errorCode,
+        [NotNullWhen(true)] out string? errorMessage)
+    {
+        (errorCode, errorMessage) = result.Failure ? ((int?)result.Code, result.Description) : (null, null);
+        return result.Failure;
+    }
 }

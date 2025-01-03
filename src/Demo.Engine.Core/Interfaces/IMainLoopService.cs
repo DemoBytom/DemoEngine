@@ -27,8 +27,8 @@ public interface IMainLoopService
     /// finish the loop and exit the Run method
     /// </remarks>
     Task RunAsync(
-        Func<KeyboardHandle, KeyboardCharCache, Task> updateCallback,
-        Func<IRenderingEngine, Task> renderCallback,
+        Func<IRenderingSurface, KeyboardHandle, KeyboardCharCache, ValueTask> updateCallback,
+        Func<IRenderingEngine, Guid, ValueTask> renderCallback,
         CancellationToken cancellationToken = default);
 
     /// <summary>

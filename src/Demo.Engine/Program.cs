@@ -42,8 +42,9 @@ try
             //    D3D12RenderingEngine>()
             .AddScoped<IMainLoopService, MainLoopService>()
             /*** Windows Only ***/
-            .AddTransient<IRenderingControl, RenderingForm>()
+            .AddScoped<IRenderingControl, RenderingForm>()
             .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
+            .AddTransient<IFpsTimer, FpsTimer>()
             //.AddTransient<IShaderCompiler, Demo.Engine.Platform.DirectX12.Shaders.ShaderCompiler>()
             //.AddSingleton<IDebugLayerLogger, DebugLayerLogger>()
             .AddDirectX12()

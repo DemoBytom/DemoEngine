@@ -22,14 +22,14 @@ public class Cube : DrawableBase<Cube>, ICube
     private readonly Vertex[] _cubeVertices = new Vertex[]
     {
             //Cube
-            new Vertex( -1.0f, -1.0f, -1.0f, 255, 000, 000, 255  ),
-            new Vertex(  1.0f, -1.0f, -1.0f, 125, 125, 000, 255  ),
-            new Vertex( -1.0f,  1.0f, -1.0f, 000, 125, 125, 255  ),
-            new Vertex(  1.0f,  1.0f, -1.0f, 000, 000, 255, 255  ),
-            new Vertex( -1.0f, -1.0f,  1.0f, 125, 000, 125, 255  ),
-            new Vertex(  1.0f, -1.0f,  1.0f, 000, 255, 000, 255  ),
-            new Vertex( -1.0f,  1.0f,  1.0f, 000, 000, 000, 255  ),
-            new Vertex(  1.0f,  1.0f,  1.0f, 000, 000, 255, 255  ),
+            new( -1.0f, -1.0f, -1.0f, 255, 000, 000, 255  ),
+            new(  1.0f, -1.0f, -1.0f, 125, 125, 000, 255  ),
+            new( -1.0f,  1.0f, -1.0f, 000, 125, 125, 255  ),
+            new(  1.0f,  1.0f, -1.0f, 000, 000, 255, 255  ),
+            new( -1.0f, -1.0f,  1.0f, 125, 000, 125, 255  ),
+            new(  1.0f, -1.0f,  1.0f, 000, 255, 000, 255  ),
+            new( -1.0f,  1.0f,  1.0f, 000, 000, 000, 255  ),
+            new(  1.0f,  1.0f,  1.0f, 000, 000, 255, 255  ),
     };
 
     private readonly ushort[] _triangleIndices = new ushort[]
@@ -135,7 +135,10 @@ public class Cube : DrawableBase<Cube>, ICube
         matricesBuffer.Update(in _matricesBuffer);
     }
 
-    public void Update(Vector3 position, float rotationAngleInRadians)
+    public void Update(
+        IRenderingSurface renderingSurface,
+        Vector3 position,
+        float rotationAngleInRadians)
     {
         //Model to world transformation(s)
         var worldMatrix = Matrix4x4.Transpose(
@@ -145,8 +148,8 @@ public class Cube : DrawableBase<Cube>, ICube
              * Matrix4x4.CreateRotationX(rotationAngleInRadians)
              * Matrix4x4.CreateTranslation(position)
              );
-
-        var viewProjectionMatrix = _renderingEngine.ViewProjectionMatrix;
+        var renderingEngine = _renderingEngine;
+        var viewProjectionMatrix = renderingEngine!.ViewProjectionMatrix;
         _matricesBuffer = new MatricesBuffer(worldMatrix, viewProjectionMatrix);
     }
 }

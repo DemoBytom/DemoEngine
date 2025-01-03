@@ -72,8 +72,8 @@ public class CircularQueue<T> : IReadOnlyCollection<T>, ICollection
     /// </summary>
     /// <param name="result"></param>
     /// <returns></returns>
-    public bool TryDequeue([MaybeNullWhen(false)] out T result) =>
-        _buffer.TryDequeue(out result);
+    public bool TryDequeue([MaybeNullWhen(false)] out T result)
+        => _buffer.TryDequeue(out result);
 
     /// <summary>
     /// Returns top element from the queue without dequeuing it

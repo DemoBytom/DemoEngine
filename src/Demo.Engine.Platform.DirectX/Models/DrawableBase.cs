@@ -14,14 +14,14 @@ public abstract class DrawableBase<T> : IDrawable, IDisposable
     where T : DrawableBase<T>
 {
     private bool _disposedValue;
-    protected readonly ID3D11RenderingEngine _renderingEngine;
+    protected readonly D3D11RenderingEngine _renderingEngine;
     private readonly Guid _drawableGuid;
     private static readonly ReaderWriterLockSlim _lockSlim = new();
     private static ReadOnlyCollection<IBindable>? _bindables;
 
     private static ReadOnlyDictionary<Type, IUpdatable>? _updatables;
 
-    private static readonly HashSet<Guid> _references = new();
+    private static readonly HashSet<Guid> _references = [];
 
     protected static uint? IndexCount { get; private set; }
 
@@ -29,7 +29,7 @@ public abstract class DrawableBase<T> : IDrawable, IDisposable
         ID3D11RenderingEngine renderingEngine,
         Func<T, IBindable[]> func)
     {
-        _renderingEngine = renderingEngine;
+        _renderingEngine = (renderingEngine as D3D11RenderingEngine)!;
         //Add reference
         _drawableGuid = Guid.NewGuid();
         _ = _lockSlim.EnterWriteLockBlock(() =>
@@ -46,7 +46,8 @@ public abstract class DrawableBase<T> : IDrawable, IDisposable
 
     protected abstract void UpdateUpdatables();
 
-    public virtual void Draw()
+    public virtual void Draw(
+        IRenderingSurface renderingSurface)
     {
         UpdateUpdatables();
 
@@ -75,8 +76,8 @@ public abstract class DrawableBase<T> : IDrawable, IDisposable
 #pragma warning disable RCS1158 // Static member in generic type should use a type parameter.
 
     internal static TUpdatable GetUpdatable<TUpdatable>()
-        where TUpdatable : IUpdatable =>
-            _updatables is not null
+        where TUpdatable : IUpdatable
+        => _updatables is not null
             && _updatables.TryGetValue(typeof(TUpdatable), out var u)
             && u is TUpdatable updatable
         ? updatable

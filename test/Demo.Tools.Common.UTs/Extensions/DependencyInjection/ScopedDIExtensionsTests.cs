@@ -73,7 +73,7 @@ public class ScopedDIExtensionsTests
         private int _constructedNo;
         public int ConstructedNo => _constructedNo;
 
-        public void Tick() =>
-            Interlocked.Increment(ref _constructedNo);
+        public void Tick()
+            => Interlocked.Increment(ref _constructedNo);
     }
 }

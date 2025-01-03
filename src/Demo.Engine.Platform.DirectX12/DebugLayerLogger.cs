@@ -71,7 +71,7 @@ internal sealed class DebugLayerLogger
         var messages = stored - readFrom
             is var toRead and > 0
             ? new DebugLayerMessage[toRead]
-            : Array.Empty<DebugLayerMessage>();
+            : [];
 
         for (var i = readFrom; i < stored; ++i)
         {
@@ -163,6 +163,7 @@ internal sealed class DebugLayerLogger
         {
             if (disposing)
             {
+                _logger.LogTrace("Disposing Debug Layer");
                 _dxgiInfoQueue?.SetBreakOnSeverity(
                     _dxgiGuid,
                     InfoQueueMessageSeverity.Corruption,
@@ -191,6 +192,8 @@ internal sealed class DebugLayerLogger
 
                 _d3d12Debug?.Dispose();
                 _dxgiDebug?.Dispose();
+
+                _logger.LogTrace("Disposed Debug Layer");
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer

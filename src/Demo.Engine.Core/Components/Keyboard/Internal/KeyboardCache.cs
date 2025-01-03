@@ -11,8 +11,8 @@ public class KeyboardCache : IKeyboardCache
 {
     private static readonly bool[] _keysPressed = new bool[256];
 
-    public void ClearState() =>
-        Array.Clear(
+    public void ClearState()
+        => Array.Clear(
             _keysPressed,
             0,
             _keysPressed.Length);

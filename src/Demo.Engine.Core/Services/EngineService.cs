@@ -24,8 +24,7 @@ public class EngineService : ServiceBase
         ILogger<EngineService> logger,
         IServiceScopeFactory scopeFactory)
         : base("Engine",
-              logger, applicationLifetime)
-        => _scopeFactory = scopeFactory;
+              logger, applicationLifetime) => _scopeFactory = scopeFactory;
 
     private IServiceProvider? _sp;
 
@@ -35,8 +34,8 @@ public class EngineService : ServiceBase
         _sp = scope.ServiceProvider;
         _drawables =
             [
-                    scope.ServiceProvider.GetRequiredService<ICube>(),
-                    //scope.ServiceProvider.GetRequiredService<ICube>()
+                scope.ServiceProvider.GetRequiredService<ICube>(),
+                //scope.ServiceProvider.GetRequiredService<ICube>()
             ];
         var mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
 
@@ -54,7 +53,8 @@ public class EngineService : ServiceBase
     private bool _f11Pressed = false;
 
     //private bool _dontCreate = false;
-    private Task Update(
+    private ValueTask Update(
+        IRenderingSurface renderingSurface,
         KeyboardHandle keyboardHandle,
         KeyboardCharCache keyboardCharCache)
     {
@@ -79,7 +79,7 @@ public class EngineService : ServiceBase
             }
 
             _drawables = [];
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
         if (keyboardHandle.GetKeyPressed(VirtualKeys.F11))
         {
@@ -149,38 +149,40 @@ public class EngineService : ServiceBase
         }
 
         _drawables.ElementAtOrDefault(0)
-            ?.Update(Vector3.Zero, _angleInRadians);
+            ?.Update(renderingSurface, Vector3.Zero, _angleInRadians);
         _drawables.ElementAtOrDefault(1)
-            ?.Update(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
+            ?.Update(renderingSurface, new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
     /// https://bitbucket.org/snippets/DemoBytom/aejA59/maps-value-between-from-one-min-max-range
     /// </summary>
-    public static float Map(float value, float inMin, float inMax, float outMin, float outMax) =>
-        ((value - inMin) * (outMax - outMin) / (inMax - inMin)) + outMin;
+    public static float Map(float value, float inMin, float inMax, float outMin, float outMax)
+        => ((value - inMin) * (outMax - outMin) / (inMax - inMin)) + outMin;
 
     private float _angleInRadians = 0.0f;
-    private ICube[] _drawables = Array.Empty<ICube>();
+    private ICube[] _drawables = [];
     private const float TWO_PI = MathHelper.TwoPi;
 
-    private Task Render(IRenderingEngine renderingEngine)
-
+    private ValueTask Render(
+        IRenderingEngine renderingEngine,
+        Guid renderingSurfaceId)
     {
         _angleInRadians = (_angleInRadians + 0.01f) % TWO_PI;
 
-        renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
-        renderingEngine.Draw(_drawables);
-        _ = renderingEngine.EndScene();
+        renderingEngine.Draw(
+            color: new Color4(_r, _g, _b, 1.0f),
+            renderingSurfaceId: renderingSurfaceId,
+            drawables: _drawables);
 
-        if (renderingEngine.Control.IsFullscreen != _fullscreen)
-        {
-            renderingEngine.SetFullscreen(_fullscreen);
-        }
+        //if (renderingEngine.Control.IsFullscreen != _fullscreen)
+        //{
+        //    renderingEngine.SetFullscreen(_fullscreen);
+        //}
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     #region IDisposable

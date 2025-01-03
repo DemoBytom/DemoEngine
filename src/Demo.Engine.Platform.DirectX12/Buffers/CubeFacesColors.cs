@@ -4,7 +4,7 @@
 using System.Runtime.InteropServices;
 using Vortice.Mathematics;
 
-namespace Demo.Engine.Platform.DirectX12;
+namespace Demo.Engine.Platform.DirectX12.Buffers;
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 internal readonly record struct CubeFacesColors(

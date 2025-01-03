@@ -22,8 +22,8 @@ public class KeyboardHandleTests
         _mockKeyboardCache.KeysPressed.Returns(_keyboardCache);
     }
 
-    private KeyboardHandle CreateKeyboardHandle() =>
-        new KeyboardHandle(_mockKeyboardCache);
+    private KeyboardHandle CreateKeyboardHandle()
+        => new KeyboardHandle(_mockKeyboardCache);
 
     [Fact]
     public void GetKeyPressed_Only_One_Pressed()

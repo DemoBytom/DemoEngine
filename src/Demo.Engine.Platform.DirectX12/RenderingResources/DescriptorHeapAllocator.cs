@@ -2,11 +2,40 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
 
-namespace Demo.Engine.Platform.DirectX12;
+namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
-internal class DescriptorHeapAlocator
+internal sealed class RTVDescriptorHeapAllocator(
+    ID3D12RenderingEngine d3D12RenderingEngine)
+    : DescriptorHeapAllocator(
+        d3D12RenderingEngine.GetRequiredService<ILogger<RTVDescriptorHeapAllocator>>(),
+        d3D12RenderingEngine,
+        DescriptorHeapType.RenderTargetView);
+
+internal sealed class DSVDescriptorHeapAllocator(
+    ID3D12RenderingEngine d3D12RenderingEngine)
+    : DescriptorHeapAllocator(
+        d3D12RenderingEngine.GetRequiredService<ILogger<DSVDescriptorHeapAllocator>>(),
+        d3D12RenderingEngine,
+        DescriptorHeapType.DepthStencilView);
+
+internal sealed class SRVDescriptorHeapAllocator(
+    ID3D12RenderingEngine d3D12RenderingEngine)
+    : DescriptorHeapAllocator(
+        d3D12RenderingEngine.GetRequiredService<ILogger<SRVDescriptorHeapAllocator>>(),
+        d3D12RenderingEngine,
+        DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+
+internal sealed class UAVDescriptorHeapAllocator(
+    ID3D12RenderingEngine d3D12RenderingEngine)
+    : DescriptorHeapAllocator(
+        d3D12RenderingEngine.GetRequiredService<ILogger<UAVDescriptorHeapAllocator>>(),
+        d3D12RenderingEngine,
+        DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
+
+internal abstract class DescriptorHeapAllocator
     : IDisposable
 {
     public CpuDescriptorHandle CPU_Start { get; private set; }
@@ -41,16 +70,19 @@ internal class DescriptorHeapAlocator
     public bool IsShaderVisible { get; private set; }
 
     private readonly Lock _lock = new();
+    private readonly ILogger<DescriptorHeapAllocator> _logger;
     private readonly ID3D12RenderingEngine _d3D12RenderingEngine;
 
-    public DescriptorHeapAlocator(
+    protected DescriptorHeapAllocator(
+        ILogger<DescriptorHeapAllocator> logger,
         ID3D12RenderingEngine d3D12RenderingEngine,
         DescriptorHeapType heapType)
     {
+        _logger = logger;
         _d3D12RenderingEngine = d3D12RenderingEngine;
         HeapType = heapType;
-        _deferredFreeIndices = new List<int>[RenderingCommand.FRAME_BUFFER_COUNT];
-        for (var i = 0; i < RenderingCommand.FRAME_BUFFER_COUNT; ++i)
+        _deferredFreeIndices = new List<int>[Common.FRAME_BUFFER_COUNT];
+        for (var i = 0; i < _deferredFreeIndices.Length; ++i)
         {
             _deferredFreeIndices[i] = [];
         }
@@ -87,6 +119,7 @@ internal class DescriptorHeapAlocator
             Size = 0;
 
             DescriptorHeap?.Dispose();
+            DescriptorHeap = null;
 
             var descriptorHeapDescription = new DescriptorHeapDescription(
                 type: HeapType,
@@ -107,6 +140,9 @@ internal class DescriptorHeapAlocator
                 //todo: log
                 throw new InvalidOperationException("Error creating descriptor heap!");
             }
+            descriptorHeap.NameObject(
+                $"DescriptorHeap {HeapType}",
+                _logger);
 
             DescriptorHeap = descriptorHeap;
 
@@ -116,7 +152,7 @@ internal class DescriptorHeapAlocator
                 _freeHandles[i] = i;
             }
 
-            for (var i = 0; i < RenderingCommand.FRAME_BUFFER_COUNT; ++i)
+            for (var i = 0; i < _deferredFreeIndices.Length; ++i)
             {
                 if (_deferredFreeIndices[i].Count > 0)
                 {
@@ -169,12 +205,12 @@ internal class DescriptorHeapAlocator
     }
 
     public void Free(
-        int frameIndex,
+        //int frameIndex,
         in DescriptorHandle descriptorHandle)
     {
         lock (_lock)
         {
-            ValidateHeapIsNotNull();
+            //ValidateHeapIsNotNull();
             ArgumentOutOfRangeException.ThrowIfZero(Size);
 
             if (descriptorHandle.Container != this)
@@ -209,9 +245,10 @@ internal class DescriptorHeapAlocator
             if (descriptorHandle.Index != index)
             {
                 throw new InvalidOperationException(
-                    "Invalid heap descriptor index!");
+                   "Invalid heap descriptor index!");
             }
 
+            var frameIndex = _d3D12RenderingEngine.CurrentFrameIndex();
             _deferredFreeIndices[frameIndex].Add((int)index);
         }
     }
@@ -229,9 +266,6 @@ internal class DescriptorHeapAlocator
     {
         if (DescriptorHeap is not null)
         {
-            DescriptorHeap.Disposed += (_, _)
-                => DescriptorHeap = null;
-
             _d3D12RenderingEngine.DeferredRelease(
                 DescriptorHeap);
         }
@@ -257,15 +291,16 @@ internal class DescriptorHeapAlocator
         GC.SuppressFinalize(this);
     }
 
-    internal void ProcessDeferredFree(int frameIndex)
+    internal void ProcessDeferredFree(uint frameIndex)
     {
         lock (_lock)
         {
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(
                 frameIndex,
-                RenderingCommand.FRAME_BUFFER_COUNT);
+                Common.FRAME_BUFFER_COUNT);
 
             var indices = _deferredFreeIndices[frameIndex];
+
             foreach (var index in indices)
             {
                 // free
@@ -277,10 +312,11 @@ internal class DescriptorHeapAlocator
     }
 
     internal readonly struct DescriptorHandle
+        : IDisposable
     {
         public CpuDescriptorHandle? CPU { get; }
         public GpuDescriptorHandle? GPU { get; }
-        public DescriptorHeapAlocator Container { get; }
+        public DescriptorHeapAllocator Container { get; }
         public int Index { get; }
 
         [MemberNotNullWhen(true, nameof(CPU))]
@@ -296,7 +332,7 @@ internal class DescriptorHeapAlocator
         public DescriptorHandle(
             CpuDescriptorHandle cpu,
             GpuDescriptorHandle? gpu,
-            DescriptorHeapAlocator heapAlocator,
+            DescriptorHeapAllocator heapAlocator,
             int index)
         {
             CPU = cpu;
@@ -305,5 +341,83 @@ internal class DescriptorHeapAlocator
             Container = heapAlocator;
             Index = index;
         }
+
+        public void Dispose()
+            => Container.Free(this);
+    }
+}
+
+internal static class DescriptorHeapAllocatorExtensions
+{
+    public static DescHeapAllocatorBuilder CreateDescriptorHeaps(
+        this ID3D12RenderingEngine renderingEngine)
+        => new(renderingEngine)
+        {
+            Initialized = true,
+        };
+
+    public static DescHeapAllocatorBuilder RTV(
+        this DescHeapAllocatorBuilder builder,
+        uint capacity,
+        bool isShaderVisible,
+        out RTVDescriptorHeapAllocator rtv)
+    {
+        rtv = new(builder.RenderingEngine);
+        var initialized = rtv.Initialize(capacity, isShaderVisible);
+        return builder with { Initialized = builder.Initialized && initialized };
+    }
+
+    public static DescHeapAllocatorBuilder DSV(
+        this DescHeapAllocatorBuilder builder,
+        uint capacity,
+        bool isShaderVisible,
+        out DSVDescriptorHeapAllocator dsv)
+    {
+        dsv = new(builder.RenderingEngine);
+        var initialized = dsv.Initialize(capacity, isShaderVisible);
+        return builder with { Initialized = builder.Initialized && initialized };
+    }
+
+    public static DescHeapAllocatorBuilder SRV(
+        this DescHeapAllocatorBuilder builder,
+        uint capacity,
+        bool isShaderVisible,
+        out SRVDescriptorHeapAllocator rsv)
+    {
+        rsv = new(builder.RenderingEngine);
+        var initialized = rsv.Initialize(capacity, isShaderVisible);
+        return builder with { Initialized = builder.Initialized && initialized };
+    }
+
+    public static DescHeapAllocatorBuilder UAV(
+        this DescHeapAllocatorBuilder builder,
+        uint capacity,
+        bool isShaderVisible,
+        out UAVDescriptorHeapAllocator uav)
+    {
+        uav = new(builder.RenderingEngine);
+        var initialized = uav.Initialize(capacity, isShaderVisible);
+        return builder with { Initialized = builder.Initialized && initialized };
+    }
+
+    /// <summary>
+    /// Verifies that the heap allocators created by this builder were initialized properly. If not an exception is thrown.
+    /// </summary>
+    /// <exception cref="InvalidOperationException"></exception>
+    public static void VerifyAllDescriptorsCreatedProperly(
+        this DescHeapAllocatorBuilder builder)
+    {
+        if (!builder.Initialized)
+        {
+            throw new InvalidOperationException(
+                "Couldn't create descriptor heap allocator!");
+        }
+    }
+
+    internal readonly ref struct DescHeapAllocatorBuilder(
+        ID3D12RenderingEngine renderingEngine)
+    {
+        public bool Initialized { get; init; }
+        public ID3D12RenderingEngine RenderingEngine { get; } = renderingEngine;
     }
 }
