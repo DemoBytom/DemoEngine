@@ -382,10 +382,10 @@ internal static class DescriptorHeapAllocatorExtensions
         this DescHeapAllocatorBuilder builder,
         uint capacity,
         bool isShaderVisible,
-        out SRVDescriptorHeapAllocator rsv)
+        out SRVDescriptorHeapAllocator srv)
     {
-        rsv = new(builder.RenderingEngine);
-        var initialized = rsv.Initialize(capacity, isShaderVisible);
+        srv = new(builder.RenderingEngine);
+        var initialized = srv.Initialize(capacity, isShaderVisible);
         return builder with { Initialized = builder.Initialized && initialized };
     }
 

@@ -72,7 +72,7 @@ internal class Cube
     private readonly ID3D12PipelineState _pipelineState;
     private readonly ID3D12Resource _psConstantBuffer;
 
-    internal Cube(
+    public Cube(
         ILogger<Cube> logger,
         IDebugLayerLogger debugLayerLogger,
         ID3D12RenderingEngine renderingEngine,

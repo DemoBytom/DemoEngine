@@ -105,18 +105,22 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         var renderingSurface = new RenderingSurface(
             serviceProvider);
 
-        renderingSurface.CreateSwapChain(
-            _dxgiFactory,
-            Device,
-            _d3d12Command.CommandQueue,
-            Common.DEFAULT_RENDER_TARGET_FORMAT,
-            RTVHeapAllocator);
-
         _surfaces.Add(renderingSurface.ID, renderingSurface);
+
+        //renderingSurface = new RenderingSurface(
+        //    serviceProvider);
+
+        //_surfaces.Add(renderingSurface.ID, renderingSurface);
 
         //Show controll:
         foreach (var surface in _surfaces.Values)
         {
+            surface.CreateSwapChain(
+                _dxgiFactory,
+                Device,
+                _d3d12Command.CommandQueue,
+                Common.DEFAULT_RENDER_TARGET_FORMAT,
+                RTVHeapAllocator);
             surface.RenderingControl.Show();
         }
     }

@@ -276,6 +276,9 @@ internal sealed class RenderingSurface
                 _swapChain = null;
                 _logger.LogTrace("Disposed Rendering Surface {id}", ID);
 
+                /* TODO: Dispose is also called when CreateSwapChain is called 2nd time
+                 * this will dispose this scope and cause problems
+                 * when accessing the rendering form!! */
                 _scope.Dispose();
             }
 
