@@ -123,6 +123,9 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
                 RTVHeapAllocator);
             surface.RenderingControl.Show();
         }
+
+        // TODO remove later!
+        _rootSignature = CreateARootSignature();
     }
 
     private TAdapter CreateAdapter<TAdapter, TDXGIFactory>(
@@ -194,6 +197,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
     }
 
     private Color4 _clearColor = new(red: 0.0f, green: 0.0f, blue: 0.0f, alpha: 1.0f);
+    private readonly ID3D12RootSignature _rootSignature;
 
     public uint CurrentFrameIndex()
         => _d3d12Command.FrameIndex;
@@ -370,6 +374,68 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         where T : notnull
         => _serviceProvider.GetRequiredService<T>();
 
+    public ID3D12RootSignature CreateARootSignature()
+    {
+        // Root parameters
+        var rootParams = new RootParameter1[]
+        {
+            // param 0: 2 constants
+            new(
+                rootConstants: new RootConstants(
+                    shaderRegister: 0, //b0
+                    registerSpace: 0,
+                    num32BitValues: 2),
+                visibility: ShaderVisibility.Pixel),
+            // param 1: 1 Constant Buffer View (Descriptor)
+            new(
+                parameterType: RootParameterType.ConstantBufferView,
+                rootDescriptor: new RootDescriptor1(
+                    shaderRegister: 1, //b1
+                    registerSpace: 0,
+                    flags: RootDescriptorFlags.None),
+                visibility: ShaderVisibility.Pixel),
+            // param 2: descriptor table (unbounded/bindless)
+            new(
+                descriptorTable: new RootDescriptorTable1(
+                    new DescriptorRange1(
+                        rangeType: DescriptorRangeType.ShaderResourceView,
+                        numDescriptors: D3D12.DescriptorRangeOffsetAppend,
+                        baseShaderRegister : 0,
+                        registerSpace: 0,
+                        offsetInDescriptorsFromTableStart: D3D12.DescriptorRangeOffsetAppend,
+                        flags: DescriptorRangeFlags.DescriptorsVolatile)
+                    ),
+                visibility: ShaderVisibility.Pixel),
+        };
+
+        //Static Sampler
+        var staticSamplerDescription = new StaticSamplerDescription
+        {
+            AddressU = TextureAddressMode.Clamp,
+            AddressV = TextureAddressMode.Clamp,
+            AddressW = TextureAddressMode.Clamp,
+            ShaderVisibility = ShaderVisibility.Pixel,
+        };
+
+        // FLags
+        const RootSignatureFlags FLAGS = RootSignatureFlags.None
+            | RootSignatureFlags.DenyHullShaderRootAccess
+            | RootSignatureFlags.DenyDomainShaderRootAccess
+            | RootSignatureFlags.DenyGeometryShaderRootAccess
+            | RootSignatureFlags.DenyAmplificationShaderRootAccess
+            | RootSignatureFlags.DenyMeshShaderRootAccess;
+
+        var rootSignatureDescription = new RootSignatureDescription1(
+            flags: FLAGS,
+            parameters: rootParams,
+            samplers: [
+                staticSamplerDescription
+                ]);
+
+        return Device.CreateRootSignature(
+            rootSignatureDescription);
+    }
+
     protected void Disposing(bool disposing)
     {
         if (!_disposedValue)
@@ -400,6 +466,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
                     FlushBuffers();
                     _d3d12Command.Dispose();
 
+                    _rootSignature.Dispose();
                     foreach (var renderingSurface in _surfaces.Values)
                     {
                         renderingSurface.Dispose();
