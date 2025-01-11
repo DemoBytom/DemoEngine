@@ -207,7 +207,7 @@ internal class Cube
             },
             RenderTargetFormats =
             [
-                Common.DEFAULT_RENDER_TARGET_FORMAT,
+                Common.DEFAULT_BACK_BUFFER_FORMAT,
             ],
             DepthStencilFormat = Format.Unknown,
             BlendState = BlendDescription.Opaque,

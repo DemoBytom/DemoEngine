@@ -34,7 +34,7 @@ public class EngineService : ServiceBase
         _sp = scope.ServiceProvider;
         _drawables =
             [
-                //scope.ServiceProvider.GetRequiredService<ICube>(),
+                scope.ServiceProvider.GetRequiredService<ICube>(),
                 //scope.ServiceProvider.GetRequiredService<ICube>()
             ];
         var mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();

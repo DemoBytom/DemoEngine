@@ -31,6 +31,7 @@ internal sealed class RenderingSurface
     public IRenderingControl RenderingControl { get; }
     private IDXGISwapChain4? _swapChain;
     private uint _currentBackBuffer;
+    private Format _format = Common.DEFAULT_BACK_BUFFER_FORMAT;
     private bool _allowTearing;
     private PresentFlags _presentFlags;
     private bool _disposedValue;
@@ -72,8 +73,8 @@ internal sealed class RenderingSurface
         IDXGIFactory7 factory,
         ID3D12Device14 device,
         ID3D12CommandQueue commandQueue,
-        Format format,
-        RTVDescriptorHeapAllocator rtvDescriptorHeapAllocator)
+        RTVDescriptorHeapAllocator rtvDescriptorHeapAllocator,
+        Format format = Common.DEFAULT_BACK_BUFFER_FORMAT)
     {
         //Release old resources if the method is called 2nd time
         if (_createdSwapChain)
@@ -83,6 +84,7 @@ internal sealed class RenderingSurface
             _createdSwapChain = false;
         }
 
+        _format = format;
         _allowTearing = factory.PresentAllowTearing == true;
         //_allowTearing = false;
         if (_allowTearing)
@@ -163,7 +165,7 @@ internal sealed class RenderingSurface
 
             var rtvDescription = new RenderTargetViewDescription
             {
-                Format = Common.DEFAULT_RENDER_TARGET_FORMAT,
+                Format = _format,
                 ViewDimension = RenderTargetViewDimension.Texture2D,
                 Texture2D =
                 {
