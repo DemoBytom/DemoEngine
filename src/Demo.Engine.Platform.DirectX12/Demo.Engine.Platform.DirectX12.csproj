@@ -32,9 +32,13 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Vortice.D3DCompiler" />
     <PackageReference Include="Vortice.Direct3D12" />
+    <PackageReference Include="Vortice.Dxc" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Shaders\FullScreenTriangle.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Shaders\Triangle\TrianglePS.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>

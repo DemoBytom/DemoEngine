@@ -21,7 +21,8 @@ public static class RegistrationExtensions
                 => sp.GetRequiredService<D3D12RenderingEngine>())
             .AddScoped<IDebugLayerLogger, DebugLayerLogger>()
             // shaders
-            .AddSingleton<IShaderCompiler, ShaderCompiler>()
+            .AddSingleton<IShaderCompiler, ShaderCompilerOld>()
+            .AddSingleton<ShaderCompiler>()
             //Cube
             .AddScoped<ICube, Cube>()
         ;

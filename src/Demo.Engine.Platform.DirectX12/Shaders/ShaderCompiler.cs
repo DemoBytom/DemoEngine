@@ -1,90 +1,71 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using Demo.Engine.Core.Interfaces.Rendering.Shaders;
-using Demo.Engine.Core.Models.Enums;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Vortice.Direct3D;
-using Compiler = Vortice.D3DCompiler.Compiler;
 
 namespace Demo.Engine.Platform.DirectX12.Shaders;
+internal record ShaderFileInfo(
+    string File,
+    string Function,
+    ShaderId ID,
+    ShaderType ShaderType);
 
-public class ShaderCompiler(
-    ILogger<ShaderCompiler> logger)
-    : IShaderCompiler
+internal class ShaderCompiler
 {
-    private readonly ILogger<ShaderCompiler> _logger = logger;
+    private readonly ShaderFileInfo[] _shaderFiles =
+    [
+        new ShaderFileInfo(
+            File: "FullScreenTriangle.hlsl",
+            Function: "FullScreenTriangleVS",
+            ID: ShaderId.FullscreenTriangle,
+            ShaderType: ShaderType.Vertex),
+    ];
+    private readonly string _rootPath;
+    private readonly string _shaderDirPath;
+    private readonly ILogger<ShaderCompiler> _logger;
 
-    public ReadOnlyMemory<byte> CompileShader(string path, ShaderStage shaderStage, string entryPoint = "main")
+    public ShaderCompiler(
+        ILogger<ShaderCompiler> logger,
+        IHostEnvironment environment)
     {
-        var shader = File.ReadAllText(path);
+        _logger = logger;
 
-        var shaderProfile = $"{GetShaderProfile(shaderStage)}_5_0";
-        var filename = Path.GetFileName(path);
+        _rootPath = environment.ContentRootPath;
+        _shaderDirPath = Path.Combine(
+            _rootPath,
+            "Shaders");
 
-        _logger.LogInformation("Compiling {shader} {name} with {profile}", shaderStage, filename, shaderProfile);
-        Blob? blob = null;
-        Blob? errorBlob = null;
-        try
+        _logger.LogInformation("Shader file path {shaderDirPath}",
+            _shaderDirPath);
+    }
+    public bool CompileShaders()
+    {
+        //verify compiled shaders are up to date
+
+        List<ReadOnlyMemory<byte>> shaders = [];
+
+        foreach (var shaderFile in _shaderFiles)
         {
-            var compileResult = Compiler.Compile(
-                shaderSource: shader,
-                entryPoint: entryPoint,
-                sourceName: filename,
-                profile: shaderProfile,
-                blob: out blob,
-                errorBlob: out errorBlob
-                );
+            var path = Path.Combine(_shaderDirPath, shaderFile.File);
+            _logger.LogInformation("Attempting {shaderFilePath} shader compliation",
+                path);
+            if (File.Exists(path))
+            {
+                // compile shader
+                shaders.Add(Array.Empty<byte>());
+            }
+            else
+            {
+                return false;
+            }
+        }
 
-            return compileResult.Failure
-                ? throw new Exception(errorBlob?.AsString())
-                : blob.AsBytes().AsMemory();
-        }
-        finally
-        {
-            blob?.Dispose();
-            errorBlob?.Dispose();
-        }
+        //save compiled files
+        return SaveCompiledShaders();
     }
 
-    private static string GetShaderProfile(ShaderStage stage) => stage switch
-    {
-        ShaderStage.VertexShader => "vs",
-        ShaderStage.HullShader => "hs",
-        ShaderStage.DomainShader => "ds",
-        ShaderStage.GeometryShader => "gs",
-        ShaderStage.PixelShader => "ps",
-        ShaderStage.ComputeShader => "cs",
-        _ => string.Empty,
-    };
-}
-
-public record CompiledS
-{
-    public CompiledS(ReadOnlyMemory<byte> compiledShader)
-        => CompiledShader = compiledShader;
-    public ReadOnlyMemory<byte> CompiledShader { get; }
-}
-public record CompiledVS : CompiledS
-{
-    public CompiledVS(
-        string path,
-        IShaderCompiler shaderCompiler)
-        : base(shaderCompiler.CompileShader(
-            path,
-            ShaderStage.VertexShader))
-    {
-    }
-}
-
-public record CompiledPS : CompiledS
-{
-    public CompiledPS(
-        string path,
-        IShaderCompiler shaderCompiler)
-        : base(shaderCompiler.CompileShader(
-            path,
-            ShaderStage.PixelShader))
+    private bool SaveCompiledShaders()
     {
     }
 }
