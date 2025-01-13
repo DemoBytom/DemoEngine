@@ -5,38 +5,32 @@ using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 
 namespace Demo.Engine.Core.Services;
 
-public class MainLoopService : IMainLoopService
+internal sealed class MainLoopService(
+    IMediator mediator,
+    IHostApplicationLifetime applicationLifetime,
+    IOSMessageHandler oSMessageHandler,
+    IRenderingEngine renderingEngine,
+    IDebugLayerLogger debugLayerLogger,
+    IFpsTimer fpsTimer,
+    IShaderAsyncCompiler shaderCompiler)
+    : IMainLoopService
 {
-    private readonly IMediator _mediator;
-    private readonly IHostApplicationLifetime _applicationLifetime;
-    private readonly IOSMessageHandler _oSMessageHandler;
-    private readonly IRenderingEngine _renderingEngine;
-    private readonly IDebugLayerLogger _debugLayerLogger;
-    private readonly IFpsTimer _fpsTimer;
+    private readonly IMediator _mediator = mediator;
+    private readonly IHostApplicationLifetime _applicationLifetime = applicationLifetime;
+    private readonly IOSMessageHandler _oSMessageHandler = oSMessageHandler;
+    private readonly IRenderingEngine _renderingEngine = renderingEngine;
+    private readonly IDebugLayerLogger _debugLayerLogger = debugLayerLogger;
+    private readonly IFpsTimer _fpsTimer = fpsTimer;
+    private readonly IShaderAsyncCompiler _shaderCompiler = shaderCompiler;
 
     public bool IsRunning { get; private set; }
-
-    public MainLoopService(
-        IMediator mediator,
-        IHostApplicationLifetime applicationLifetime,
-        IOSMessageHandler oSMessageHandler,
-        IRenderingEngine renderingEngine,
-        IDebugLayerLogger debugLayerLogger,
-        IFpsTimer fpsTimer)
-    {
-        _mediator = mediator;
-        _applicationLifetime = applicationLifetime;
-        _oSMessageHandler = oSMessageHandler;
-        _renderingEngine = renderingEngine;
-        _debugLayerLogger = debugLayerLogger;
-        _fpsTimer = fpsTimer;
-    }
 
     public async Task RunAsync(
         Func<IRenderingSurface, KeyboardHandle, KeyboardCharCache, ValueTask> updateCallback,
@@ -52,10 +46,14 @@ public class MainLoopService : IMainLoopService
             throw new ArgumentNullException(nameof(renderCallback), "Render callback method cannot be null!");
         }
 
+        _ = await _shaderCompiler.CompileShaders(
+            cancellationToken);
+
         //TODO proper main loop instead of simple while
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
         var doEventsOk = true;
+
         while (
             doEventsOk
             && !_applicationLifetime.ApplicationStopping.IsCancellationRequested

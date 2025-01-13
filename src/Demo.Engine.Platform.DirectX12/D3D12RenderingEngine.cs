@@ -6,7 +6,6 @@ using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.ValueObjects;
 using Demo.Engine.Platform.DirectX12.RenderingResources;
-using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -53,11 +52,8 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         ILogger<D3D12RenderingEngine> logger,
         IServiceProvider serviceProvider,
         IOptionsSnapshot<RenderSettings> renderSettings,
-        IDebugLayerLogger debugLayerLogger,
-        ShaderCompiler shaderCompiler)
+        IDebugLayerLogger debugLayerLogger)
     {
-        _ = shaderCompiler.CompileShaders();
-
         _logger = logger;
         _serviceProvider = serviceProvider;
         _debugLayerLogger = debugLayerLogger;

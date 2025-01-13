@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Core.Services;
 
-public sealed class FpsTimer(
+internal sealed class FpsTimer(
     ILogger<FpsTimer> logger)
     : IFpsTimer
 {

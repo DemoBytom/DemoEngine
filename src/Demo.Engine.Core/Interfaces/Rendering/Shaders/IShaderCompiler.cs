@@ -9,3 +9,8 @@ public interface IShaderCompiler
 {
     ReadOnlyMemory<byte> CompileShader(string path, ShaderStage shaderStage, string entryPoint = "main");
 }
+
+public interface IShaderAsyncCompiler
+{
+    ValueTask<bool> CompileShaders(CancellationToken cancellationToken = default);
+}

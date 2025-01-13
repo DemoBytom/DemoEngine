@@ -8,6 +8,7 @@ using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.Services;
 using FluentAssertions;
@@ -27,6 +28,7 @@ public class MainLoopServiceTests
     private readonly IRenderingEngine _mockRenderingEngine;
     private readonly IDebugLayerLogger _mockDebugLayer;
     private readonly IFpsTimer _fpsTimerMock;
+    private readonly IShaderAsyncCompiler _shaderCompiler;
 
     public MainLoopServiceTests()
     {
@@ -36,6 +38,7 @@ public class MainLoopServiceTests
         _mockRenderingEngine = Substitute.For<IRenderingEngine>();
         _mockDebugLayer = Substitute.For<IDebugLayerLogger>();
         _fpsTimerMock = Substitute.For<IFpsTimer>();
+        _shaderCompiler = Substitute.For<IShaderAsyncCompiler>();
     }
 
     private MainLoopService CreateService()
@@ -45,7 +48,8 @@ public class MainLoopServiceTests
             _mockOSMessageHandler,
             _mockRenderingEngine,
             _mockDebugLayer,
-            _fpsTimerMock);
+            _fpsTimerMock,
+            _shaderCompiler);
 
     [Fact]
     public void RunAsync_Throws_On_UpdateCallback_Null()

@@ -2,10 +2,9 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Autofac.Extensions.DependencyInjection;
+using Demo.Engine.Core;
 using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Extensions;
-using Demo.Engine.Core.Interfaces;
-using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
@@ -30,7 +29,6 @@ try
             _ = services
             .AddHostedService<EngineService>()
             .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
-            .AddSingleton<IKeyboardCache, KeyboardCache>()
             //DirectX 11
             //.AddScoped<
             //    ID3D11RenderingEngine,
@@ -40,11 +38,10 @@ try
             //    ID3D12RenderingEngine,
             //    IRenderingEngine,
             //    D3D12RenderingEngine>()
-            .AddScoped<IMainLoopService, MainLoopService>()
             /*** Windows Only ***/
             .AddScoped<IRenderingControl, RenderingForm>()
             .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
-            .AddTransient<IFpsTimer, FpsTimer>()
+            .AddEngineCore()
             //.AddTransient<IShaderCompiler, Demo.Engine.Platform.DirectX12.Shaders.ShaderCompiler>()
             //.AddSingleton<IDebugLayerLogger, DebugLayerLogger>()
             .AddDirectX12()

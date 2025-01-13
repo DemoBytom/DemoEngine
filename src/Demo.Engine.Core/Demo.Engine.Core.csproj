@@ -21,6 +21,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <DefineConstants />
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Demo.Engine.Core.UTs" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />

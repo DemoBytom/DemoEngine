@@ -1,7 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using Microsoft.Extensions.Hosting;
+using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Platform.DirectX12.Shaders;
@@ -11,7 +11,20 @@ internal record ShaderFileInfo(
     ShaderId ID,
     ShaderType ShaderType);
 
-internal class ShaderCompiler
+/* Shader.bin structure:
+ * int shader count
+ * int combined shader length
+ * [
+ *   int ShaderId
+ *   int shader length
+ *   byte[shaderLength] shader bytecode
+ * ]
+ * */
+
+internal sealed class ShaderCompiler(
+    ILogger<ShaderCompiler> logger,
+    IEngineShaderManager engineShaderManager)
+    : IShaderAsyncCompiler
 {
     private readonly ShaderFileInfo[] _shaderFiles =
     [
@@ -21,51 +34,32 @@ internal class ShaderCompiler
             ID: ShaderId.FullscreenTriangle,
             ShaderType: ShaderType.Vertex),
     ];
-    private readonly string _rootPath;
-    private readonly string _shaderDirPath;
-    private readonly ILogger<ShaderCompiler> _logger;
 
-    public ShaderCompiler(
-        ILogger<ShaderCompiler> logger,
-        IHostEnvironment environment)
+    private readonly ILogger<ShaderCompiler> _logger = logger;
+    private readonly IEngineShaderManager _engineShaderManager = engineShaderManager;
+
+    public ValueTask<bool> CompileShaders(
+        CancellationToken cancellationToken = default)
     {
-        _logger = logger;
-
-        _rootPath = environment.ContentRootPath;
-        _shaderDirPath = Path.Combine(
-            _rootPath,
-            "Shaders");
-
-        _logger.LogInformation("Shader file path {shaderDirPath}",
-            _shaderDirPath);
-    }
-    public bool CompileShaders()
-    {
-        //verify compiled shaders are up to date
-
-        List<ReadOnlyMemory<byte>> shaders = [];
+        //TODO: verify compiled shaders are up to date
 
         foreach (var shaderFile in _shaderFiles)
         {
-            var path = Path.Combine(_shaderDirPath, shaderFile.File);
+            _logger.LogInformation("Compiling {shaderFile}",
+                shaderFile.File);
+
             _logger.LogInformation("Attempting {shaderFilePath} shader compliation",
-                path);
-            if (File.Exists(path))
-            {
-                // compile shader
-                shaders.Add(Array.Empty<byte>());
-            }
-            else
-            {
-                return false;
-            }
+                shaderFile.File);
+            //if (_contentFileProvider.FileExists(shaderFile.File))
+            //{
+            //    // compile shader
+            //}
+            //else
+            //{
+            //    return false;
+            //}
         }
 
-        //save compiled files
-        return SaveCompiledShaders();
-    }
-
-    private bool SaveCompiledShaders()
-    {
+        return ValueTask.FromResult(true);
     }
 }
