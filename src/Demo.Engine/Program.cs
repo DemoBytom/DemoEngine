@@ -8,7 +8,6 @@ using Demo.Engine.Core.Extensions;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
-using Demo.Engine.Core.Services;
 using Demo.Engine.Extensions;
 using Demo.Engine.Platform.DirectX12;
 using Demo.Engine.Platform.Windows;
@@ -27,7 +26,7 @@ try
         =>
         {
             _ = services
-            .AddHostedService<EngineService>()
+            //.AddHostedService<EngineService>()
             .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
             //DirectX 11
             //.AddScoped<

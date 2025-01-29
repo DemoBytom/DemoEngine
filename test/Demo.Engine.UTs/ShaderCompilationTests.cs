@@ -54,20 +54,20 @@ public class ShaderCompilationTests
         _ = shader2.Size.Should().Be(4);
         _ = shader2.ShaderBlob.ToArray().Should().BeEquivalentTo(new byte[] { 154, 21, 14, 33 });
 
-        static async IAsyncEnumerable<ShaderContent> GetShaders()
+        static async IAsyncEnumerable<Task<ShaderContent>> GetShaders()
         {
             var blob = new byte[] { 55, 123, 55, 46, 23, 123 };
             var blob2 = new byte[] { 154, 21, 14, 33 };
 
             await Task.Yield();
 
-            yield return new ShaderContent(
+            yield return Task.FromResult(new ShaderContent(
                 ShaderId.FullscreenTriangle,
-                blob);
+                blob));
 
-            yield return new ShaderContent(
+            yield return Task.FromResult(new ShaderContent(
                 (ShaderId)2,
-                blob2);
+                blob2));
         }
     }
 }

@@ -1,6 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Collections.Concurrent;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
@@ -38,9 +39,10 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
     public SRVDescriptorHeapAllocator SRVHeapAllocator { get; }
     public UAVDescriptorHeapAllocator UAVHeapAllocator { get; }
 
-    private readonly Dictionary<Guid, RenderingSurface> _surfaces = [];
+    private readonly ConcurrentDictionary<Guid, RenderingSurface> _surfaces = [];
 
-    public IReadOnlyCollection<IRenderingSurface> RenderingSurfaces => _surfaces.Values;
+    public IReadOnlyCollection<IRenderingSurface> RenderingSurfaces
+        => (IReadOnlyCollection<IRenderingSurface>)_surfaces.Values;
 
     public RawBool IsTearingSupported { get; }
 
@@ -102,26 +104,36 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         SRVHeapAllocator = srv;
         UAVHeapAllocator = uav;
 
-        var renderingSurface = new RenderingSurface(
-            serviceProvider);
-
-        _surfaces.Add(renderingSurface.ID, renderingSurface);
-
         //renderingSurface = new RenderingSurface(
         //    serviceProvider);
 
         //_surfaces.Add(renderingSurface.ID, renderingSurface);
 
         //Show controll:
-        foreach (var surface in _surfaces.Values)
-        {
-            surface.CreateSwapChain(
+        //foreach (var surface in _surfaces.Values)
+        //{
+        //    surface.CreateSwapChain(
+        //        factory: _dxgiFactory,
+        //        device: Device,
+        //        commandQueue: _d3d12Command.CommandQueue,
+        //        rtvDescriptorHeapAllocator: RTVHeapAllocator);
+        //    surface.RenderingControl.Show();
+        //}
+    }
+
+    public void CreateSurface()
+    {
+        var renderingSurface = new RenderingSurface(
+            _serviceProvider);
+
+        renderingSurface.CreateSwapChain(
                 factory: _dxgiFactory,
                 device: Device,
                 commandQueue: _d3d12Command.CommandQueue,
                 rtvDescriptorHeapAllocator: RTVHeapAllocator);
-            surface.RenderingControl.Show();
-        }
+        renderingSurface.RenderingControl.Show();
+
+        _ = _surfaces.TryAdd(renderingSurface.ID, renderingSurface);
     }
 
     private TAdapter CreateAdapter<TAdapter, TDXGIFactory>(

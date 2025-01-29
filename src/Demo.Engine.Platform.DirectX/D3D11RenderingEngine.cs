@@ -305,5 +305,7 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
 
     public void Draw(Color4 color, Guid renderingSurfaceId, IEnumerable<IDrawable> drawables) => throw new NotImplementedException();
 
+    public void CreateSurface() => throw new NotImplementedException();
+
     #endregion IDisposable Support
 }

@@ -20,5 +20,6 @@ public static class RegistrationExtensions
             .AddSingleton<IKeyboardCache, KeyboardCache>()
             .AddTransient<IFpsTimer, FpsTimer>()
             .AddTransient<IContentFileProvider, ContentFileProvider>()
+            .AddHostedService<EngineServiceNew>()
         ;
 }

@@ -10,6 +10,8 @@ public interface IRenderingEngine : IDisposable
     //IRenderingControl Control { get; }
     IReadOnlyCollection<IRenderingSurface> RenderingSurfaces { get; }
 
+    void CreateSurface();
+
     //void BeginScene(Guid renderingSurfaceId, Color4 color);
 
     //bool EndScene(Guid renderingSurfaceId);
