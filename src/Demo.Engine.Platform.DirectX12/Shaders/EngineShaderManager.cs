@@ -67,6 +67,9 @@ internal sealed class EngineShaderManager(
 
     public const string ENGINE_SHADERS_BIN_FILE = "EngineShaders/shaders.bin";
 
+    public string GetShaderDirAbsolutePath
+        => _contentFileProvider.GetAbsolutePath("Shaders");
+
     public async ValueTask<bool> LoadEngineShaders(
         CancellationToken cancellationToken = default)
     {
@@ -76,8 +79,8 @@ internal sealed class EngineShaderManager(
         return true;
     }
 
-    public async ValueTask<bool> SaveEngineShaders(
-        IAsyncEnumerable<ShaderContent> shaders,
+    public async Task<bool> SaveEngineShaders(
+        IAsyncEnumerable<Task<ShaderContent>> shaders,
         CancellationToken cancellationToken = default)
     {
         await using var shadersBinFile = _contentFileProvider.CreateFile(
@@ -86,13 +89,15 @@ internal sealed class EngineShaderManager(
 
         await WriteHeader(
             pipeWriter,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
 
         var shaderCount = 0;
         var shaderBlobTotalLength = 0;
 
-        await foreach (var shader in shaders)
+        await foreach (var shaderTask in shaders)
         {
+            var shader = await shaderTask;
             var shaderBytelen = shader.ShaderBytecode.Length;
 
             WriteShader(
@@ -101,7 +106,7 @@ internal sealed class EngineShaderManager(
                 shaderBytelen,
                 shader.ShaderBytecode.Span);
 
-            _ = await pipeWriter.FlushAsync(cancellationToken);
+            _ = await pipeWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
 
             ++shaderCount;
             shaderBlobTotalLength += shaderBytelen;
@@ -113,10 +118,11 @@ internal sealed class EngineShaderManager(
             headerWriter,
             shaderCount,
             shaderBlobTotalLength,
-            cancellationToken);
+            cancellationToken)
+            .ConfigureAwait(false);
 
-        await pipeWriter.CompleteAsync();
-        await headerWriter.CompleteAsync();
+        await pipeWriter.CompleteAsync().ConfigureAwait(false);
+        await headerWriter.CompleteAsync().ConfigureAwait(false);
 
         return true;
     }
@@ -135,14 +141,15 @@ internal sealed class EngineShaderManager(
 
         for (var i = 0; i < shaderCount; ++i)
         {
-            var shaderId = (ShaderId)await ReadInt32Async(pipeReader, cancellationToken);
-            var shaderLength = await ReadInt32Async(pipeReader, cancellationToken);
+            var shaderId = (ShaderId)await ReadInt32Async(pipeReader, cancellationToken).ConfigureAwait(false);
+            var shaderLength = await ReadInt32Async(pipeReader, cancellationToken).ConfigureAwait(false);
             var blobBuffer = shadersBlob.Slice(currentIndex, shaderLength);
 
             await ReadBlobAsync(
                 pipeReader,
                 blobBuffer,
-                cancellationToken);
+                cancellationToken)
+                .ConfigureAwait(false);
 
             _compiledShaders.Add(shaderId,
                 new CompiledShader(
@@ -158,7 +165,7 @@ internal sealed class EngineShaderManager(
         PipeReader pipeReader,
         CancellationToken cancellationToken = default)
     {
-        var result = await pipeReader.ReadAtLeastAsync(sizeof(int), cancellationToken);
+        var result = await pipeReader.ReadAtLeastAsync(sizeof(int), cancellationToken).ConfigureAwait(false);
         var buffer = result.Buffer;
 
         if (buffer.Length < sizeof(int))
@@ -186,7 +193,7 @@ internal sealed class EngineShaderManager(
 
         while (remainingBytes > 0)
         {
-            var result = await reader.ReadAsync(cancellationToken);
+            var result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             var buffer = result.Buffer;
 
             if (buffer.IsEmpty
@@ -217,7 +224,7 @@ internal sealed class EngineShaderManager(
         BinaryPrimitives.WriteInt32LittleEndian(headerBuffer[sizeof(int)..], combinedShaderLength);
 
         pipeWriter.Advance(BUFFER_LENGTH);
-        _ = await pipeWriter.FlushAsync(cancellationToken);
+        _ = await pipeWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
         return;
     }
 

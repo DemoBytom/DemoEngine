@@ -12,5 +12,5 @@ public interface IShaderCompiler
 
 public interface IShaderAsyncCompiler
 {
-    ValueTask<bool> CompileShaders(CancellationToken cancellationToken = default);
+    Task<bool> CompileShaders(CancellationToken cancellationToken = default);
 }

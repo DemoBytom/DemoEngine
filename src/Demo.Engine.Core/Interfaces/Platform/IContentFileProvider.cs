@@ -9,5 +9,7 @@ public interface IContentFileProvider
 
     bool FileExists(string fileSubPath);
 
+    string GetAbsolutePath(string path);
+
     Stream OpenFile(string fileSubPath);
 }

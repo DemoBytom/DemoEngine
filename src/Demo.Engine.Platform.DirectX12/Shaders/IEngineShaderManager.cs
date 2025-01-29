@@ -5,7 +5,11 @@ namespace Demo.Engine.Platform.DirectX12.Shaders;
 
 internal interface IEngineShaderManager
 {
+    string GetShaderDirAbsolutePath { get; }
+
     CompiledShader GetShader(ShaderId id);
 
     ValueTask<bool> LoadEngineShaders(CancellationToken cancellationToken = default);
+
+    Task<bool> SaveEngineShaders(IAsyncEnumerable<Task<ShaderContent>> shaders, CancellationToken cancellationToken = default);
 }

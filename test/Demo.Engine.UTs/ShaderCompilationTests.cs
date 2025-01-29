@@ -62,8 +62,8 @@ public class ShaderCompilationTests
             await Task.Yield();
 
             yield return new ShaderContent(
-                 ShaderId.FullscreenTriangle,
-                 blob);
+                ShaderId.FullscreenTriangle,
+                blob);
 
             yield return new ShaderContent(
                 (ShaderId)2,

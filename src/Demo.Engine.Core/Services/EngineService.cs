@@ -42,7 +42,8 @@ public class EngineService : ServiceBase
         await mainLoop.RunAsync(
             Update,
             Render,
-            _loopCancellationTokenSource.Token);
+            _loopCancellationTokenSource.Token)
+            .ConfigureAwait(true);
         _sp = null;
     }
 

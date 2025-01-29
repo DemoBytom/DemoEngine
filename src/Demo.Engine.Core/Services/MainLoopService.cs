@@ -46,8 +46,10 @@ internal sealed class MainLoopService(
             throw new ArgumentNullException(nameof(renderCallback), "Render callback method cannot be null!");
         }
 
-        _ = await _shaderCompiler.CompileShaders(
+        var compileShaders = _shaderCompiler.CompileShaders(
             cancellationToken);
+
+        _ = compileShaders.GetAwaiter().GetResult();
 
         //TODO proper main loop instead of simple while
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);

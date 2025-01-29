@@ -12,6 +12,11 @@ internal sealed class ContentFileProvider(
 {
     private readonly IHostEnvironment _environment = environment;
 
+    public string GetAbsolutePath(string path)
+        => Path.Combine(
+            _environment.ContentRootPath,
+            path);
+
     public Stream CreateFile(
         string fileSubPath)
     {
