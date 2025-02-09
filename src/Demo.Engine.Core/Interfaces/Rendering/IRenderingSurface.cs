@@ -3,12 +3,13 @@
 
 using System.Numerics;
 using Demo.Engine.Core.Interfaces.Platform;
+using Demo.Engine.Core.ValueObjects;
 
 namespace Demo.Engine.Core.Interfaces.Rendering;
 
 public interface IRenderingSurface
 {
-    Guid ID { get; }
+    RenderingSurfaceId ID { get; }
 
     IRenderingControl RenderingControl { get; }
 

@@ -11,6 +11,7 @@ using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.Services;
+using Demo.Engine.Core.ValueObjects;
 using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Hosting;
@@ -58,7 +59,7 @@ public class MainLoopServiceTests
         var service = CreateService();
 
         CancellationToken cancellationToken = default;
-        static ValueTask RenderCallback(IRenderingEngine _, Guid __) => ValueTask.CompletedTask;
+        static ValueTask RenderCallback(IRenderingEngine _, RenderingSurfaceId __) => ValueTask.CompletedTask;
 
         // Act
         Func<Task> func = () => service.RunAsync(
@@ -98,7 +99,7 @@ public class MainLoopServiceTests
         var cts = new CancellationTokenSource();
         cts.CancelAfter(TimeSpan.FromSeconds(5));
 
-        static ValueTask RenderCallback(IRenderingEngine _, Guid __) => ValueTask.CompletedTask;
+        static ValueTask RenderCallback(IRenderingEngine _, RenderingSurfaceId __) => ValueTask.CompletedTask;
         static ValueTask UpdateCallback(IRenderingSurface _, KeyboardHandle __, KeyboardCharCache ___) => ValueTask.CompletedTask;
         var keybaorCacheSub = Substitute.For<IKeyboardCache>();
         var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
@@ -150,7 +151,7 @@ public class MainLoopServiceTests
 
         var cts = new CancellationTokenSource();
 
-        static ValueTask RenderCallback(IRenderingEngine _, Guid __) => ValueTask.CompletedTask;
+        static ValueTask RenderCallback(IRenderingEngine _, RenderingSurfaceId __) => ValueTask.CompletedTask;
         var iUpdate = 0;
         ValueTask UpdateCallback(IRenderingSurface _, KeyboardHandle __, KeyboardCharCache ___)
         {
@@ -207,7 +208,7 @@ public class MainLoopServiceTests
         var cts = new CancellationTokenSource();
         var appLifetimeCTS = new CancellationTokenSource();
 
-        static ValueTask RenderCallback(IRenderingEngine _, Guid __) => ValueTask.CompletedTask;
+        static ValueTask RenderCallback(IRenderingEngine _, RenderingSurfaceId __) => ValueTask.CompletedTask;
         var iUpdate = 0;
         ValueTask UpdateCallback(IRenderingSurface _, KeyboardHandle __, KeyboardCharCache ___)
         {
@@ -268,7 +269,7 @@ public class MainLoopServiceTests
 
         var iUpdate = 0;
         var iRender = 0;
-        ValueTask RenderCallback(IRenderingEngine _, Guid __)
+        ValueTask RenderCallback(IRenderingEngine _, RenderingSurfaceId __)
         {
             ++iRender;
             return ValueTask.CompletedTask;
@@ -328,7 +329,7 @@ public class MainLoopServiceTests
         cts.CancelAfter(TimeSpan.FromSeconds(5));
         var appLifetimeCTS = new CancellationTokenSource();
 
-        static ValueTask RenderCallback(IRenderingEngine _, Guid __) => ValueTask.CompletedTask;
+        static ValueTask RenderCallback(IRenderingEngine _, RenderingSurfaceId __) => ValueTask.CompletedTask;
         var iUpdate = 0;
         ValueTask UpdateCallback(IRenderingSurface _, KeyboardHandle __, KeyboardCharCache ___)
         {
@@ -383,7 +384,7 @@ public class MainLoopServiceTests
         cts.CancelAfter(TimeSpan.FromSeconds(5));
         var appLifetimeCTS = new CancellationTokenSource();
 
-        static ValueTask RenderCallback(IRenderingEngine _, Guid __) => ValueTask.CompletedTask;
+        static ValueTask RenderCallback(IRenderingEngine _, RenderingSurfaceId __) => ValueTask.CompletedTask;
 
         ValueTask UpdateCallback(IRenderingSurface __, KeyboardHandle ___, KeyboardCharCache ____)
         {

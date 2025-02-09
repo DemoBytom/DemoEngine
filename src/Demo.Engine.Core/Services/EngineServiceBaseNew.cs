@@ -86,7 +86,7 @@ internal abstract class EngineServiceBaseNew(
 
             _sp = null;
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException)
         {
             IsRunning = false;
         }
@@ -119,6 +119,11 @@ internal abstract class EngineServiceBaseNew(
                         osMessageHandler: osMessageHandler,
                         cancellationToken: _hostApplicationLifetime.ApplicationStopping));
 
+                IsRunning = false;
+                tcs.SetResult();
+            }
+            catch (OperationCanceledException)
+            {
                 IsRunning = false;
                 tcs.SetResult();
             }

@@ -7,6 +7,7 @@ using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
+using Demo.Engine.Core.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 
@@ -34,7 +35,7 @@ internal sealed class MainLoopService(
 
     public async Task RunAsync(
         Func<IRenderingSurface, KeyboardHandle, KeyboardCharCache, ValueTask> updateCallback,
-        Func<IRenderingEngine, Guid, ValueTask> renderCallback,
+        Func<IRenderingEngine, RenderingSurfaceId, ValueTask> renderCallback,
         CancellationToken cancellationToken = default)
     {
         if (updateCallback is null)

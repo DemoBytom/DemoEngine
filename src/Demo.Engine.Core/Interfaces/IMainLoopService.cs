@@ -3,6 +3,7 @@
 
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.Hosting;
 
 namespace Demo.Engine.Core.Interfaces;
@@ -28,7 +29,7 @@ public interface IMainLoopService
     /// </remarks>
     Task RunAsync(
         Func<IRenderingSurface, KeyboardHandle, KeyboardCharCache, ValueTask> updateCallback,
-        Func<IRenderingEngine, Guid, ValueTask> renderCallback,
+        Func<IRenderingEngine, RenderingSurfaceId, ValueTask> renderCallback,
         CancellationToken cancellationToken = default);
 
     /// <summary>

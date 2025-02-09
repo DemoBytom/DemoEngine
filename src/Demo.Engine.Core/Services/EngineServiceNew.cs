@@ -11,6 +11,7 @@ using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Requests.Keyboard;
+using Demo.Engine.Core.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -38,10 +39,7 @@ internal class EngineServiceNew(
     private readonly CancellationTokenSource _loopCancellationTokenSource = new();
     private bool _disposedValue;
 
-    internal record StaThreadWork(
-        Action<IRenderingEngine> Action);
-
-    private readonly Channel<StaThreadWork> _channel = Channel.CreateBounded<StaThreadWork>(
+    private readonly Channel<StaThreadRequests> _channel = Channel.CreateBounded<StaThreadRequests>(
         new BoundedChannelOptions(10)
         {
             AllowSynchronousContinuations = false,
@@ -68,14 +66,11 @@ internal class EngineServiceNew(
             _sp!.GetRequiredService<ICube>(),
         ];
 
-        await _channel.Writer.WriteAsync(
-            new StaThreadWork(
-                re => re.CreateSurface()),
+        var surfaces = new RenderingSurfaceId[2];
+        surfaces[0] = await _channel.Writer.CreateSurface(
             cts.Token);
 
-        await _channel.Writer.WriteAsync(
-            new StaThreadWork(
-                re => re.CreateSurface()),
+        surfaces[1] = await _channel.Writer.CreateSurface(
             cts.Token);
 
         var previous = Stopwatch.GetTimestamp();
@@ -83,21 +78,37 @@ internal class EngineServiceNew(
 
         var msPerUpdate = TimeSpan.FromSeconds(1) / 60;
 
+        var doEventsFunc = StaThreadRequests.DoEventsOk(RenderingSurfaceId.Empty);
+        var doEventsOk = true;
+
         while (
-            IsRunning
+            doEventsOk
+            && IsRunning
             && !cts.Token.IsCancellationRequested)
         {
             var current = Stopwatch.GetTimestamp();
             var elapsed = Stopwatch.GetElapsedTime(previous, current);
             previous = current;
             lag += elapsed;
+
             //process input
+            // TODO!
 
             while (lag >= msPerUpdate)
             {
                 //Update
-                foreach (var renderingSurface in renderingEngine.RenderingSurfaces)
+                foreach (var renderingSurfaceId in surfaces)
                 {
+                    if (!renderingEngine.TryGetRenderingSurface(
+                        renderingSurfaceId,
+                        out var renderingSurface))
+                    {
+                        _logger.LogCritical(
+                            "Rendering surface {id} not found!",
+                            renderingSurfaceId);
+                        break;
+                    }
+
                     await Update(
                           renderingSurface,
                           keyboardHandle,
@@ -108,15 +119,22 @@ internal class EngineServiceNew(
             }
 
             //Render
-            foreach (var renderingSurface in renderingEngine.RenderingSurfaces)
+            foreach (var renderingSurfaceId in surfaces)
             {
+                doEventsOk &= await _channel.Writer.DoEventsOk(
+                    renderingSurfaceId,
+                    doEventsFunc,
+                    cts.Token);
+
                 _fpsTimer.Start();
                 await Render(
                     renderingEngine,
-                    renderingSurface.ID);
+                    renderingSurfaceId);
                 _fpsTimer.Stop();
             }
         }
+        _channel.Writer.Complete();
+        _loopCancellationTokenSource.Cancel();
     }
 
     protected override async Task STAThread(
@@ -130,30 +148,28 @@ internal class EngineServiceNew(
 
         var doEventsOk = true;
 
-        using var periodicTimer = new PeriodicTimer(
-            TimeSpan.FromSeconds(1) / 60);
-
-        var timestamp = Stopwatch.GetTimestamp();
-
-        while (await periodicTimer.WaitForNextTickAsync(cts.Token)
+        while (
+            await _channel.Reader.WaitToReadAsync(cts.Token)
                 && IsRunning
                 && doEventsOk
                 && !cts.Token.IsCancellationRequested)
         {
-            //_logger.LogTrace("Tick! {elapsedMS}",
-            //    Stopwatch.GetElapsedTime(timestamp).TotalMilliseconds);
-            timestamp = Stopwatch.GetTimestamp();
-
-            while (_channel.Reader.TryRead(out var staAction))
+            while (
+                doEventsOk
+                && _channel.Reader.TryRead(out var staAction))
             {
-                staAction.Action.Invoke(renderingEngine);
-            }
-            foreach (var renderingSurface in renderingEngine.RenderingSurfaces)
-            {
-                doEventsOk &= osMessageHandler.DoEvents(
-                        renderingSurface.RenderingControl);
+                if (staAction is StaThreadRequests.DoEventsOkRequest doEventsOkRequest)
+                {
+                    doEventsOk &= doEventsOkRequest.Invoke(renderingEngine, osMessageHandler);
+                }
+                else
+                {
+                    _ = staAction.Invoke(renderingEngine, osMessageHandler);
+                }
             }
         }
+
+        _loopCancellationTokenSource.Cancel();
     }
 
     private float _r, _g, _b = 0.0f;
@@ -247,9 +263,9 @@ internal class EngineServiceNew(
         //}
 
         //Share the rainbow
-        _r = MathF.Sin((_sin + 0) * MathF.PI / 180);
-        _g = MathF.Sin((_sin + 120) * MathF.PI / 180);
-        _b = MathF.Sin((_sin + 240) * MathF.PI / 180);
+        _r = float.Sin((_sin + 0) * float.Pi / 180);
+        _g = float.Sin((_sin + 120) * float.Pi / 180);
+        _b = float.Sin((_sin + 240) * float.Pi / 180);
 
         //Taste the rainbow
         if (++_sin > 360)
@@ -277,7 +293,7 @@ internal class EngineServiceNew(
 
     private ValueTask Render(
         IRenderingEngine renderingEngine,
-        Guid renderingSurfaceId)
+        RenderingSurfaceId renderingSurfaceId)
     {
         renderingEngine.Draw(
             color: new Color4(_r, _g, _b, 1.0f),

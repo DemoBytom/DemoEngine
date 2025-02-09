@@ -1,6 +1,8 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics.CodeAnalysis;
+using Demo.Engine.Core.ValueObjects;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Core.Interfaces.Rendering;
@@ -10,17 +12,16 @@ public interface IRenderingEngine : IDisposable
     //IRenderingControl Control { get; }
     IReadOnlyCollection<IRenderingSurface> RenderingSurfaces { get; }
 
-    void CreateSurface();
+    bool TryGetRenderingSurface(
+        RenderingSurfaceId renderingSurfaceId,
+        [NotNullWhen(true)]
+        out IRenderingSurface? renderingSurface);
 
-    //void BeginScene(Guid renderingSurfaceId, Color4 color);
+    RenderingSurfaceId CreateSurface();
 
-    //bool EndScene(Guid renderingSurfaceId);
+    void Draw(RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables);
 
-    //void BeginScene(Guid renderingSurfaceId);
-
-    void Draw(Guid renderingSurfaceId, IEnumerable<IDrawable> drawables);
-
-    void Draw(Color4 color, Guid renderingSurfaceId, IEnumerable<IDrawable> drawables);
+    void Draw(Color4 color, RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables);
 
     public void LogDebugMessages();
 

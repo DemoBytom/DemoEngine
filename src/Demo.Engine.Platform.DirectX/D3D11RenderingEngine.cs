@@ -1,11 +1,13 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
+using Demo.Engine.Core.ValueObjects;
 using Demo.Engine.Platform.DirectX.Interfaces;
 using Demo.Tools.Common.Logging;
 using Microsoft.Extensions.Logging;
@@ -295,17 +297,19 @@ public class D3D11RenderingEngine : ID3D11RenderingEngine
     {
     }
 
-    public void BeginScene(Guid renderingSurfaceId, Color4 color) => throw new NotImplementedException();
+    public void BeginScene(RenderingSurfaceId renderingSurfaceId, Color4 color) => throw new NotImplementedException();
 
-    public bool EndScene(Guid renderingSurfaceId) => throw new NotImplementedException();
+    public bool EndScene(RenderingSurfaceId renderingSurfaceId) => throw new NotImplementedException();
 
-    public void BeginScene(Guid renderingSurfaceId) => throw new NotImplementedException();
+    public void BeginScene(RenderingSurfaceId renderingSurfaceId) => throw new NotImplementedException();
 
-    public void Draw(Guid renderingSurfaceId, IEnumerable<IDrawable> drawables) => throw new NotImplementedException();
+    public void Draw(RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables) => throw new NotImplementedException();
 
-    public void Draw(Color4 color, Guid renderingSurfaceId, IEnumerable<IDrawable> drawables) => throw new NotImplementedException();
+    public void Draw(Color4 color, RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables) => throw new NotImplementedException();
 
-    public void CreateSurface() => throw new NotImplementedException();
+    public bool TryGetRenderingSurface(RenderingSurfaceId renderingSurfaceId, [NotNullWhen(true)] out IRenderingSurface? renderingSurface) => throw new NotImplementedException();
+
+    public RenderingSurfaceId CreateSurface() => throw new NotImplementedException();
 
     #endregion IDisposable Support
 }

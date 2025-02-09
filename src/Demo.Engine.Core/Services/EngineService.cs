@@ -6,6 +6,7 @@ using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Platform;
+using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -169,7 +170,7 @@ public class EngineService : ServiceBase
 
     private ValueTask Render(
         IRenderingEngine renderingEngine,
-        Guid renderingSurfaceId)
+        RenderingSurfaceId renderingSurfaceId)
     {
         _angleInRadians = (_angleInRadians + 0.01f) % TWO_PI;
 

@@ -27,7 +27,7 @@ internal sealed class RenderingSurface
         RenderingControl = _scope.ServiceProvider.GetRequiredService<IRenderingControl>();
     }
 
-    public Guid ID { get; } = Guid.CreateVersion7();
+    public RenderingSurfaceId ID { get; } = RenderingSurfaceId.NewId();
     public IRenderingControl RenderingControl { get; }
     private IDXGISwapChain4? _swapChain;
     private uint _currentBackBuffer;

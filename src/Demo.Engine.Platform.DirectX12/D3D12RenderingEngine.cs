@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
@@ -39,10 +40,21 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
     public SRVDescriptorHeapAllocator SRVHeapAllocator { get; }
     public UAVDescriptorHeapAllocator UAVHeapAllocator { get; }
 
-    private readonly ConcurrentDictionary<Guid, RenderingSurface> _surfaces = [];
+    private readonly ConcurrentDictionary<RenderingSurfaceId, RenderingSurface> _surfaces = [];
 
     public IReadOnlyCollection<IRenderingSurface> RenderingSurfaces
         => (IReadOnlyCollection<IRenderingSurface>)_surfaces.Values;
+
+    public bool TryGetRenderingSurface(
+        RenderingSurfaceId renderingSurfaceId,
+        [NotNullWhen(true)]
+        out IRenderingSurface? renderingSurface)
+    {
+        var gotSuccessfully = _surfaces.TryGetValue(renderingSurfaceId, out var outValue);
+        renderingSurface = outValue;
+
+        return gotSuccessfully;
+    }
 
     public RawBool IsTearingSupported { get; }
 
@@ -121,7 +133,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         //}
     }
 
-    public void CreateSurface()
+    public RenderingSurfaceId CreateSurface()
     {
         var renderingSurface = new RenderingSurface(
             _serviceProvider);
@@ -134,6 +146,8 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         renderingSurface.RenderingControl.Show();
 
         _ = _surfaces.TryAdd(renderingSurface.ID, renderingSurface);
+
+        return renderingSurface.ID;
     }
 
     private TAdapter CreateAdapter<TAdapter, TDXGIFactory>(
@@ -281,7 +295,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
     }
 
     public void Draw(
-        Guid renderingSurfaceId,
+        RenderingSurfaceId renderingSurfaceId,
         IEnumerable<IDrawable> drawables)
         => Draw(
             _clearColor,
@@ -290,7 +304,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
 
     public void Draw(
         Color4 color,
-        Guid renderingSurfaceId,
+        RenderingSurfaceId renderingSurfaceId,
         IEnumerable<IDrawable> drawables)
     {
         InitCommandList();
@@ -330,7 +344,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
     }
 
     public bool EndScene(
-        Guid renderingSurfaceId)
+        RenderingSurfaceId renderingSurfaceId)
         => !_surfaces.TryGetValue(renderingSurfaceId, out var renderingSurface)
         || !renderingSurface.IsValid
             ? throw new InvalidOperationException(
