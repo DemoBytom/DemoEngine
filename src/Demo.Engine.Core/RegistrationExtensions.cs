@@ -1,6 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Threading.Channels;
 using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
@@ -21,5 +22,27 @@ public static class RegistrationExtensions
             .AddTransient<IFpsTimer, FpsTimer>()
             .AddTransient<IContentFileProvider, ContentFileProvider>()
             .AddHostedService<EngineServiceNew>()
+            .AddScoped<IStaThreadService, StaThreadService>()
+            .AddScopedBoundedChannel<StaThreadRequests>(
+                new BoundedChannelOptions(10)
+                {
+                    AllowSynchronousContinuations = false,
+                    FullMode = BoundedChannelFullMode.Wait,
+                    SingleReader = true,
+                    SingleWriter = false,
+                })
+        ;
+
+    private static IServiceCollection AddScopedBoundedChannel<T>(
+        this IServiceCollection services,
+            BoundedChannelOptions options)
+        => services
+            .AddScoped(_
+                => Channel.CreateBounded<T>(
+                    options))
+            .AddScoped(sp
+                => sp.GetRequiredService<Channel<T>>().Reader)
+            .AddScoped(sp
+                => sp.GetRequiredService<Channel<T>>().Writer)
         ;
 }

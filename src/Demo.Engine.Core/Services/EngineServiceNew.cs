@@ -6,7 +6,6 @@ using System.Numerics;
 using System.Threading.Channels;
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces;
-using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Platform;
@@ -36,17 +35,7 @@ internal class EngineServiceNew(
     private readonly IShaderAsyncCompiler _shaderCompiler = shaderCompiler;
     private readonly IFpsTimer _fpsTimer = fpsTimer;
     private ICube[] _drawables = [];
-    private readonly CancellationTokenSource _loopCancellationTokenSource = new();
     private bool _disposedValue;
-
-    private readonly Channel<StaThreadRequests> _channel = Channel.CreateBounded<StaThreadRequests>(
-        new BoundedChannelOptions(10)
-        {
-            AllowSynchronousContinuations = false,
-            FullMode = BoundedChannelFullMode.Wait,
-            SingleReader = true,
-            SingleWriter = false,
-        });
 
     protected override async Task DoAsync(
         IRenderingEngine renderingEngine,
@@ -61,17 +50,20 @@ internal class EngineServiceNew(
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
 
+        var channelWriter = _sp!.GetRequiredService<ChannelWriter<StaThreadRequests>>();
+
         _drawables =
         [
             _sp!.GetRequiredService<ICube>(),
         ];
 
-        var surfaces = new RenderingSurfaceId[2];
-        surfaces[0] = await _channel.Writer.CreateSurface(
-            cts.Token);
-
-        surfaces[1] = await _channel.Writer.CreateSurface(
-            cts.Token);
+        var surfaces = new RenderingSurfaceId[]
+        {
+            await channelWriter.CreateSurface(
+                cts.Token),
+            await channelWriter.CreateSurface(
+                cts.Token),
+        };
 
         var previous = Stopwatch.GetTimestamp();
         var lag = TimeSpan.Zero;
@@ -121,7 +113,7 @@ internal class EngineServiceNew(
             //Render
             foreach (var renderingSurfaceId in surfaces)
             {
-                doEventsOk &= await _channel.Writer.DoEventsOk(
+                doEventsOk &= await channelWriter.DoEventsOk(
                     renderingSurfaceId,
                     doEventsFunc,
                     cts.Token);
@@ -133,42 +125,7 @@ internal class EngineServiceNew(
                 _fpsTimer.Stop();
             }
         }
-        _channel.Writer.Complete();
-        _loopCancellationTokenSource.Cancel();
-    }
-
-    protected override async Task STAThread(
-        IRenderingEngine renderingEngine,
-        IOSMessageHandler osMessageHandler,
-        CancellationToken cancellationToken)
-    {
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            _loopCancellationTokenSource.Token);
-
-        var doEventsOk = true;
-
-        while (
-            await _channel.Reader.WaitToReadAsync(cts.Token)
-                && IsRunning
-                && doEventsOk
-                && !cts.Token.IsCancellationRequested)
-        {
-            while (
-                doEventsOk
-                && _channel.Reader.TryRead(out var staAction))
-            {
-                if (staAction is StaThreadRequests.DoEventsOkRequest doEventsOkRequest)
-                {
-                    doEventsOk &= doEventsOkRequest.Invoke(renderingEngine, osMessageHandler);
-                }
-                else
-                {
-                    _ = staAction.Invoke(renderingEngine, osMessageHandler);
-                }
-            }
-        }
-
+        channelWriter.Complete();
         _loopCancellationTokenSource.Cancel();
     }
 
@@ -314,8 +271,6 @@ internal class EngineServiceNew(
         {
             if (disposing)
             {
-                _loopCancellationTokenSource.Dispose();
-
                 foreach (var drawable in _drawables)
                 {
                     if (drawable is IDisposable disposable)
