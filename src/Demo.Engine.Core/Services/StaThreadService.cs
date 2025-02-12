@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading.Channels;
+using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Microsoft.Extensions.Hosting;
@@ -16,8 +17,8 @@ internal sealed class StaThreadService
 {
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private readonly ChannelReader<StaThreadRequests> _channelReader;
+    private readonly IMainLoopLifetime _mainLoopLifetime;
     private bool _disposedValue;
-    private readonly CancellationTokenSource _loopCancellationTokenSource = new();
 
     public Task ExecutingTask { get; }
     public bool IsRunning { get; private set; }
@@ -26,10 +27,12 @@ internal sealed class StaThreadService
         IHostApplicationLifetime hostApplicationLifetime,
         IRenderingEngine renderingEngine,
         IOSMessageHandler osMessageHandler,
-        ChannelReader<StaThreadRequests> channelReader)
+        ChannelReader<StaThreadRequests> channelReader,
+        IMainLoopLifetime mainLoopLifetime)
     {
         _hostApplicationLifetime = hostApplicationLifetime;
         _channelReader = channelReader;
+        _mainLoopLifetime = mainLoopLifetime;
         IsRunning = true;
         ExecutingTask = RunSTAThread(
             renderingEngine,
@@ -48,7 +51,7 @@ internal sealed class StaThreadService
             {
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(
                     _hostApplicationLifetime.ApplicationStopping,
-                    _loopCancellationTokenSource.Token);
+                    _mainLoopLifetime.Token);
 
                 SingleThreadedSynchronizationContext.Await(async ()
                     => await STAThread(
@@ -107,11 +110,8 @@ internal sealed class StaThreadService
             }
         }
 
-        _loopCancellationTokenSource.Cancel();
+        _mainLoopLifetime.Cancel();
     }
-
-    public void Cancel()
-        => _loopCancellationTokenSource.Cancel();
 
     private void Dispose(bool disposing)
     {
@@ -119,7 +119,6 @@ internal sealed class StaThreadService
         {
             if (disposing)
             {
-                _loopCancellationTokenSource.Dispose();
             }
 
             _disposedValue = true;

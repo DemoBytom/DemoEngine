@@ -1,287 +1,118 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System.Diagnostics;
-using System.Numerics;
-using System.Threading.Channels;
-using Demo.Engine.Core.Components.Keyboard;
+using System.Reflection;
 using Demo.Engine.Core.Interfaces;
+using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Engine.Core.Interfaces.Rendering.Shaders;
-using Demo.Engine.Core.Platform;
-using Demo.Engine.Core.Requests.Keyboard;
-using Demo.Engine.Core.ValueObjects;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Vortice.Mathematics;
 
 namespace Demo.Engine.Core.Services;
 
-internal class EngineServiceNew(
+internal sealed class EngineServiceNew(
     ILogger<EngineServiceNew> logger,
     IHostApplicationLifetime hostApplicationLifetime,
     IServiceScopeFactory scopeFactory,
-    IMediator mediator,
-    IShaderAsyncCompiler shaderCompiler,
-    IFpsTimer fpsTimer)
-    : EngineServiceBaseNew(
-        logger,
-        hostApplicationLifetime,
-        scopeFactory)
+    IMainLoopLifetime mainLoopLifetime)
+    : IHostedService,
+      IDisposable
 {
-    private readonly IMediator _mediator = mediator;
-    private readonly IShaderAsyncCompiler _shaderCompiler = shaderCompiler;
-    private readonly IFpsTimer _fpsTimer = fpsTimer;
-    private ICube[] _drawables = [];
+    private readonly ILogger<EngineServiceNew> _logger = logger;
+    private readonly IHostApplicationLifetime _hostApplicationLifetime = hostApplicationLifetime;
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+    private readonly IMainLoopLifetime _mainLoopLifetime = mainLoopLifetime;
+    private readonly string _serviceName = "Engine";
+    private Task? _executingTask;
+    private bool _stopRequested;
     private bool _disposedValue;
 
-    protected override async Task DoAsync(
-        IRenderingEngine renderingEngine,
-        CancellationToken cancellationToken)
+    private readonly string _version = Assembly
+        .GetEntryAssembly()
+        ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+        ?.InformationalVersion ?? "0.0.0";
+
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            _loopCancellationTokenSource.Token);
+        _logger.LogInformation("{serviceName} starting! v{version}", _serviceName, _version);
+        _executingTask = DoWorkAsync();
 
-        _ = await _shaderCompiler.CompileShaders(cts.Token);
-
-        var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
-        var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
-
-        var channelWriter = _sp!.GetRequiredService<ChannelWriter<StaThreadRequests>>();
-
-        _drawables =
-        [
-            _sp!.GetRequiredService<ICube>(),
-        ];
-
-        var surfaces = new RenderingSurfaceId[]
-        {
-            await channelWriter.CreateSurface(
-                cts.Token),
-            await channelWriter.CreateSurface(
-                cts.Token),
-        };
-
-        var previous = Stopwatch.GetTimestamp();
-        var lag = TimeSpan.Zero;
-
-        var msPerUpdate = TimeSpan.FromSeconds(1) / 60;
-
-        var doEventsFunc = StaThreadRequests.DoEventsOk(RenderingSurfaceId.Empty);
-        var doEventsOk = true;
-
-        while (
-            doEventsOk
-            && IsRunning
-            && !cts.Token.IsCancellationRequested)
-        {
-            var current = Stopwatch.GetTimestamp();
-            var elapsed = Stopwatch.GetElapsedTime(previous, current);
-            previous = current;
-            lag += elapsed;
-
-            //process input
-            // TODO!
-
-            while (lag >= msPerUpdate)
-            {
-                //Update
-                foreach (var renderingSurfaceId in surfaces)
-                {
-                    if (!renderingEngine.TryGetRenderingSurface(
-                        renderingSurfaceId,
-                        out var renderingSurface))
-                    {
-                        _logger.LogCritical(
-                            "Rendering surface {id} not found!",
-                            renderingSurfaceId);
-                        break;
-                    }
-
-                    await Update(
-                          renderingSurface,
-                          keyboardHandle,
-                          keyboardCharCache);
-
-                    lag -= msPerUpdate;
-                }
-            }
-
-            //Render
-            foreach (var renderingSurfaceId in surfaces)
-            {
-                doEventsOk &= await channelWriter.DoEventsOk(
-                    renderingSurfaceId,
-                    doEventsFunc,
-                    cts.Token);
-
-                _fpsTimer.Start();
-                await Render(
-                    renderingEngine,
-                    renderingSurfaceId);
-                _fpsTimer.Stop();
-            }
-        }
-        channelWriter.Complete();
-        _loopCancellationTokenSource.Cancel();
+        return _executingTask.IsCompleted
+            ? _executingTask
+            : Task.CompletedTask;
     }
 
-    private float _r, _g, _b = 0.0f;
-
-    private float _sin = 0.0f;
-    private bool _fullscreen = false;
-    private bool _f11Pressed = false;
-
-    private ValueTask Update(
-        IRenderingSurface renderingSurface,
-        KeyboardHandle keyboardHandle,
-        KeyboardCharCache keyboardCharCache)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.OemOpenBrackets))
-        {
-            keyboardCharCache.Clear();
-        }
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.OemCloseBrackets))
-        {
-            var str = keyboardCharCache?.ReadCache();
-            if (!string.IsNullOrEmpty(str))
-            {
-                _logger.LogInformation(str);
-            }
-        }
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
-        {
-            _loopCancellationTokenSource.Cancel();
-            foreach (var drawable in _drawables)
-            {
-                (drawable as IDisposable)?.Dispose();
-            }
+        _logger.LogInformation("{serviceName} stopping!", _serviceName);
 
-            _drawables = [];
-            return ValueTask.CompletedTask;
-        }
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.F11))
+        _stopRequested = true;
+        if (_executingTask is null)
         {
-            if (!_f11Pressed)
-            {
-                _fullscreen = !_fullscreen;
-            }
-            _f11Pressed = true;
-        }
-        else
-        {
-            _f11Pressed = false;
+            return;
         }
 
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.Back)
-            && _drawables.ElementAtOrDefault(0) is IDisposable d)
-        {
-            Debug.WriteLine("Removing cube!");
-
-            _drawables = _drawables.Length > 0
-                ? _drawables[1..]
-                : [];
-
-            d?.Dispose();
-
-            Debug.WriteLine("Cube removed!");
-        }
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter)
-            && _drawables.Length < 2
-            && _sp is not null)
-        {
-            Debug.WriteLine("Adding new Cube!");
-            _drawables = new List<ICube>(_drawables)
-                {
-                    _sp.GetRequiredService<ICube>()
-                }.ToArray();
-            Debug.WriteLine("Cube added!!");
-        }
-
-        //if (_drawables.Length == 2)
-        //{
-        //    foreach (var drawable in _drawables)
-        //    {
-        //        (drawable as IDisposable)?.Dispose();
-        //    }
-
-        //    _drawables = Array.Empty<ICube>();
-        //}
-        //else if (_drawables.Length < 2 && _sp is not null /*&& _dontCreate == false*/)
-        //{
-        //    _drawables = new List<ICube>(_drawables)
-        //        {
-        //            _sp.GetRequiredService<ICube>()
-        //        }.ToArray();
-        //    //_dontCreate = true;
-        //}
-
-        //Share the rainbow
-        _r = float.Sin((_sin + 0) * float.Pi / 180);
-        _g = float.Sin((_sin + 120) * float.Pi / 180);
-        _b = float.Sin((_sin + 240) * float.Pi / 180);
-
-        //Taste the rainbow
-        if (++_sin > 360)
-        {
-            _sin = 0;
-        }
-        _angleInRadians = (_angleInRadians + 0.01f) % TWO_PI;
-
-        _drawables.ElementAtOrDefault(0)
-            ?.Update(renderingSurface, Vector3.Zero, _angleInRadians);
-        _drawables.ElementAtOrDefault(1)
-            ?.Update(renderingSurface, new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
-
-        return ValueTask.CompletedTask;
+        _ = await Task.WhenAny(
+            _executingTask,
+            Task.Delay(Timeout.Infinite, cancellationToken));
     }
 
-    /// <summary>
-    /// https://bitbucket.org/snippets/DemoBytom/aejA59/maps-value-between-from-one-min-max-range
-    /// </summary>
-    public static float Map(float value, float inMin, float inMax, float outMin, float outMax)
-        => ((value - inMin) * (outMax - outMin) / (inMax - inMin)) + outMin;
-
-    private float _angleInRadians = 0.0f;
-    private const float TWO_PI = MathHelper.TwoPi;
-
-    private ValueTask Render(
-        IRenderingEngine renderingEngine,
-        RenderingSurfaceId renderingSurfaceId)
+    private async Task DoWorkAsync()
     {
-        renderingEngine.Draw(
-            color: new Color4(_r, _g, _b, 1.0f),
-            renderingSurfaceId: renderingSurfaceId,
-            drawables: _drawables);
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var serviceProvider = scope.ServiceProvider;
+            var osMessageHandler = serviceProvider.GetRequiredService<IOSMessageHandler>();
+            var renderingEngine = serviceProvider.GetRequiredService<IRenderingEngine>();
 
-        //if (renderingEngine.Control.IsFullscreen != _fullscreen)
-        //{
-        //    renderingEngine.SetFullscreen(_fullscreen);
-        //}
+            var mainLoopService = serviceProvider.GetRequiredService<IMainLoopServiceNew>();
+            var executeAsync = mainLoopService.ExecutingTask;
 
-        return ValueTask.CompletedTask;
+            var staThreadService = serviceProvider.GetRequiredService<IStaThreadService>();
+            var runStaThread = staThreadService.ExecutingTask;
+
+            await Task.WhenAll(
+                [
+                    executeAsync,
+                    runStaThread
+                ]);
+        }
+        catch (OperationCanceledException)
+        {
+            _mainLoopLifetime.Cancel();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "{serviceName} failed with error! {errorMessage}", _serviceName, ex.Message);
+        }
+        finally
+        {
+            if (!_stopRequested)
+            {
+                _hostApplicationLifetime.StopApplication();
+            }
+        }
     }
 
-    protected override void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {
             if (disposing)
             {
-                foreach (var drawable in _drawables)
-                {
-                    if (drawable is IDisposable disposable)
-                    {
-                        disposable.Dispose();
-                    }
-                }
-
-                _disposedValue = true;
+                _hostApplicationLifetime.StopApplication();
             }
-            base.Dispose(disposing);
+
+            _disposedValue = true;
         }
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

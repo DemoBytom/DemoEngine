@@ -22,7 +22,9 @@ public static class RegistrationExtensions
             .AddTransient<IFpsTimer, FpsTimer>()
             .AddTransient<IContentFileProvider, ContentFileProvider>()
             .AddHostedService<EngineServiceNew>()
+            .AddScoped<IMainLoopLifetime, MainLoopLifetime>()
             .AddScoped<IStaThreadService, StaThreadService>()
+            .AddScoped<IMainLoopServiceNew, MainLoopServiceNew>()
             .AddScopedBoundedChannel<StaThreadRequests>(
                 new BoundedChannelOptions(10)
                 {
