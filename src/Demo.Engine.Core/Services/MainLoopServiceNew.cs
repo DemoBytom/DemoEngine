@@ -100,6 +100,8 @@ internal sealed class MainLoopServiceNew
             while (lag >= msPerUpdate)
             {
                 //Update
+                // TODO - fix the UPS timer.. somehow :D
+                _fpsTimer.StopUpdateTimer();
                 foreach (var renderingSurfaceId in surfaces)
                 {
                     if (!renderingEngine.TryGetRenderingSurface(
@@ -116,9 +118,9 @@ internal sealed class MainLoopServiceNew
                           renderingSurface,
                           keyboardHandle,
                           keyboardCharCache);
-
-                    lag -= msPerUpdate;
                 }
+                lag -= msPerUpdate;
+                _fpsTimer.StartUpdateTimer();
             }
 
             //Render
@@ -129,11 +131,12 @@ internal sealed class MainLoopServiceNew
                     doEventsFunc,
                     _mainLoopLifetime.Token);
 
-                _fpsTimer.Start();
-                await Render(
+                using var scope = _fpsTimer.StartRenderingTimerScope(
+                    renderingSurfaceId);
+
+                Render(
                     renderingEngine,
                     renderingSurfaceId);
-                _fpsTimer.Stop();
             }
         }
         _channelWriter.Complete();
@@ -259,22 +262,13 @@ internal sealed class MainLoopServiceNew
     private float _angleInRadians = 0.0f;
     private const float TWO_PI = MathHelper.TwoPi;
 
-    private ValueTask Render(
+    private void Render(
         IRenderingEngine renderingEngine,
         RenderingSurfaceId renderingSurfaceId)
-    {
-        renderingEngine.Draw(
+        => renderingEngine.Draw(
             color: new Color4(_r, _g, _b, 1.0f),
             renderingSurfaceId: renderingSurfaceId,
             drawables: _drawables);
-
-        //if (renderingEngine.Control.IsFullscreen != _fullscreen)
-        //{
-        //    renderingEngine.SetFullscreen(_fullscreen);
-        //}
-
-        return ValueTask.CompletedTask;
-    }
 
     private void Dispose(bool disposing)
     {

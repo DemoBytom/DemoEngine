@@ -78,11 +78,11 @@ internal sealed class MainLoopService(
                     keyboardHandle,
                     keyboardCharCache);
 
-                _fpsTimer.Start();
+                _fpsTimer.StartRenderingTimer(renderingSurface.ID);
                 await renderCallback(
                     _renderingEngine,
                     renderingSurface.ID);
-                _fpsTimer.Stop();
+                _fpsTimer.StopRenderingTimer(renderingSurface.ID);
             }
 
             _debugLayerLogger.LogMessages();
