@@ -24,6 +24,7 @@ public static class RegistrationExtensions
             .AddHostedService<EngineServiceNew>()
             .AddScoped<IMainLoopLifetime, MainLoopLifetime>()
             .AddScoped<IStaThreadService, StaThreadService>()
+            .AddScoped<ILoopJob, LoopJob>()
             .AddScoped<IMainLoopServiceNew, MainLoopServiceNew>()
             .AddScopedBoundedChannel<StaThreadRequests>(
                 new BoundedChannelOptions(10)
