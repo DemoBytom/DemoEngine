@@ -9,6 +9,8 @@ using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Demo.Engine.Core;
 
@@ -16,25 +18,44 @@ public static class RegistrationExtensions
 {
     public static IServiceCollection AddEngineCore(
         this IServiceCollection services)
-        => services
-            .AddScoped<IMainLoopService, MainLoopService>()
-            .AddSingleton<IKeyboardCache, KeyboardCache>()
-            .AddTransient<IFpsTimer, FpsTimer>()
-            .AddTransient<IContentFileProvider, ContentFileProvider>()
-            .AddHostedService<EngineServiceNew>()
-            .AddScoped<IMainLoopLifetime, MainLoopLifetime>()
-            .AddScoped<IStaThreadService, StaThreadService>()
-            .AddScoped<ILoopJob, LoopJob>()
-            .AddScoped<IMainLoopServiceNew, MainLoopServiceNew>()
-            .AddScopedBoundedChannel<StaThreadRequests>(
-                new BoundedChannelOptions(10)
-                {
-                    AllowSynchronousContinuations = false,
-                    FullMode = BoundedChannelFullMode.Wait,
-                    SingleReader = true,
-                    SingleWriter = false,
-                })
-        ;
+    {
+        _ = services
+                .AddScoped<IMainLoopService, MainLoopService>()
+                .AddSingleton<IKeyboardCache, KeyboardCache>()
+                .AddTransient<IFpsTimer, FpsTimer>()
+                .AddTransient<IContentFileProvider, ContentFileProvider>()
+                .AddHostedService<EngineServiceNew>()
+                .AddScoped<IMainLoopLifetime, MainLoopLifetime>()
+                .AddScoped<IStaThreadService, StaThreadService>()
+                .AddScoped<ILoopJob, LoopJob>()
+                .AddScoped<IMainLoopServiceNew, MainLoopServiceNew>()
+                .AddScopedBoundedChannel<StaThreadRequests>(
+                    new BoundedChannelOptions(10)
+                    {
+                        AllowSynchronousContinuations = false,
+                        FullMode = BoundedChannelFullMode.Wait,
+                        SingleReader = true,
+                        SingleWriter = false,
+                    })
+            .AddScoped<IStaThreadWriter, StaThreadWriter>()
+            ;
+
+        services
+            .TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+        services
+            .TryAddSingleton(sp
+                =>
+            {
+                var provider = sp.GetRequiredService<ObjectPoolProvider>();
+                var policy = new DefaultPooledObjectPolicy<StaThreadRequests.DoEventsOkRequest>();
+
+                var created = provider.Create(policy);
+
+                return created;
+            });
+
+        return services;
+    }
 
     private static IServiceCollection AddScopedBoundedChannel<T>(
         this IServiceCollection services,

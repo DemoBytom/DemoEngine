@@ -2,7 +2,6 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Diagnostics;
-using System.Threading.Channels;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
@@ -18,7 +17,7 @@ internal sealed class MainLoopServiceNew
       IDisposable
 {
     private readonly ILogger<MainLoopServiceNew> _logger;
-    private readonly ChannelWriter<StaThreadRequests> _channelWriter;
+    private readonly IStaThreadWriter _staThreadWriter;
     private readonly IMediator _mediator;
     private readonly IShaderAsyncCompiler _shaderCompiler;
     private readonly IFpsTimer _fpsTimer;
@@ -30,7 +29,7 @@ internal sealed class MainLoopServiceNew
 
     public MainLoopServiceNew(
         ILogger<MainLoopServiceNew> logger,
-        ChannelWriter<StaThreadRequests> channelWriter,
+        IStaThreadWriter staThreadWriter,
         IMediator mediator,
         IShaderAsyncCompiler shaderCompiler,
         IFpsTimer fpsTimer,
@@ -39,7 +38,7 @@ internal sealed class MainLoopServiceNew
         ILoopJob loopJob)
     {
         _logger = logger;
-        _channelWriter = channelWriter;
+        _staThreadWriter = staThreadWriter;
         _mediator = mediator;
         _shaderCompiler = shaderCompiler;
         _fpsTimer = fpsTimer;
@@ -59,10 +58,10 @@ internal sealed class MainLoopServiceNew
 
         var surfaces = new RenderingSurfaceId[]
         {
-            await _channelWriter.CreateSurface(
+            await _staThreadWriter.CreateSurface(
                 _mainLoopLifetime.Token),
-            await _channelWriter.CreateSurface(
-                _mainLoopLifetime.Token),
+            //await _channelWriter.CreateSurface(
+            //    _mainLoopLifetime.Token),
         };
 
         var previous = Stopwatch.GetTimestamp();
@@ -70,7 +69,6 @@ internal sealed class MainLoopServiceNew
 
         var msPerUpdate = TimeSpan.FromSeconds(1) / 60;
 
-        var doEventsFunc = StaThreadRequests.DoEventsOk(RenderingSurfaceId.Empty);
         var doEventsOk = true;
 
         while (
@@ -115,9 +113,8 @@ internal sealed class MainLoopServiceNew
             //Render
             foreach (var renderingSurfaceId in surfaces)
             {
-                doEventsOk &= await _channelWriter.DoEventsOk(
+                doEventsOk &= await _staThreadWriter.DoEventsOk(
                     renderingSurfaceId,
-                    doEventsFunc,
                     _mainLoopLifetime.Token);
 
                 using var scope = _fpsTimer.StartRenderingTimerScope(
@@ -128,7 +125,6 @@ internal sealed class MainLoopServiceNew
                     renderingSurfaceId);
             }
         }
-        _channelWriter.Complete();
         _mainLoopLifetime.Cancel();
     }
 

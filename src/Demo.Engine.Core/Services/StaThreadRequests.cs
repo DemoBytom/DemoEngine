@@ -5,6 +5,7 @@ using System.Threading.Channels;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.ValueObjects;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Demo.Engine.Core.Services;
 
@@ -114,9 +115,16 @@ internal abstract record StaThreadRequests
     }
 
     internal sealed record DoEventsOkRequest
-        : StaThreadWorkInner<bool>
+        : StaThreadWorkInner<bool>,
+          IResettable
     {
         private RenderingSurfaceId _renderingSurfaceId;
+
+        public DoEventsOkRequest()
+            : this(RenderingSurfaceId.Empty)
+        {
+
+        }
 
         internal DoEventsOkRequest(
             RenderingSurfaceId renderingSurfaceId)
@@ -138,6 +146,22 @@ internal abstract record StaThreadRequests
         {
             Reset(cancellationToken);
             _renderingSurfaceId = renderingSurfaceId;
+        }
+
+        /* TODO: Every time this is reset here
+         * it creates new TaskCompletionSource
+         * It should be optimized to only create it if it's reset using the Reset method
+         * Otherwise it should just have a precomputed Empty value, or something */
+        public bool TryReset()
+        {
+            if (Invoked.IsCompleted == false)
+            {
+                return false;
+            }
+
+            Reset(RenderingSurfaceId.Empty, CancellationToken.None);
+
+            return true;
         }
     }
 }
