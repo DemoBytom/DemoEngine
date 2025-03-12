@@ -2,11 +2,10 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Threading.Channels;
-using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.ObjectPool;
 
-namespace Demo.Engine.Core.Services;
+namespace Demo.Engine.Core.Features.StaThread;
 internal sealed class StaThreadWriter(
     ChannelWriter<StaThreadRequests> channelWriter,
     ObjectPool<StaThreadRequests.DoEventsOkRequest> doEventsOkPool)
@@ -19,8 +18,14 @@ internal sealed class StaThreadWriter(
 
     public async Task<RenderingSurfaceId> CreateSurface(
         CancellationToken cancellationToken = default)
-        => await _channelWriter.CreateSurface(
-            cancellationToken);
+    {
+        var createSurfaceRequest = StaThreadRequests.CreateSurface();
+        await _channelWriter.WriteAsync(
+                createSurfaceRequest,
+                cancellationToken);
+
+        return await createSurfaceRequest.Invoked;
+    }
 
     public async ValueTask<bool> DoEventsOk(
         RenderingSurfaceId renderingSurfaceId,
@@ -30,12 +35,13 @@ internal sealed class StaThreadWriter(
 
         try
         {
-            var doEventsOk = await _channelWriter.DoEventsOk(
-                renderingSurfaceId,
+            request.Reset(renderingSurfaceId, cancellationToken);
+
+            await _channelWriter.WriteAsync(
                 request,
                 cancellationToken);
 
-            return doEventsOk;
+            return await request.Invoked;
         }
         finally
         {

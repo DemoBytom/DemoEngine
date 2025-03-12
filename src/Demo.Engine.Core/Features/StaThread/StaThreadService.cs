@@ -9,7 +9,7 @@ using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Microsoft.Extensions.Hosting;
 
-namespace Demo.Engine.Core.Services;
+namespace Demo.Engine.Core.Features.StaThread;
 
 internal sealed class StaThreadService
     : IStaThreadService,

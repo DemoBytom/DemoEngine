@@ -1,46 +1,12 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System.Threading.Channels;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.ObjectPool;
 
-namespace Demo.Engine.Core.Services;
-
-internal static class StaThreadWorkExtensions
-{
-    public static async ValueTask<bool> DoEventsOk(
-        this ChannelWriter<StaThreadRequests> channelWriter,
-        RenderingSurfaceId renderingSurfaceId,
-        StaThreadRequests.DoEventsOkRequest? doEventsOkRequest = null,
-        CancellationToken cancellationToken = default)
-    {
-        doEventsOkRequest?.Reset(renderingSurfaceId, cancellationToken);
-
-        var request = doEventsOkRequest
-            ?? StaThreadRequests.DoEventsOk(renderingSurfaceId);
-
-        await channelWriter.WriteAsync(
-            request,
-            cancellationToken);
-
-        return await request.Invoked;
-    }
-
-    public static async ValueTask<RenderingSurfaceId> CreateSurface(
-        this ChannelWriter<StaThreadRequests> channelWriter,
-        CancellationToken cancellationToken = default)
-    {
-        var createSurfaceRequest = StaThreadRequests.CreateSurface();
-        await channelWriter.WriteAsync(
-                createSurfaceRequest,
-                cancellationToken);
-
-        return await createSurfaceRequest.Invoked;
-    }
-}
+namespace Demo.Engine.Core.Features.StaThread;
 
 internal abstract record StaThreadRequests
 {
@@ -61,7 +27,8 @@ internal abstract record StaThreadRequests
         private TaskCompletionSource<TResult> _tcs = new();
         private CancellationTokenRegistration? _tcsRegistration;
 
-        public Task<TResult> Invoked => _tcs.Task;
+        public Task<TResult> Invoked
+            => _tcs.Task;
 
         protected abstract TResult InvokeFuncInternal(
             IRenderingEngine renderingEngine,

@@ -1,6 +1,7 @@
 # Suppress: EC114
 # You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 # Taken and modified from https://gist.github.com/DemoBytom/19d1005b84eee5e7afba2b0648924c1d
+root = true
 
 [*]
 #Core editorconfig formatting - indentation
@@ -100,6 +101,9 @@ csharp_preserve_single_line_blocks = true
 indent_size              = 2
 [*.md]
 trim_trailing_whitespace = false
+
+[pre-commit]
+end_of_line             = lf
 
 # Generated code
 [*.Designer.cs]

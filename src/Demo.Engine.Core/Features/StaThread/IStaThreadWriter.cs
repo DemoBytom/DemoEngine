@@ -3,7 +3,7 @@
 
 using Demo.Engine.Core.ValueObjects;
 
-namespace Demo.Engine.Core.Interfaces;
+namespace Demo.Engine.Core.Features.StaThread;
 
 internal interface IStaThreadWriter
 {
