@@ -24,8 +24,21 @@ internal abstract record StaThreadRequests
     internal abstract record StaThreadWorkInner<TResult>
         : StaThreadRequests
     {
-        private TaskCompletionSource<TResult> _tcs = new();
+        private static TaskCompletionSource<TResult> Empty { get; }
+        private TaskCompletionSource<TResult> _tcs;
         private CancellationTokenRegistration? _tcsRegistration;
+
+        static StaThreadWorkInner()
+        {
+            Empty = new();
+            Empty.SetResult(default!);
+        }
+
+        protected StaThreadWorkInner(
+            bool startCompleted = false)
+            => _tcs = startCompleted
+                ? Empty
+                : new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public Task<TResult> Invoked
             => _tcs.Task;
@@ -67,9 +80,23 @@ internal abstract record StaThreadRequests
                     new TaskCanceledException("Message reset!"));
             }
             _ = _tcsRegistration?.Unregister();
-            _tcs = new TaskCompletionSource<TResult>();
+            _tcsRegistration = null;
+            _tcs = new TaskCompletionSource<TResult>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
             _tcsRegistration = cancellationToken.Register(()
                 => _tcs.SetCanceled());
+        }
+
+        protected void ResetCompleted()
+        {
+            if (!_tcs.Task.IsCompleted)
+            {
+                _ = _tcs.TrySetException(
+                    new TaskCanceledException("Message reset!"));
+            }
+            _ = _tcsRegistration?.Unregister();
+            _tcsRegistration = null;
+            _tcs = Empty;
         }
     }
     internal sealed record CreateSurfaceRequest
@@ -95,6 +122,7 @@ internal abstract record StaThreadRequests
 
         internal DoEventsOkRequest(
             RenderingSurfaceId renderingSurfaceId)
+            : base(false)
             => _renderingSurfaceId = renderingSurfaceId;
 
         protected override bool InvokeFuncInternal(
@@ -111,14 +139,17 @@ internal abstract record StaThreadRequests
             RenderingSurfaceId renderingSurfaceId,
             CancellationToken cancellationToken)
         {
-            Reset(cancellationToken);
+            if (renderingSurfaceId == RenderingSurfaceId.Empty)
+            {
+                ResetCompleted();
+            }
+            else
+            {
+                Reset(cancellationToken);
+            }
             _renderingSurfaceId = renderingSurfaceId;
         }
 
-        /* TODO: Every time this is reset here
-         * it creates new TaskCompletionSource
-         * It should be optimized to only create it if it's reset using the Reset method
-         * Otherwise it should just have a precomputed Empty value, or something */
         public bool TryReset()
         {
             if (Invoked.IsCompleted == false)
