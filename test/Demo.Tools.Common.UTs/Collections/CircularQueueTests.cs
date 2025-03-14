@@ -3,7 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Demo.Tools.Common.Collections;
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 
 namespace Demo.Tools.Common.UTs.Collections;
@@ -15,12 +15,12 @@ public class CircularQueueTests
     {
         var circQueue = new CircularQueue<int>(2);
         circQueue.Enqueue(123);
-        circQueue.Count.Should().Be(1);
+        circQueue.Count.ShouldBe(1);
 
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(123);
-        buffer[1].Should().Be(0);
+        buffer[0].ShouldBe(123);
+        buffer[1].ShouldBe(0);
     }
 
     [Fact]
@@ -29,12 +29,12 @@ public class CircularQueueTests
         var circQueue = new CircularQueue<int>(2);
         circQueue.Enqueue(123);
         circQueue.Enqueue(456);
-        circQueue.Count.Should().Be(2);
+        circQueue.Count.ShouldBe(2);
 
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(123);
-        buffer[1].Should().Be(456);
+        buffer[0].ShouldBe(123);
+        buffer[1].ShouldBe(456);
     }
 
     [Fact]
@@ -44,12 +44,12 @@ public class CircularQueueTests
         circQueue.Enqueue(123);
         circQueue.Enqueue(456);
         circQueue.Enqueue(789);
-        circQueue.Count.Should().Be(2);
+        circQueue.Count.ShouldBe(2);
 
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(456);
-        buffer[1].Should().Be(789);
+        buffer[0].ShouldBe(456);
+        buffer[1].ShouldBe(789);
     }
 
     [Fact]
@@ -61,12 +61,12 @@ public class CircularQueueTests
         circQueue.Enqueue(789);
         var dequeued = circQueue.Dequeue();
 
-        circQueue.Count.Should().Be(1);
-        dequeued.Should().Be(456);
+        circQueue.Count.ShouldBe(1);
+        dequeued.ShouldBe(456);
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(789);
-        buffer[1].Should().Be(0);
+        buffer[0].ShouldBe(789);
+        buffer[1].ShouldBe(0);
     }
 
     [Fact]
@@ -79,12 +79,12 @@ public class CircularQueueTests
         var dequeued = circQueue.Dequeue();
         circQueue.Enqueue(159);
 
-        circQueue.Count.Should().Be(2);
-        dequeued.Should().Be(456);
+        circQueue.Count.ShouldBe(2);
+        dequeued.ShouldBe(456);
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(789);
-        buffer[1].Should().Be(159);
+        buffer[0].ShouldBe(789);
+        buffer[1].ShouldBe(159);
     }
 
     [Fact]
@@ -93,13 +93,13 @@ public class CircularQueueTests
         var circQueue = new CircularQueue<int>(2);
 
         Action act = () => circQueue.Dequeue();
-        act.Should().Throw<InvalidOperationException>();
+        _ = act.ShouldThrow<InvalidOperationException>();
 
-        circQueue.Count.Should().Be(0);
+        circQueue.Count.ShouldBe(0);
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(0);
-        buffer[1].Should().Be(0);
+        buffer[0].ShouldBe(0);
+        buffer[1].ShouldBe(0);
     }
 
     [Fact]
@@ -108,14 +108,14 @@ public class CircularQueueTests
         var circQueue = new CircularQueue<int>(2);
         var peeked = circQueue.TryDequeue(out var result);
 
-        peeked.Should().BeFalse();
-        result.Should().Be(default);
+        peeked.ShouldBeFalse();
+        result.ShouldBe(default);
 
-        circQueue.Count.Should().Be(0);
+        circQueue.Count.ShouldBe(0);
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(0);
-        buffer[1].Should().Be(0);
+        buffer[0].ShouldBe(0);
+        buffer[1].ShouldBe(0);
     }
 
     [Fact]
@@ -127,12 +127,12 @@ public class CircularQueueTests
         circQueue.Enqueue(789);
         var peaked = circQueue.Peek();
 
-        circQueue.Count.Should().Be(2);
-        peaked.Should().Be(456);
+        circQueue.Count.ShouldBe(2);
+        peaked.ShouldBe(456);
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(456);
-        buffer[1].Should().Be(789);
+        buffer[0].ShouldBe(456);
+        buffer[1].ShouldBe(789);
     }
 
     [Fact]
@@ -145,14 +145,14 @@ public class CircularQueueTests
         var peaked1 = circQueue.Peek();
         var peaked2 = circQueue.Peek();
 
-        circQueue.Count.Should().Be(2);
-        peaked1.Should().Be(456);
-        peaked2.Should().Be(456);
+        circQueue.Count.ShouldBe(2);
+        peaked1.ShouldBe(456);
+        peaked2.ShouldBe(456);
 
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(456);
-        buffer[1].Should().Be(789);
+        buffer[0].ShouldBe(456);
+        buffer[1].ShouldBe(789);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class CircularQueueTests
     public void Constructor_negative_capacity()
     {
         Action circQueue = () => new CircularQueue<int>(-2);
-        circQueue.Should().Throw<InvalidOperationException>();
+        _ = circQueue.ShouldThrow<InvalidOperationException>();
     }
 
     [Fact]
@@ -172,13 +172,13 @@ public class CircularQueueTests
         var circQueue = new CircularQueue<int>(2);
         Action peek = () => circQueue.Peek();
 
-        peek.Should().Throw<InvalidOperationException>();
+        _ = peek.ShouldThrow<InvalidOperationException>();
 
-        circQueue.Count.Should().Be(0);
+        circQueue.Count.ShouldBe(0);
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(0);
-        buffer[1].Should().Be(0);
+        buffer[0].ShouldBe(0);
+        buffer[1].ShouldBe(0);
     }
 
     [Fact]
@@ -187,13 +187,13 @@ public class CircularQueueTests
         var circQueue = new CircularQueue<int>(2);
         var peeked = circQueue.TryPeek(out var result);
 
-        peeked.Should().BeFalse();
-        result.Should().Be(default);
+        peeked.ShouldBeFalse();
+        result.ShouldBe(default);
 
-        circQueue.Count.Should().Be(0);
+        circQueue.Count.ShouldBe(0);
         var buffer = new int[2];
         circQueue.CopyTo(buffer, 0);
-        buffer[0].Should().Be(0);
-        buffer[1].Should().Be(0);
+        buffer[0].ShouldBe(0);
+        buffer[1].ShouldBe(0);
     }
 }
