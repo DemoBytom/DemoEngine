@@ -1,8 +1,8 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
 
 namespace Demo.Engine.UTs;
 
@@ -22,9 +22,9 @@ public class ScopeTests
         var innerSingleton = scope.ServiceProvider.GetRequiredService<SingletonService>();
         var innerSingleton2 = scope.ServiceProvider.GetRequiredService<SingletonService>();
 
-        _ = outerSingleton.ID.Should().NotBe(innerSingleton.ID);
+        outerSingleton.ID.ShouldNotBe(innerSingleton.ID);
 
-        _ = innerSingleton2.ID.Should().Be(innerSingleton2.ID);
+        innerSingleton2.ID.ShouldBe(innerSingleton2.ID);
     }
 
     private class SingletonService

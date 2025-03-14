@@ -4,8 +4,8 @@
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Platform;
-using FluentAssertions;
 using NSubstitute;
+using Shouldly;
 using Xunit;
 
 namespace Demo.Engine.Core.UTs.Components.Keyboard;
@@ -19,11 +19,11 @@ public class KeyboardHandleTests
     {
         _mockKeyboardCache = Substitute.For<IKeyboardCache>();
         _keyboardCache = Enumerable.Repeat(false, 256).ToArray().AsMemory();
-        _mockKeyboardCache.KeysPressed.Returns(_keyboardCache);
+        _ = _mockKeyboardCache.KeysPressed.Returns(_keyboardCache);
     }
 
     private KeyboardHandle CreateKeyboardHandle()
-        => new KeyboardHandle(_mockKeyboardCache);
+        => new(_mockKeyboardCache);
 
     [Fact]
     public void GetKeyPressed_Only_One_Pressed()
@@ -38,7 +38,7 @@ public class KeyboardHandleTests
         foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
         {
             var result = keyboardHandle.GetKeyPressed(key);
-            result.Should().Be(key == TESTKEY, $"{key} is {result}");
+            result.ShouldBe(key == TESTKEY, $"{key} is {result}");
         }
 
         // Assert
@@ -65,7 +65,7 @@ public class KeyboardHandleTests
         foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
         {
             var result = keyboardHandle.GetKeyPressed(key);
-            result.Should().Be(testKeys.Contains(key), $"{key} is {result}");
+            result.ShouldBe(testKeys.Contains(key), $"{key} is {result}");
         }
 
         // Assert

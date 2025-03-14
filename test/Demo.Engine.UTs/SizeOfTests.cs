@@ -4,7 +4,7 @@
 using System.Runtime.CompilerServices;
 using Demo.Engine.Platform.DirectX12;
 using Demo.Engine.Platform.DirectX12.Buffers;
-using FluentAssertions;
+using Shouldly;
 
 namespace Demo.Engine.UTs;
 
@@ -17,7 +17,7 @@ public class SizeOfTests
 
         var sizeOf = SizeHelper.GetSize<CubeFacesColors>();
 
-        _ = sizeOf.Should().Be(unsafeSizeOf);
+        sizeOf.ShouldBe(unsafeSizeOf);
     }
 
     [Fact]
@@ -26,6 +26,6 @@ public class SizeOfTests
         var unsafeSizeOf = (uint)Unsafe.SizeOf<Vertex>();
         var sizeOf = SizeHelper.GetSize<Vertex>();
 
-        _ = sizeOf.Should().Be(unsafeSizeOf);
+        sizeOf.ShouldBe(unsafeSizeOf);
     }
 }

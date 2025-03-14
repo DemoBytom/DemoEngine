@@ -3,9 +3,9 @@
 
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Platform.DirectX12.Shaders;
-using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using Shouldly;
 
 namespace Demo.Engine.UTs;
 
@@ -45,14 +45,14 @@ public class ShaderCompilationTests
 
         var shader = engineShaderManager.GetShader(ShaderId.FullscreenTriangle);
 
-        _ = shader.ID.Should().Be(ShaderId.FullscreenTriangle);
-        _ = shader.Size.Should().Be(6);
-        _ = shader.ShaderBlob.ToArray().Should().BeEquivalentTo(new byte[] { 55, 123, 55, 46, 23, 123 });
+        shader.ID.ShouldBe(ShaderId.FullscreenTriangle);
+        shader.Size.ShouldBe(6);
+        shader.ShaderBlob.ToArray().ShouldBe(new byte[] { 55, 123, 55, 46, 23, 123 });
 
         var shader2 = engineShaderManager.GetShader((ShaderId)2);
-        _ = shader2.ID.Should().Be((ShaderId)2);
-        _ = shader2.Size.Should().Be(4);
-        _ = shader2.ShaderBlob.ToArray().Should().BeEquivalentTo(new byte[] { 154, 21, 14, 33 });
+        shader2.ID.ShouldBe((ShaderId)2);
+        shader2.Size.ShouldBe(4);
+        shader2.ShaderBlob.ToArray().ShouldBe(new byte[] { 154, 21, 14, 33 });
 
         static async IAsyncEnumerable<Task<ShaderContent>> GetShaders()
         {

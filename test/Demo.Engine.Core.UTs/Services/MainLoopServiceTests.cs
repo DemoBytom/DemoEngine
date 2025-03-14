@@ -12,10 +12,10 @@ using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Core.ValueObjects;
-using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
+using Shouldly;
 using Xunit;
 
 namespace Demo.Engine.Core.UTs.Services;
@@ -68,7 +68,7 @@ public class MainLoopServiceTests
             cancellationToken);
 
         // Assert
-        _ = func.Should().ThrowAsync<ArgumentNullException>();
+        _ = func.ShouldThrowAsync<ArgumentNullException>();
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class MainLoopServiceTests
             cancellationToken);
 
         // Assert
-        _ = func.Should().ThrowAsync<ArgumentNullException>();
+        _ = func.ShouldThrowAsync<ArgumentNullException>();
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class MainLoopServiceTests
 
         // Assert
         // We let it have a bit of a leeway
-        _ = sw.Elapsed.TotalSeconds.Should().BeInRange(
+        sw.Elapsed.TotalSeconds.ShouldBeInRange(
             TimeSpan.FromSeconds(4.9).TotalSeconds,
             TimeSpan.FromSeconds(5.9).TotalSeconds);
     }
@@ -196,7 +196,7 @@ public class MainLoopServiceTests
             cts.Token);
 
         // Assert
-        _ = iUpdate.Should().Be(6);
+        iUpdate.ShouldBe(6);
     }
 
     [Fact]
@@ -254,7 +254,7 @@ public class MainLoopServiceTests
             cts.Token);
 
         // Assert
-        _ = iUpdate.Should().Be(6);
+        iUpdate.ShouldBe(6);
     }
 
     [Fact]
@@ -315,8 +315,8 @@ public class MainLoopServiceTests
             cts.Token);
 
         // Assert
-        _ = iUpdate.Should().BeGreaterThan(0);
-        _ = iRender.Should().BeGreaterThan(0);
+        iUpdate.ShouldBeGreaterThan(0);
+        iRender.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -371,7 +371,7 @@ public class MainLoopServiceTests
             cts.Token);
 
         // Assert
-        _ = iUpdate.Should().Be(6);
+        iUpdate.ShouldBe(6);
     }
 
     [Fact]
@@ -388,7 +388,7 @@ public class MainLoopServiceTests
 
         ValueTask UpdateCallback(IRenderingSurface __, KeyboardHandle ___, KeyboardCharCache ____)
         {
-            _ = service.IsRunning.Should().BeTrue();
+            service.IsRunning.ShouldBeTrue();
             return ValueTask.CompletedTask;
         }
 
@@ -420,13 +420,13 @@ public class MainLoopServiceTests
         _ = _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
 
         // Act
-        _ = service.IsRunning.Should().BeFalse();
+        service.IsRunning.ShouldBeFalse();
         await service.RunAsync(
             UpdateCallback,
             RenderCallback,
             cts.Token);
 
         // Assert
-        _ = service.IsRunning.Should().BeFalse();
+        service.IsRunning.ShouldBeFalse();
     }
 }

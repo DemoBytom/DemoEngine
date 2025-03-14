@@ -2,8 +2,8 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Demo.Tools.Common.Extensions.DependencyInjection;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
 using Xunit;
 
 namespace Demo.Tools.Common.UTs.Extensions.DependencyInjection;
@@ -16,12 +16,12 @@ public class ScopedDIExtensionsTests
         // Arrange
         IServiceCollection services = new ServiceCollection();
         var counter = new Counter();
-        services.AddSingleton(_ => counter);
+        _ = services.AddSingleton(_ => counter);
 
         // Act
-        services.AddScoped<Bar>();
-        services.AddScoped<Foo1, Bar>();
-        services.AddScoped<Foo2, Bar>();
+        _ = services.AddScoped<Bar>();
+        _ = services.AddScoped<Foo1, Bar>();
+        _ = services.AddScoped<Foo2, Bar>();
 
         //Assert
         var serviceProvider = services.BuildServiceProvider();
@@ -29,11 +29,11 @@ public class ScopedDIExtensionsTests
         var foo2 = serviceProvider.GetRequiredService<Foo2>();
         var bar = serviceProvider.GetRequiredService<Bar>();
 
-        foo1.Should().NotBeSameAs(bar);
-        foo2.Should().NotBeSameAs(bar);
-        foo2.Should().NotBeSameAs(foo1);
+        foo1.ShouldNotBeSameAs(bar);
+        foo2.ShouldNotBeSameAs(bar);
+        foo2.ShouldNotBeSameAs(foo1);
 
-        counter.ConstructedNo.Should().Be(3);
+        counter.ConstructedNo.ShouldBe(3);
     }
 
     [Fact]
@@ -42,9 +42,9 @@ public class ScopedDIExtensionsTests
         // Arrange
         IServiceCollection services = new ServiceCollection();
         var counter = new Counter();
-        services.AddSingleton(_ => counter);
+        _ = services.AddSingleton(_ => counter);
         // Act
-        services.AddScoped<Foo1, Foo2, Bar>();
+        _ = services.AddScoped<Foo1, Foo2, Bar>();
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
@@ -52,9 +52,9 @@ public class ScopedDIExtensionsTests
         var foo2 = serviceProvider.GetRequiredService<Foo2>();
         var bar = serviceProvider.GetRequiredService<Bar>();
 
-        foo1.Should().BeSameAs(bar);
-        foo2.Should().BeSameAs(bar);
-        counter.ConstructedNo.Should().Be(1);
+        foo1.ShouldBeSameAs(bar);
+        foo2.ShouldBeSameAs(bar);
+        counter.ConstructedNo.ShouldBe(1);
     }
 
     public interface Foo1
