@@ -4,7 +4,7 @@
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Interfaces.Components;
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 
 namespace Demo.Engine.Core.UTs.Components.Keyboard;
@@ -40,7 +40,7 @@ public class KeyboardCharCacheTests
         var result = _charResponse.ReadCache();
 
         // Assert
-        result.Should().Be("ala ma kota");
+        result.ShouldBe("ala ma kota");
     }
 
     [Fact]
@@ -53,8 +53,8 @@ public class KeyboardCharCacheTests
         var result1 = _charResponse.ReadCache();
         var result2 = _charResponse.ReadCache();
 
-        result1.Should().Be("abc");
-        result2.Should().BeEmpty();
+        result1.ShouldBe("abc");
+        result2.ShouldBeEmpty();
     }
 
     [Fact]
@@ -67,9 +67,9 @@ public class KeyboardCharCacheTests
         _keyboardCache.Char('b');
         _keyboardCache.Char('c');
 
-        _charResponse.ReadCache().Should().Be("abc");
-        charResponse1.ReadCache().Should().Be("abc");
-        charResponse2.ReadCache().Should().Be("abc");
+        _charResponse.ReadCache().ShouldBe("abc");
+        charResponse1.ReadCache().ShouldBe("abc");
+        charResponse2.ReadCache().ShouldBe("abc");
     }
 
     [Fact]
@@ -89,12 +89,12 @@ public class KeyboardCharCacheTests
         var charResponse2Read2 = charResponse2.ReadCache();
         var charResponse3Read2 = _charResponse.ReadCache();
 
-        charResponse1Read1.Should().Be("a");
-        charResponse2Read1.Should().Be("ab");
-        charResponse3Read1.Should().Be("abc");
+        charResponse1Read1.ShouldBe("a");
+        charResponse2Read1.ShouldBe("ab");
+        charResponse3Read1.ShouldBe("abc");
 
-        charResponse1Read2.Should().Be("bc");
-        charResponse2Read2.Should().Be("c");
-        charResponse3Read2.Should().BeEmpty();
+        charResponse1Read2.ShouldBe("bc");
+        charResponse2Read2.ShouldBe("c");
+        charResponse3Read2.ShouldBeEmpty();
     }
 }

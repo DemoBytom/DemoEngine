@@ -3,7 +3,7 @@
 
 using System.Text;
 using Demo.Tools.Common.Extensions.LockSlim;
-using FluentAssertions;
+using Shouldly;
 using Xunit;
 
 namespace Demo.Tools.Common.UTs.Extensions.LockSlim;
@@ -30,30 +30,30 @@ public class ReaderWriterLockSlimExtensionsTests
         var sb = new StringBuilder();
         var threadJobs = new List<ThreadJob>
             {
-                new ThreadJob(T1, () => lockSlim.TryEnterWriteLock(TimeSpan.FromSeconds(20))),
-                new ThreadJob(T1, () =>
+                new(T1, () => lockSlim.TryEnterWriteLock(TimeSpan.FromSeconds(20))),
+                new(T1, () =>
                 {
-                    sb.Append("T1 start");
+                    _ = sb.Append("T1 start");
                     Thread.Sleep(5);
                 }),
-                new ThreadJob(T2, () => lockSlim.TryEnterWriteLock(TimeSpan.FromSeconds(20))),
-                new ThreadJob(T1, () =>
+                new(T2, () => lockSlim.TryEnterWriteLock(TimeSpan.FromSeconds(20))),
+                new(T1, () =>
                 {
-                    sb.Append("T1 end");
+                    _ = sb.Append("T1 end");
                     Thread.Sleep(5);
                 }),
-                new ThreadJob(T1, () => lockSlim.ExitWriteLock()),
-                new ThreadJob(T2, () =>
+                new(T1, lockSlim.ExitWriteLock),
+                new(T2, () =>
                 {
-                    sb.Append("T2 start");
+                    _ = sb.Append("T2 start");
                     Thread.Sleep(5);
                 }),
-                new ThreadJob(T2, () =>
+                new(T2, () =>
                 {
-                    sb.Append("T2 end");
+                    _ = sb.Append("T2 end");
                     Thread.Sleep(5);
                 }),
-                new ThreadJob(T2, () => lockSlim.ExitWriteLock())
+                new(T2, lockSlim.ExitWriteLock)
             };
 
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
@@ -67,8 +67,8 @@ public class ReaderWriterLockSlimExtensionsTests
                 tw2.Start()
         });
 
-        sb.ToString().Should().Contain("T1 startT1 end");
-        sb.ToString().Should().Contain("T2 startT2 end");
+        sb.ToString().ShouldContain("T1 startT1 end");
+        sb.ToString().ShouldContain("T2 startT2 end");
     }
 
     [Fact]
@@ -89,32 +89,32 @@ public class ReaderWriterLockSlimExtensionsTests
 
         var threadJobs = new List<ThreadJob>
             {
-                new ThreadJob(T1, () => lockSlim.EnterWriteLockBlock(() =>
+                new(T1, () => lockSlim.EnterWriteLockBlock(() =>
                 {
-                    sb.Append("T1 start");
+                    _ = sb.Append("T1 start");
                     while (!cts.IsCancellationRequested && !t1FinishedWriting)
                     {
                         Thread.Sleep(5);
                         t1Started = true;
                     }
-                    sb.Append("T1 end");
+                    _ = sb.Append("T1 end");
                 })),
-                new ThreadJob(T2, () =>
+                new(T2, () =>
                 {
                     while (!cts.IsCancellationRequested && !t1Started)
                     {
                         Thread.Sleep(5);
                     }
-                    sb.Append("T2 attempt");
+                    _ = sb.Append("T2 attempt");
                     t2Started = true;
-                    lockSlim.EnterWriteLockBlock(() =>
+                    _ = lockSlim.EnterWriteLockBlock(() =>
                     {
-                        sb.Append("T2 start");
+                        _ = sb.Append("T2 start");
                         Thread.Sleep(5);
-                        sb.Append("T2 end");
+                        _ = sb.Append("T2 end");
                     });
                 }),
-                new ThreadJob(T3, () =>
+                new(T3, () =>
                 {
                     while (!t1Started || !t2Started)
                     {
@@ -134,7 +134,7 @@ public class ReaderWriterLockSlimExtensionsTests
             tw2.Start(),
             tw3.Start());
 
-        sb.ToString().Should().Be(
+        sb.ToString().ShouldBe(
             "T1 start" +
             "T2 attempt" +
             "T1 end" +
