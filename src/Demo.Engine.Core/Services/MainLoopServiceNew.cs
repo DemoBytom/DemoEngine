@@ -15,7 +15,7 @@ namespace Demo.Engine.Core.Services;
 
 internal sealed class MainLoopServiceNew
     : IMainLoopServiceNew,
-      IDisposable
+      IAsyncDisposable
 {
     private readonly ILogger<MainLoopServiceNew> _logger;
     private readonly IStaThreadWriter _staThreadWriter;
@@ -45,8 +45,10 @@ internal sealed class MainLoopServiceNew
         _fpsTimer = fpsTimer;
         _mainLoopLifetime = mainLoopLifetime;
         _loopJob = loopJob;
-        ExecutingTask = DoAsync(
-            renderingEngine);
+        ExecutingTask = Task.Factory.StartNew(()
+            => DoAsync(
+                renderingEngine),
+            creationOptions: TaskCreationOptions.LongRunning);
     }
 
     private async Task DoAsync(
@@ -75,6 +77,7 @@ internal sealed class MainLoopServiceNew
         while (
             doEventsOk
             //&& IsRunning
+            && !_disposedValue
             && !_mainLoopLifetime.Token.IsCancellationRequested)
         {
             var current = Stopwatch.GetTimestamp();
@@ -129,7 +132,7 @@ internal sealed class MainLoopServiceNew
         _mainLoopLifetime.Cancel();
     }
 
-    private void Dispose(bool disposing)
+    private async ValueTask Dispose(bool disposing)
     {
         if (!_disposedValue)
         {
@@ -138,13 +141,15 @@ internal sealed class MainLoopServiceNew
             }
 
             _disposedValue = true;
+            //Make sure the loop finishes
+            await ExecutingTask;
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
+        await Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
 }
