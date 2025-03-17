@@ -26,26 +26,12 @@ try
         =>
         {
             _ = services
-            //.AddHostedService<EngineService>()
             .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
-            //DirectX 11
-            //.AddScoped<
-            //    ID3D11RenderingEngine,
-            //    IRenderingEngine,
-            //    D3D11RenderingEngine>()
-            //.AddScoped<
-            //    ID3D12RenderingEngine,
-            //    IRenderingEngine,
-            //    D3D12RenderingEngine>()
             /*** Windows Only ***/
             .AddScoped<IRenderingControl, RenderingForm>()
             .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
             .AddEngineCore()
-            //.AddTransient<IShaderCompiler, Demo.Engine.Platform.DirectX12.Shaders.ShaderCompiler>()
-            //.AddSingleton<IDebugLayerLogger, DebugLayerLogger>()
             .AddDirectX12()
-            //tmp
-            //.AddTransient<ICube, Cube>()
             /*** End Windows Only ***/
             .AddMediatR(config
                 => config.RegisterServicesFromAssemblyContaining<KeyboardHandler>());
@@ -58,11 +44,6 @@ try
                 .AddSingleton(x =>
                     new Demo.Engine.Platform.DirectX12.Shaders.CompiledPS("Shaders/Triangle/TrianglePS.hlsl", x.GetRequiredService<IShaderCompiler>()));
         })
-        //.ConfigureContainer<ContainerBuilder>(builder
-        //    => builder
-        //        .RegisterType<Cube>()
-        //        .As<ICube>()
-        //        .ExternallyOwned())
         ;
 
     var host = hostBuilder.Build();

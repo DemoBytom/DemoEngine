@@ -17,14 +17,13 @@ public static class RegistrationExtensions
 {
     public static IServiceCollection AddEngineCore(
         this IServiceCollection services) => services
-                .AddScoped<IMainLoopService, MainLoopService>()
                 .AddSingleton<IKeyboardCache, KeyboardCache>()
                 .AddTransient<IFpsTimer, FpsTimer>()
                 .AddTransient<IContentFileProvider, ContentFileProvider>()
-                .AddHostedService<EngineServiceNew>()
+                .AddHostedService<EngineService>()
                 .AddScoped<IMainLoopLifetime, MainLoopLifetime>()
                 .AddScoped<ILoopJob, LoopJob>()
-                .AddScoped<IMainLoopServiceNew, MainLoopServiceNew>()
+                .AddScoped<IMainLoopService, MainLoopService>()
                 .AddStaThreadFeature()
                 ;
 

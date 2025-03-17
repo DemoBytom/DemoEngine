@@ -1,92 +1,155 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using Demo.Engine.Core.Components.Keyboard;
+using System.Diagnostics;
+using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
-using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.ValueObjects;
 using MediatR;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Core.Services;
 
-internal sealed class MainLoopService(
-    IMediator mediator,
-    IHostApplicationLifetime applicationLifetime,
-    IOSMessageHandler oSMessageHandler,
-    IRenderingEngine renderingEngine,
-    IDebugLayerLogger debugLayerLogger,
-    IFpsTimer fpsTimer,
-    IShaderAsyncCompiler shaderCompiler)
-    : IMainLoopService
+internal sealed class MainLoopService
+    : IMainLoopService,
+      IAsyncDisposable
 {
-    private readonly IMediator _mediator = mediator;
-    private readonly IHostApplicationLifetime _applicationLifetime = applicationLifetime;
-    private readonly IOSMessageHandler _oSMessageHandler = oSMessageHandler;
-    private readonly IRenderingEngine _renderingEngine = renderingEngine;
-    private readonly IDebugLayerLogger _debugLayerLogger = debugLayerLogger;
-    private readonly IFpsTimer _fpsTimer = fpsTimer;
-    private readonly IShaderAsyncCompiler _shaderCompiler = shaderCompiler;
+    private readonly ILogger<MainLoopService> _logger;
+    private readonly IStaThreadWriter _staThreadWriter;
+    private readonly IMediator _mediator;
+    private readonly IShaderAsyncCompiler _shaderCompiler;
+    private readonly IFpsTimer _fpsTimer;
+    private readonly IMainLoopLifetime _mainLoopLifetime;
+    private readonly ILoopJob _loopJob;
+    private bool _disposedValue;
 
-    public bool IsRunning { get; private set; }
+    public Task ExecutingTask { get; }
 
-    public async Task RunAsync(
-        Func<IRenderingSurface, KeyboardHandle, KeyboardCharCache, ValueTask> updateCallback,
-        Func<IRenderingEngine, RenderingSurfaceId, ValueTask> renderCallback,
-        CancellationToken cancellationToken = default)
+    public MainLoopService(
+        ILogger<MainLoopService> logger,
+        IStaThreadWriter staThreadWriter,
+        IMediator mediator,
+        IShaderAsyncCompiler shaderCompiler,
+        IFpsTimer fpsTimer,
+        IRenderingEngine renderingEngine,
+        IMainLoopLifetime mainLoopLifetime,
+        ILoopJob loopJob)
     {
-        if (updateCallback is null)
-        {
-            throw new ArgumentNullException(nameof(updateCallback), "Update callback method cannot be null!");
-        }
-        if (renderCallback is null)
-        {
-            throw new ArgumentNullException(nameof(renderCallback), "Render callback method cannot be null!");
-        }
+        _logger = logger;
+        _staThreadWriter = staThreadWriter;
+        _mediator = mediator;
+        _shaderCompiler = shaderCompiler;
+        _fpsTimer = fpsTimer;
+        _mainLoopLifetime = mainLoopLifetime;
+        _loopJob = loopJob;
+        ExecutingTask = Task.Factory.StartNew(()
+            => DoAsync(
+                renderingEngine),
+            creationOptions: TaskCreationOptions.LongRunning);
+    }
 
-        var compileShaders = _shaderCompiler.CompileShaders(
-            cancellationToken);
+    private async Task DoAsync(
+        IRenderingEngine renderingEngine)
+    {
+        _ = await _shaderCompiler.CompileShaders(_mainLoopLifetime.Token);
 
-        _ = compileShaders.GetAwaiter().GetResult();
-
-        //TODO proper main loop instead of simple while
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
+
+        var surfaces = new RenderingSurfaceId[]
+        {
+            await _staThreadWriter.CreateSurface(
+                _mainLoopLifetime.Token),
+            //await _channelWriter.CreateSurface(
+            //    _mainLoopLifetime.Token),
+        };
+
+        var previous = Stopwatch.GetTimestamp();
+        var lag = TimeSpan.Zero;
+
+        var msPerUpdate = TimeSpan.FromSeconds(1) / 60;
+
         var doEventsOk = true;
 
         while (
             doEventsOk
-            && !_applicationLifetime.ApplicationStopping.IsCancellationRequested
-            && !cancellationToken.IsCancellationRequested
-            )
+            //&& IsRunning
+            && !_disposedValue
+            && !_mainLoopLifetime.Token.IsCancellationRequested)
         {
-            IsRunning = true;
+            var current = Stopwatch.GetTimestamp();
+            var elapsed = Stopwatch.GetElapsedTime(previous, current);
+            previous = current;
+            lag += elapsed;
 
-            foreach (var renderingSurface in _renderingEngine.RenderingSurfaces)
+            //process input
+            // TODO!
+
+            while (lag >= msPerUpdate)
             {
-                doEventsOk &= _oSMessageHandler.DoEvents(renderingSurface.RenderingControl);
-                if (!doEventsOk)
+                //Update
+                // TODO - fix the UPS timer.. somehow :D
+                _fpsTimer.StopUpdateTimer();
+                foreach (var renderingSurfaceId in surfaces)
                 {
-                    break;
+                    if (!renderingEngine.TryGetRenderingSurface(
+                        renderingSurfaceId,
+                        out var renderingSurface))
+                    {
+                        _logger.LogCritical(
+                            "Rendering surface {id} not found!",
+                            renderingSurfaceId);
+                        break;
+                    }
+
+                    await _loopJob.Update(
+                          renderingSurface,
+                          keyboardHandle,
+                          keyboardCharCache);
                 }
-
-                await updateCallback(
-                    renderingSurface,
-                    keyboardHandle,
-                    keyboardCharCache);
-
-                _fpsTimer.StartRenderingTimer(renderingSurface.ID);
-                await renderCallback(
-                    _renderingEngine,
-                    renderingSurface.ID);
-                _fpsTimer.StopRenderingTimer(renderingSurface.ID);
+                lag -= msPerUpdate;
+                _fpsTimer.StartUpdateTimer();
             }
 
-            _debugLayerLogger.LogMessages();
+            //Render
+            foreach (var renderingSurfaceId in surfaces)
+            {
+                doEventsOk &= await _staThreadWriter.DoEventsOk(
+                    renderingSurfaceId,
+                    _mainLoopLifetime.Token);
+
+                using var scope = _fpsTimer.StartRenderingTimerScope(
+                    renderingSurfaceId);
+
+                _loopJob.Render(
+                    renderingEngine,
+                    renderingSurfaceId);
+            }
         }
-        IsRunning = false;
+        _mainLoopLifetime.Cancel();
+    }
+
+    private async ValueTask Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+            }
+
+            _disposedValue = true;
+            //Make sure the loop finishes
+            await ExecutingTask;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        await Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
