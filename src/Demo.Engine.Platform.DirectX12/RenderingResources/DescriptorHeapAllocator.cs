@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Diagnostics.CodeAnalysis;
+using Demo.Tools.Common;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
 
@@ -94,19 +95,28 @@ internal abstract class DescriptorHeapAllocator
     {
         lock (_lock)
         {
-            ArgumentOutOfRangeException.ThrowIfZero(
-                capacity);
+            Capacity = ValueResultExtensions
+               .ErrorIfZero(capacity)
+               .ErrorIfGreaterThen((uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2)
+               .Map(ValidateCapacityForSamplerHeap)
+               .Match(
+                   capacity => capacity.Value,
+                   error => throw new ArgumentOutOfRangeException(error.Message))
+               ;
 
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(
-                value: capacity,
-                other: (uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2);
+            //ArgumentOutOfRangeException.ThrowIfZero(
+            //    capacity);
 
-            if (HeapType == DescriptorHeapType.Sampler)
-            {
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(
-                    value: capacity,
-                    other: (uint)D3D12.MaxShaderVisibleSamplerHeapSize);
-            }
+            //ArgumentOutOfRangeException.ThrowIfGreaterThan(
+            //    value: capacity,
+            //    other: (uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2);
+
+            //if (HeapType == DescriptorHeapType.Sampler)
+            //{
+            //    ArgumentOutOfRangeException.ThrowIfGreaterThan(
+            //        value: capacity,
+            //        other: (uint)D3D12.MaxShaderVisibleSamplerHeapSize);
+            //}
 
             if (HeapType
                 is DescriptorHeapType.DepthStencilView
@@ -115,7 +125,7 @@ internal abstract class DescriptorHeapAllocator
                 isShaderVisible = false;
             }
 
-            Capacity = capacity;
+            //Capacity = capacity;
             Size = 0;
 
             DescriptorHeap?.Dispose();
@@ -146,8 +156,8 @@ internal abstract class DescriptorHeapAllocator
 
             DescriptorHeap = descriptorHeap;
 
-            _freeHandles = new int[capacity];
-            for (var i = 0; i < capacity; ++i)
+            _freeHandles = new int[Capacity];
+            for (var i = 0; i < Capacity; ++i)
             {
                 _freeHandles[i] = i;
             }
@@ -172,6 +182,14 @@ internal abstract class DescriptorHeapAllocator
 
             return true;
         }
+
+        ValueResult<uint, ValueError> ValidateCapacityForSamplerHeap(
+            scoped in uint capacity)
+            => HeapType == DescriptorHeapType.Sampler
+                ? ValueResultExtensions.ErrorIfGreaterThen(
+                    capacity,
+                    (uint)D3D12.MaxShaderVisibleSamplerHeapSize)
+                : ValueResult.Success(capacity);
     }
 
     public DescriptorHandle Allocate()
