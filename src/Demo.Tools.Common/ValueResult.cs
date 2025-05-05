@@ -128,6 +128,30 @@ public static class ValueResultExtensions
             ? bind(result.Value)
             : ValueResult<TValue2, TError>.Failure(result.Error);
 
+    public delegate ValueResult<TValue2, TError> BindFunc2<TValue1, TValue2, TError, TParam1, TParam2>(
+        scoped in TValue1 value,
+        scoped in TParam1 param1,
+        scoped in TParam2 param2)
+        where TError : IError, allows ref struct
+        where TValue1 : allows ref struct
+        where TValue2 : allows ref struct
+        where TParam1 : allows ref struct
+        where TParam2 : allows ref struct;
+
+    public static ValueResult<TValue2, TError> Bind<TValue1, TValue2, TError, TParam1, TParam2>(
+        this scoped in ValueResult<TValue1, TError> result,
+        scoped in TParam1 param1,
+        scoped in TParam2 param2,
+        BindFunc2<TValue1, TValue2, TError, TParam1, TParam2> bind)
+        where TError : IError, allows ref struct
+        where TValue1 : allows ref struct
+        where TValue2 : allows ref struct
+        where TParam1 : allows ref struct
+        where TParam2 : allows ref struct
+        => result.IsSuccess
+            ? bind(result.Value, param1, param2)
+            : ValueResult<TValue2, TError>.Failure(result.Error);
+
     public static ValueResult<TValue, TError> MapError<TValue, TError>(
         this scoped in ValueResult<TValue, TError> result,
         Func<TError, TError> map)
@@ -147,6 +171,24 @@ public static class ValueResultExtensions
             ? onSuccess(result.Value)
             : onFailure(result.Error);
 
+    public delegate TResult OnSuccessFunc<TValue, TResult>(
+        scoped in TValue value)
+        where TValue : allows ref struct;
+
+    public delegate TResult OnFailureFunc<TError, TResult>(
+        scoped in TError error)
+        where TError : IError, allows ref struct;
+
+    public static TResult MatchWithDelegate<TValue, TError, TResult>(
+        this scoped in ValueResult<TValue, TError> result,
+        OnSuccessFunc<TValue, TResult> onSuccess,
+        OnFailureFunc<TError, TResult> onFailure)
+        where TError : IError, allows ref struct
+        where TValue : allows ref struct
+        => result.IsSuccess
+            ? onSuccess(result.Value)
+            : onFailure(result.Error);
+
     public static ValueResult<TValue, ValueError> ErrorIfZero<TValue>(
         scoped in TValue value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
@@ -158,21 +200,26 @@ public static class ValueResultExtensions
 
     public static ValueResult<TValue, ValueError> ErrorIfGreaterThen<TValue>(
         this scoped in ValueResult<TValue, ValueError> value,
-        TValue other,
+        scoped in TValue other,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
         where TValue : IComparable<TValue>
     {
-        return value.Bind(
+        return value
+            .Bind(
+                other,
+                paramName,
                 ErrorIfGreaterThenInner);
 
-        ValueResult<TValue, ValueError> ErrorIfGreaterThenInner(
-            scoped in TValue v)
+        static ValueResult<TValue, ValueError> ErrorIfGreaterThenInner(
+            scoped in TValue v,
+            scoped in TValue other,
+            scoped in string? paramName)
             => ErrorIfGreaterThen(v, other, paramName);
     }
 
     public static ValueResult<TValue, ValueError> ErrorIfGreaterThen<TValue>(
         scoped in TValue value,
-        TValue other,
+        scoped in TValue other,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
         where TValue : IComparable<TValue>
         => value.CompareTo(other) > 0
