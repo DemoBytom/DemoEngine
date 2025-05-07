@@ -4,6 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Demo.Tools.Common;
 
@@ -31,6 +32,7 @@ public readonly ref struct ValueError(
     public string Message { get; } = error;
 }
 
+[StructLayout(LayoutKind.Auto)]
 public readonly ref struct ValueResult<TValue, TError>
     : IResult<TValue, TError>
     where TError : IError, allows ref struct
@@ -44,7 +46,9 @@ public readonly ref struct ValueResult<TValue, TError>
     public TError? Error { get; }
 
     private ValueResult(
-        bool isSuccess, TValue? value, TError? error)
+        bool isSuccess,
+        scoped in TValue? value,
+        scoped in TError? error)
     {
         IsSuccess = isSuccess;
         Value = value;
@@ -52,22 +56,18 @@ public readonly ref struct ValueResult<TValue, TError>
     }
 
     public static ValueResult<TValue, TError> Success(
-        TValue value) => new(
+        scoped in TValue value)
+        => new(
             isSuccess: true,
             value: value,
             error: default);
 
     public static ValueResult<TValue, TError> Failure(
-        TError error) => new(
+        scoped in TError error)
+        => new(
             isSuccess: false,
             value: default,
             error: error);
-
-    public static ValueResult<TValue, ValueError> Failure(
-        string error) => new(
-            isSuccess: false,
-            value: default,
-            error: new ValueError(error));
 }
 
 public static class ValueResult
@@ -85,26 +85,20 @@ public static class ValueResult
         => ValueResult<TValue, TError>.Failure(error);
 
     public static ValueResult<TValue, ValueError> Success<TValue>(
-        TValue value)
+        scoped in TValue value)
         where TValue : allows ref struct
         => ValueResult<TValue, ValueError>.Success(value);
 
     public static ValueResult<TValue, ValueError> Failure<TValue>(
         string error)
         where TValue : allows ref struct
-        => ValueResult<TValue, ValueError>.Failure(error);
+        => ValueResult<TValue, ValueError>.Failure(new(error));
 }
 
 public static class ValueResultExtensions
 {
     public delegate TValue2 MapFunc<TValue1, TValue2>(
         scoped in TValue1 value)
-        where TValue1 : allows ref struct
-        where TValue2 : allows ref struct;
-
-    public delegate ValueResult<TValue2, TError> BindFunc<TValue1, TValue2, TError>(
-        scoped in TValue1 value)
-        where TError : IError, allows ref struct
         where TValue1 : allows ref struct
         where TValue2 : allows ref struct;
 
@@ -116,40 +110,6 @@ public static class ValueResultExtensions
         where TValue2 : allows ref struct
         => result.IsSuccess
             ? ValueResult<TValue2, TError>.Success(map(result.Value))
-            : ValueResult<TValue2, TError>.Failure(result.Error);
-
-    public static ValueResult<TValue2, TError> Bind<TValue1, TValue2, TError>(
-        this scoped in ValueResult<TValue1, TError> result,
-        BindFunc<TValue1, TValue2, TError> bind)
-        where TError : IError, allows ref struct
-        where TValue1 : allows ref struct
-        where TValue2 : allows ref struct
-        => result.IsSuccess
-            ? bind(result.Value)
-            : ValueResult<TValue2, TError>.Failure(result.Error);
-
-    public delegate ValueResult<TValue2, TError> BindFunc2<TValue1, TValue2, TError, TParam1, TParam2>(
-        scoped in TValue1 value,
-        scoped in TParam1 param1,
-        scoped in TParam2 param2)
-        where TError : IError, allows ref struct
-        where TValue1 : allows ref struct
-        where TValue2 : allows ref struct
-        where TParam1 : allows ref struct
-        where TParam2 : allows ref struct;
-
-    public static ValueResult<TValue2, TError> Bind<TValue1, TValue2, TError, TParam1, TParam2>(
-        this scoped in ValueResult<TValue1, TError> result,
-        scoped in TParam1 param1,
-        scoped in TParam2 param2,
-        BindFunc2<TValue1, TValue2, TError, TParam1, TParam2> bind)
-        where TError : IError, allows ref struct
-        where TValue1 : allows ref struct
-        where TValue2 : allows ref struct
-        where TParam1 : allows ref struct
-        where TParam2 : allows ref struct
-        => result.IsSuccess
-            ? bind(result.Value, param1, param2)
             : ValueResult<TValue2, TError>.Failure(result.Error);
 
     public static ValueResult<TValue, TError> MapError<TValue, TError>(
@@ -194,36 +154,27 @@ public static class ValueResultExtensions
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
         where TValue : INumberBase<TValue>
         => TValue.IsZero(value)
-            ? ValueResult<TValue, ValueError>.Failure(
-                new ValueError($"{paramName} cannot be zero"))
-            : ValueResult<TValue, ValueError>.Success(value);
+            ? ValueResult.Failure<TValue>(
+                $"{paramName} cannot be zero")
+            : ValueResult.Success(value);
 
     public static ValueResult<TValue, ValueError> ErrorIfGreaterThen<TValue>(
         this scoped in ValueResult<TValue, ValueError> value,
         scoped in TValue other,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
         where TValue : IComparable<TValue>
-    {
-        return value
-            .Bind(
-                other,
-                paramName,
-                ErrorIfGreaterThenInner);
-
-        static ValueResult<TValue, ValueError> ErrorIfGreaterThenInner(
-            scoped in TValue v,
-            scoped in TValue other,
-            scoped in string? paramName)
-            => ErrorIfGreaterThen(v, other, paramName);
-    }
+        => value.Bind(
+            other,
+            paramName,
+            ErrorIfGreaterThen);
 
     public static ValueResult<TValue, ValueError> ErrorIfGreaterThen<TValue>(
         scoped in TValue value,
         scoped in TValue other,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null)
+        [CallerArgumentExpression(nameof(value))] scoped in string? paramName = null)
         where TValue : IComparable<TValue>
         => value.CompareTo(other) > 0
-            ? ValueResult<TValue, ValueError>.Failure(
-                new ValueError($"{paramName} cannot be greater than {other}"))
-            : ValueResult<TValue, ValueError>.Success(value);
+            ? ValueResult.Failure<TValue>(
+                $"{paramName} cannot be greater than {other}")
+            : ValueResult.Success(value);
 }
