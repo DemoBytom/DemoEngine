@@ -158,7 +158,9 @@ internal partial class Build : NukeBuild
 
     public Target VerifyCodeFormat => _ => _
         .Executes(() => DotNet(
-            @"format -v n --verify-no-changes --exclude .\src\Demo.Engine\Program.cs"));
+            /* `--exclude **\Program.cs` 
+             * to work around the fact that it still doesn't handle top level statements properly */
+            @"format -v n --verify-no-changes --exclude **\Program.cs"));
 
 #pragma warning restore CA1822 // Mark members as static
 
