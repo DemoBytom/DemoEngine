@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
+using BenchmarkDotNet.Jobs;
 using Demo.Engine.Benchmarks;
 using Demo.Tools.Common;
 
@@ -13,6 +14,8 @@ namespace Demo.Engine.Benchmarks;
 
 [MemoryDiagnoser]
 [JitStatsDiagnoser]
+[SimpleJob(runtimeMoniker: RuntimeMoniker.Net90, baseline: true)]
+[SimpleJob(runtimeMoniker: RuntimeMoniker.Net10_0)]
 public class ValueResultBenchmark
 {
     public const int TEST_INT = 12345678;
