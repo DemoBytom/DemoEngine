@@ -32,6 +32,52 @@ public readonly ref struct ValueError(
     public string Message { get; } = error;
 }
 
+public readonly ref struct TypedValueError(
+    TypedValueError.ErrorTypeEnum errorType,
+    string error)
+    : IError
+{
+    public string Message { get; } = error;
+    public ErrorTypeEnum ErrorType { get; } = errorType;
+
+    public static TypedValueError General(string error)
+        => new(ErrorTypeEnum.General, error);
+
+    public static TypedValueError OutOfRange(string error)
+        => new(ErrorTypeEnum.OutOfRange, error);
+
+    public static TypedValueError InvalidOperation(string error)
+        => new(ErrorTypeEnum.InvalidOperation, error);
+
+    public static TypedValueError Unreachable(string error)
+        => new(ErrorTypeEnum.Unreachable, error);
+
+    public static ValueResult<TValue, TypedValueError> General<TValue>(string error)
+        where TValue : allows ref struct
+        => ValueResult.Failure<TValue, TypedValueError>(General(error));
+
+    public static ValueResult<TValue, TypedValueError> OutOfRange<TValue>(string error)
+        where TValue : allows ref struct
+        => ValueResult.Failure<TValue, TypedValueError>(OutOfRange(error));
+
+    public static ValueResult<TValue, TypedValueError> InvalidOperation<TValue>(string error)
+        where TValue : allows ref struct
+        => ValueResult.Failure<TValue, TypedValueError>(InvalidOperation(error));
+
+    public static ValueResult<TValue, TypedValueError> Unreachable<TValue>(string error)
+        where TValue : allows ref struct
+        => ValueResult.Failure<TValue, TypedValueError>(Unreachable(error));
+
+    public enum ErrorTypeEnum
+    {
+        General,
+        OutOfRange,
+        InvalidOperation,
+
+        Unreachable,
+    }
+}
+
 [StructLayout(LayoutKind.Auto)]
 public readonly ref struct ValueResult<TValue, TError>
     : IResult<TValue, TError>
@@ -112,14 +158,15 @@ public static class ValueResultExtensions
             ? ValueResult<TValue2, TError>.Success(map(result.Value))
             : ValueResult<TValue2, TError>.Failure(result.Error);
 
-    public static ValueResult<TValue, TError> MapError<TValue, TError>(
+    public static ValueResult<TValue, TNewError> MapError<TValue, TError, TNewError>(
         this scoped in ValueResult<TValue, TError> result,
-        Func<TError, TError> map)
+        Func<TError, TNewError> map)
         where TError : IError, allows ref struct
+        where TNewError : IError, allows ref struct
         where TValue : allows ref struct
         => result.IsSuccess
-            ? ValueResult<TValue, TError>.Success(result.Value)
-            : ValueResult<TValue, TError>.Failure(map(result.Error));
+            ? ValueResult<TValue, TNewError>.Success(result.Value)
+            : ValueResult<TValue, TNewError>.Failure(map(result.Error));
 
     public static TResult Match<TValue, TError, TResult>(
         this scoped in ValueResult<TValue, TError> result,

@@ -231,45 +231,105 @@ internal abstract class DescriptorHeapAllocator
             //ValidateHeapIsNotNull();
             ArgumentOutOfRangeException.ThrowIfZero(Size);
 
-            if (descriptorHandle.Container != this)
-            {
-                throw new InvalidOperationException(
-                    "Given descriptor handle wasn't allocated by this heap allocator!");
-            }
+            var index =
+                ValidateDescriptorHandle(
+                    descriptorHeapAllocator: this,
+                    descriptorHandle: descriptorHandle)
+                .Bind(
+                    GetIndex)
+                .Bind(
+                    ValidateHeapDescriptorIndex)
+                .Match(
+                    onSuccess: idh => idh.Index,
+                    onFailure: error => error.ErrorType switch
+                    {
+                        TypedValueError.ErrorTypeEnum.InvalidOperation
+                            => throw new InvalidOperationException(error.Message),
 
-            // TODO add logging
-            if (!descriptorHandle.IsValid)
-            {
-                throw new InvalidOperationException(
-                    "Invalid descriptor handle!");
-            }
-            if (descriptorHandle.CPU.Value.Ptr < CPU_Start.Ptr)
-            {
-                throw new InvalidOperationException(
-                    "Invalid CPU pointer!");
-            }
-            if ((descriptorHandle.CPU.Value.Ptr - CPU_Start.Ptr) % DescriptorSize != 0)
-            {
-                throw new InvalidOperationException(
-                    "Invalid CPU pointer offset!");
-            }
+                        TypedValueError.ErrorTypeEnum.OutOfRange
+                            => throw new ArgumentOutOfRangeException(error.Message),
 
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(
-                (uint)descriptorHandle.Index,
-                Capacity);
-
-            var index = (uint)(descriptorHandle.CPU.Value.Ptr - CPU_Start.Ptr) / DescriptorSize;
-
-            if (descriptorHandle.Index != index)
-            {
-                throw new InvalidOperationException(
-                   "Invalid heap descriptor index!");
-            }
+                        _
+                            => throw new Exception(error.Message),
+                    })
+                ;
 
             var frameIndex = _d3D12RenderingEngine.CurrentFrameIndex();
             _deferredFreeIndices[frameIndex].Add((int)index);
         }
+
+        static ValueResult<IndexDescriptorHandle, TypedValueError> GetIndex(
+            scoped in DescriptorHandleValidationContext descriptorHandleValidationContext)
+            => descriptorHandleValidationContext is
+            {
+                Allocator: var allocator,
+                DescriptorHandle: var descriptorHandle
+                    and { CPU.Ptr: var descriptorHandlePointer },
+            }
+                ? ValueResult
+                    .Success<IndexDescriptorHandle, TypedValueError>(
+                        new(
+                            index: (uint)(descriptorHandlePointer - allocator.CPU_Start.Ptr) / allocator.DescriptorSize,
+                            descriptorHandle: descriptorHandle))
+                : TypedValueError.Unreachable<IndexDescriptorHandle>("Unreachable state!")
+                ;
     }
+
+    private static ValueResult<DescriptorHandleValidationContext, TypedValueError> ValidateDescriptorHandle(
+        scoped in DescriptorHeapAllocator descriptorHeapAllocator,
+        scoped in DescriptorHandle descriptorHandle)
+        => descriptorHandle switch
+        {
+            { Container: var container } when container != descriptorHeapAllocator
+                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
+                    "Given descriptor handle wasn't allocated by this heap allocator!"),
+
+            { IsValid: false }
+                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
+                    "Invalid descriptor handle!"),
+
+            { CPU.Ptr: var cpuPtr } when cpuPtr < descriptorHeapAllocator.CPU_Start.Ptr
+                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
+                    "Invalid CPU pointer!"),
+
+            { CPU.Ptr: var cpuPtr } when (cpuPtr - descriptorHeapAllocator.CPU_Start.Ptr) % descriptorHeapAllocator.DescriptorSize != 0
+                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
+                    "Invalid CPU pointer offset!"),
+
+            { CPU.Ptr: var cpuPtr } when (cpuPtr - descriptorHeapAllocator.CPU_Start.Ptr) % descriptorHeapAllocator.DescriptorSize != 0
+                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
+                    "Invalid CPU pointer offset!"),
+
+            { Index: var index } when index > descriptorHeapAllocator.Capacity
+                => TypedValueError.OutOfRange<DescriptorHandleValidationContext>(
+                    "Index cannot be greater than the capacity!"),
+            _
+                => ValueResult.Success<DescriptorHandleValidationContext, TypedValueError>(
+                    new(
+                        descriptorHeapAllocator,
+                        descriptorHandle)),
+        };
+    private readonly ref struct DescriptorHandleValidationContext(
+        DescriptorHeapAllocator allocator,
+        DescriptorHandle descriptorHandle)
+    {
+        public DescriptorHeapAllocator Allocator { get; } = allocator;
+        public DescriptorHandle DescriptorHandle { get; } = descriptorHandle;
+    }
+
+    private readonly ref struct IndexDescriptorHandle(
+        uint index,
+        DescriptorHandle descriptorHandle)
+    {
+        public uint Index { get; } = index;
+        public DescriptorHandle DescriptorHandle { get; } = descriptorHandle;
+    }
+
+    private static ValueResult<IndexDescriptorHandle, TypedValueError> ValidateHeapDescriptorIndex(
+        scoped in IndexDescriptorHandle indexDescriptorHandle)
+        => indexDescriptorHandle.DescriptorHandle.Index != indexDescriptorHandle.Index
+            ? TypedValueError.InvalidOperation<IndexDescriptorHandle>("Invalid heap descriptor index!")
+            : ValueResult.Success<IndexDescriptorHandle, TypedValueError>(indexDescriptorHandle);
 
     private void ValidateHeapIsNotNull()
     {
