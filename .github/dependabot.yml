@@ -19,6 +19,10 @@ updates:
       update-types:
       - "minor"
       - "patch"
+  ignore:
+  - dependency-name: "MediatR"
+    # Ignore versions of MediatR that are equal to or greater than 13.0.0
+    versions: [ ">=13.0.0" ]
 # Maintain updates for GitHub Actions
 - package-ecosystem: "github-actions"
   directory: "/"
