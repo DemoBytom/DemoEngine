@@ -98,25 +98,11 @@ internal abstract class DescriptorHeapAllocator
             Capacity = ValueResultExtensions
                .ErrorIfZero(capacity)
                .ErrorIfGreaterThen((uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2)
-               .Map(ValidateCapacityForSamplerHeap)
+               .ValidateCapacityForSamplerHeap(HeapType)
                .Match(
-                   capacity => capacity.Value,
+                   capacity => capacity,
                    error => throw new ArgumentOutOfRangeException(error.Message))
                ;
-
-            //ArgumentOutOfRangeException.ThrowIfZero(
-            //    capacity);
-
-            //ArgumentOutOfRangeException.ThrowIfGreaterThan(
-            //    value: capacity,
-            //    other: (uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2);
-
-            //if (HeapType == DescriptorHeapType.Sampler)
-            //{
-            //    ArgumentOutOfRangeException.ThrowIfGreaterThan(
-            //        value: capacity,
-            //        other: (uint)D3D12.MaxShaderVisibleSamplerHeapSize);
-            //}
 
             if (HeapType
                 is DescriptorHeapType.DepthStencilView
@@ -125,7 +111,6 @@ internal abstract class DescriptorHeapAllocator
                 isShaderVisible = false;
             }
 
-            //Capacity = capacity;
             Size = 0;
 
             DescriptorHeap?.Dispose();
@@ -182,14 +167,6 @@ internal abstract class DescriptorHeapAllocator
 
             return true;
         }
-
-        ValueResult<uint, ValueError> ValidateCapacityForSamplerHeap(
-            scoped in uint capacity)
-            => HeapType == DescriptorHeapType.Sampler
-                ? ValueResultExtensions.ErrorIfGreaterThen(
-                    capacity,
-                    (uint)D3D12.MaxShaderVisibleSamplerHeapSize)
-                : ValueResult.Success(capacity);
     }
 
     public DescriptorHandle Allocate()
@@ -198,37 +175,34 @@ internal abstract class DescriptorHeapAllocator
         {
             ValidateHeapIsNotNull();
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(
-                Size, Capacity);
+                value: Size,
+                other: Capacity);
 
             var index = _freeHandles[Size];
 
             ++Size;
 
-            var handle = new DescriptorHandle(
+            return new DescriptorHandle(
                 cpu: new CpuDescriptorHandle(
-                    CPU_Start,
-                    index,
-                    DescriptorSize),
+                    other: CPU_Start,
+                    offsetInDescriptors: index,
+                    descriptorIncrementSize: DescriptorSize),
                 gpu: IsShaderVisible
                     ? new GpuDescriptorHandle(
-                        GPU_Start.Value,
-                        index,
-                        DescriptorSize)
+                        other: GPU_Start.Value,
+                        offsetInDescriptors: index,
+                        descriptorIncrementSize: DescriptorSize)
                     : null,
                 heapAlocator: this,
                 index: index);
-
-            return handle;
         }
     }
 
     public void Free(
-        //int frameIndex,
         in DescriptorHandle descriptorHandle)
     {
         lock (_lock)
         {
-            //ValidateHeapIsNotNull();
             ArgumentOutOfRangeException.ThrowIfZero(Size);
 
             var index =
@@ -236,7 +210,7 @@ internal abstract class DescriptorHeapAllocator
                     descriptorHeapAllocator: this,
                     descriptorHandle: descriptorHandle)
                 .Bind(
-                    GetIndex)
+                    CalculateIndex)
                 .Bind(
                     ValidateHeapDescriptorIndex)
                 .Match(
@@ -258,7 +232,7 @@ internal abstract class DescriptorHeapAllocator
             _deferredFreeIndices[frameIndex].Add((int)index);
         }
 
-        static ValueResult<IndexDescriptorHandle, TypedValueError> GetIndex(
+        static ValueResult<IndexDescriptorHandle, TypedValueError> CalculateIndex(
             scoped in DescriptorHandleValidationContext descriptorHandleValidationContext)
             => descriptorHandleValidationContext is
             {
@@ -497,5 +471,25 @@ internal static class DescriptorHeapAllocatorExtensions
     {
         public bool Initialized { get; init; }
         public ID3D12RenderingEngine RenderingEngine { get; } = renderingEngine;
+    }
+}
+
+static file class DescriptorHeapAllocatorValidationExtensions
+{
+    internal static ValueResult<uint, ValueError> ValidateCapacityForSamplerHeap(
+        this ValueResult<uint, ValueError> capacityResult,
+        DescriptorHeapType heapType)
+    {
+
+        return capacityResult
+            .Bind(ValidateCapacityForSamplerHeapInner);
+
+        ValueResult<uint, ValueError> ValidateCapacityForSamplerHeapInner(
+            scoped in uint capacity)
+            => heapType is DescriptorHeapType.Sampler
+                ? ValueResultExtensions.ErrorIfGreaterThen(
+                    capacity,
+                    (uint)D3D12.MaxShaderVisibleSamplerHeapSize)
+                : ValueResult.Success(capacity);
     }
 }
