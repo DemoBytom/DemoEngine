@@ -8,16 +8,25 @@ using System.Runtime.InteropServices;
 
 namespace Demo.Tools.Common;
 
+public interface IResult<out TError>
+        where TError : IError, allows ref struct
+{
+    [MemberNotNullWhen(false, nameof(Error))]
+    bool IsSuccess { get; }
+
+    TError? Error { get; }
+}
 public interface IResult<out TValue, out TError>
+    : IResult<TError>
     where TError : IError, allows ref struct
     where TValue : allows ref struct
 {
     [MemberNotNullWhen(true, nameof(Value))]
     [MemberNotNullWhen(false, nameof(Error))]
-    bool IsSuccess { get; }
+    new bool IsSuccess { get; }
 
     TValue? Value { get; }
-    TError? Error { get; }
+    new TError? Error { get; }
 }
 
 public interface IError
@@ -116,6 +125,33 @@ public readonly ref struct ValueResult<TValue, TError>
             error: error);
 }
 
+public readonly ref struct ValueResult<TError>
+    : IResult<TError>
+    where TError : IError, allows ref struct
+{
+    public bool IsSuccess { get; }
+
+    public TError? Error { get; }
+    private ValueResult(
+        bool isSuccess,
+        scoped in TError? error)
+    {
+        IsSuccess = isSuccess;
+        Error = error;
+    }
+
+    public static ValueResult<TError> Success()
+        => new(
+            isSuccess: true,
+            error: default);
+
+    public static ValueResult<TError> Failure(
+        scoped in TError error)
+        => new(
+            isSuccess: false,
+            error: error);
+}
+
 public static class ValueResult
 {
     public static ValueResult<TValue, TError> Success<TValue, TError>(
@@ -139,6 +175,22 @@ public static class ValueResult
         string error)
         where TValue : allows ref struct
         => ValueResult<TValue, ValueError>.Failure(new(error));
+
+    public static ValueResult<ValueError> Success()
+        => ValueResult<ValueError>.Success();
+
+    public static ValueResult<ValueError> Failure(
+        scoped in ValueError error)
+        => ValueResult<ValueError>.Failure(error);
+
+    public static ValueResult<TError> Success<TError>()
+        where TError : IError, allows ref struct
+        => ValueResult<TError>.Success();
+
+    public static ValueResult<TError> Failure<TError>(
+        scoped in TError error)
+        where TError : IError, allows ref struct
+        => ValueResult<TError>.Failure(error);
 }
 
 public static class ValueResultExtensions
