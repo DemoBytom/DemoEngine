@@ -8,7 +8,7 @@ using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using BenchmarkDotNet.Jobs;
 using Demo.Engine.Benchmarks;
-using Demo.Tools.Common;
+using Demo.Tools.Common.ValueResults;
 
 namespace Demo.Engine.Benchmarks;
 

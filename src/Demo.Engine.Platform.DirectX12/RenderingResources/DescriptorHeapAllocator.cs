@@ -2,9 +2,10 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Diagnostics.CodeAnalysis;
-using Demo.Tools.Common;
+using Demo.Tools.Common.ValueResults;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
+using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocatorLoggerExtensions;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
@@ -207,20 +208,23 @@ internal abstract class DescriptorHeapAllocator
 
             var index =
                 ValidateDescriptorHandle(
+                    _logger,
                     descriptorHeapAllocator: this,
                     descriptorHandle: descriptorHandle)
                 .Bind(
                     CalculateIndex)
                 .Bind(
-                    ValidateHeapDescriptorIndex)
+                    param1: _logger,
+                    bind: static (scoped in indexDescriptorHandle, scoped in logger)
+                    => ValidateHeapDescriptorIndex(indexDescriptorHandle, logger))
                 .Match(
                     onSuccess: idh => idh.Index,
                     onFailure: error => error.ErrorType switch
                     {
-                        TypedValueError.ErrorTypeEnum.InvalidOperation
+                        TypedValueError.ErrorTypes.InvalidOperation
                             => throw new InvalidOperationException(error.Message),
 
-                        TypedValueError.ErrorTypeEnum.OutOfRange
+                        TypedValueError.ErrorTypes.OutOfRange
                             => throw new ArgumentOutOfRangeException(error.Message),
 
                         _
@@ -250,32 +254,39 @@ internal abstract class DescriptorHeapAllocator
     }
 
     private static ValueResult<DescriptorHandleValidationContext, TypedValueError> ValidateDescriptorHandle(
+        in ILogger logger,
         scoped in DescriptorHeapAllocator descriptorHeapAllocator,
         scoped in DescriptorHandle descriptorHandle)
         => descriptorHandle switch
         {
             { Container: var container } when container != descriptorHeapAllocator
-                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
-                    "Given descriptor handle wasn't allocated by this heap allocator!"),
+                => logger.LogAndReturnInvalidOperation<DescriptorHandleValidationContext>(
+                    LogDescriptorHandleWasntAllocatedByThisHeapAllocator,
+                    errorMessage: "Given descriptor handle wasn't allocated by this heap allocator!"),
 
             { IsValid: false }
-                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
-                    "Invalid descriptor handle!"),
+                => logger.LogAndReturnInvalidOperation<DescriptorHandleValidationContext>(
+                    LogInvalidDescriptorHandle,
+                    errorMessage: "Invalid descriptor handle!"),
 
             { CPU.Ptr: var cpuPtr } when cpuPtr < descriptorHeapAllocator.CPU_Start.Ptr
-                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
-                    "Invalid CPU pointer!"),
+                => logger.LogAndReturnInvalidOperation<DescriptorHandleValidationContext>(
+                    LogInvalidCpuPointer,
+                    errorMessage: "Invalid CPU pointer!"),
 
             { CPU.Ptr: var cpuPtr } when (cpuPtr - descriptorHeapAllocator.CPU_Start.Ptr) % descriptorHeapAllocator.DescriptorSize != 0
-                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
-                    "Invalid CPU pointer offset!"),
+                => logger.LogAndReturnInvalidOperation<DescriptorHandleValidationContext>(
+                    LogInvalidCpuPointerOffset,
+                    errorMessage: "Invalid CPU pointer offset!"),
 
-            { CPU.Ptr: var cpuPtr } when (cpuPtr - descriptorHeapAllocator.CPU_Start.Ptr) % descriptorHeapAllocator.DescriptorSize != 0
-                => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
-                    "Invalid CPU pointer offset!"),
+            //{ CPU.Ptr: var cpuPtr } when (cpuPtr - descriptorHeapAllocator.CPU_Start.Ptr) % descriptorHeapAllocator.DescriptorSize != 0
+            //    => TypedValueError.InvalidOperation<DescriptorHandleValidationContext>(
+            //        "Invalid CPU pointer offset!"),
 
             { Index: var index } when index > descriptorHeapAllocator.Capacity
-                => TypedValueError.OutOfRange<DescriptorHandleValidationContext>(
+                => logger.LogAndReturnOutOfRange<DescriptorHandleValidationContext, int, uint>(
+                    logAction: (LogIndexCannotBeGreaterThanCapacity, index, descriptorHeapAllocator.Capacity),
+                    parameterName: nameof(descriptorHandle.Index),
                     "Index cannot be greater than the capacity!"),
             _
                 => ValueResult.Success<DescriptorHandleValidationContext, TypedValueError>(
@@ -283,6 +294,7 @@ internal abstract class DescriptorHeapAllocator
                         descriptorHeapAllocator,
                         descriptorHandle)),
         };
+
     private readonly ref struct DescriptorHandleValidationContext(
         DescriptorHeapAllocator allocator,
         DescriptorHandle descriptorHandle)
@@ -300,10 +312,13 @@ internal abstract class DescriptorHeapAllocator
     }
 
     private static ValueResult<IndexDescriptorHandle, TypedValueError> ValidateHeapDescriptorIndex(
-        scoped in IndexDescriptorHandle indexDescriptorHandle)
-        => indexDescriptorHandle.DescriptorHandle.Index != indexDescriptorHandle.Index
-            ? TypedValueError.InvalidOperation<IndexDescriptorHandle>("Invalid heap descriptor index!")
-            : ValueResult.Success<IndexDescriptorHandle, TypedValueError>(indexDescriptorHandle);
+        scoped in IndexDescriptorHandle indexDescriptorHandle,
+        scoped in ILogger logger)
+        => indexDescriptorHandle.DescriptorHandle.Index == indexDescriptorHandle.Index
+            ? ValueResult.Success<IndexDescriptorHandle, TypedValueError>(indexDescriptorHandle)
+            : logger.LogAndReturnInvalidOperation<IndexDescriptorHandle>(
+                LogInvalidHeapDescriptorIndex,
+                errorMessage: "Invalid heap descriptor index!");
 
     private void ValidateHeapIsNotNull()
     {
@@ -492,4 +507,45 @@ static file class DescriptorHeapAllocatorValidationExtensions
                     (uint)D3D12.MaxShaderVisibleSamplerHeapSize)
                 : ValueResult.Success(capacity);
     }
+}
+
+internal partial class DescriptorHeapAllocatorLoggerExtensions
+{
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Invalid heap descriptor index!")]
+    internal static partial void LogInvalidHeapDescriptorIndex(
+        ILogger logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Given descriptor handle wasn't allocated by this heap allocator!")]
+    internal static partial void LogDescriptorHandleWasntAllocatedByThisHeapAllocator(
+        ILogger logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Invalid descriptor handle!")]
+    internal static partial void LogInvalidDescriptorHandle(
+        ILogger logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Invalid CPU pointer!")]
+    internal static partial void LogInvalidCpuPointer(
+        ILogger logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Invalid CPU pointer offset!")]
+    internal static partial void LogInvalidCpuPointerOffset(
+        ILogger logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Index {index} cannot be greater than the capacity {capacity}!")]
+    internal static partial void LogIndexCannotBeGreaterThanCapacity(
+        ILogger logger,
+        int index,
+        uint capacity);
 }

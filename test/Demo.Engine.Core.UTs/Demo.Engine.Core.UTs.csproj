@@ -48,5 +48,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Demo.Engine.Core\Demo.Engine.Core.csproj" />
+    <ProjectReference Include="..\Demo.Tools.Common.UTs\Demo.Tools.Common.UTs.csproj" />
   </ItemGroup>
 </Project>
