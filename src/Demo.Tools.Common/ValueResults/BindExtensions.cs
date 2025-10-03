@@ -8,7 +8,7 @@ public static class BindExtensions
     /// <summary>
     /// Bind function without extra parameters
     /// </summary>
-    public delegate ValueResult<TValue2, TError> BindFunc0<TValue1, TValue2, TError>(
+    public delegate ValueResult<TValue2, TError> BindFunc<TValue1, TValue2, TError>(
        scoped in TValue1 value)
        where TError : IError, allows ref struct
        where TValue1 : allows ref struct
@@ -17,7 +17,7 @@ public static class BindExtensions
     /// <summary>
     /// Bind function with one extra parameter
     /// </summary>
-    public delegate ValueResult<TValue2, TError> BindFunc1<TValue1, TValue2, TError, TParam1>(
+    public delegate ValueResult<TValue2, TError> BindFunc<TValue1, TValue2, TError, TParam1>(
         scoped in TValue1 value,
         scoped in TParam1 param1)
         where TError : IError, allows ref struct
@@ -160,7 +160,7 @@ public static class BindExtensions
 
     public static ValueResult<TValue2, TError> Bind<TValue1, TValue2, TError>(
         this scoped in ValueResult<TValue1, TError> result,
-        BindFunc0<TValue1, TValue2, TError> bind)
+        BindFunc<TValue1, TValue2, TError> bind)
         where TError : IError, allows ref struct
         where TValue1 : allows ref struct
         where TValue2 : allows ref struct
@@ -171,7 +171,7 @@ public static class BindExtensions
     public static ValueResult<TValue2, TError> Bind<TValue1, TValue2, TError, TParam1>(
         this scoped in ValueResult<TValue1, TError> result,
         scoped in TParam1 param1,
-        BindFunc1<TValue1, TValue2, TError, TParam1> bind)
+        BindFunc<TValue1, TValue2, TError, TParam1> bind)
         where TError : IError, allows ref struct
         where TValue1 : allows ref struct
         where TValue2 : allows ref struct

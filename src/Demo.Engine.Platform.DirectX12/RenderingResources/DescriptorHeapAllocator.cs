@@ -215,8 +215,7 @@ internal abstract class DescriptorHeapAllocator
                     CalculateIndex)
                 .Bind(
                     param1: _logger,
-                    bind: static (scoped in indexDescriptorHandle, scoped in logger)
-                    => ValidateHeapDescriptorIndex(indexDescriptorHandle, logger))
+                    bind: ValidateHeapDescriptorIndex)
                 .Match(
                     onSuccess: idh => idh.Index,
                     onFailure: error => error.ErrorType switch
@@ -311,9 +310,10 @@ internal abstract class DescriptorHeapAllocator
         public DescriptorHandle DescriptorHandle { get; } = descriptorHandle;
     }
 
-    private static ValueResult<IndexDescriptorHandle, TypedValueError> ValidateHeapDescriptorIndex(
+    private static ValueResult<IndexDescriptorHandle, TypedValueError> ValidateHeapDescriptorIndex<TLogger>(
         scoped in IndexDescriptorHandle indexDescriptorHandle,
-        scoped in ILogger logger)
+        scoped in TLogger logger)
+        where TLogger : ILogger
         => indexDescriptorHandle.DescriptorHandle.Index == indexDescriptorHandle.Index
             ? ValueResult.Success<IndexDescriptorHandle, TypedValueError>(indexDescriptorHandle)
             : logger.LogAndReturnInvalidOperation<IndexDescriptorHandle>(
