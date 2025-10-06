@@ -96,14 +96,23 @@ internal abstract class DescriptorHeapAllocator
     {
         lock (_lock)
         {
-            Capacity = ValueResultExtensions
-               .ErrorIfZero(capacity)
-               .ErrorIfGreaterThen((uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2)
-               .ValidateCapacityForSamplerHeap(HeapType)
-               .Match(
-                   capacity => capacity,
-                   error => throw new ArgumentOutOfRangeException(error.Message))
-               ;
+            _ = ValueResultExtensions
+                .ErrorIfZero(capacity)
+                .ErrorIfGreaterThen((uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2)
+                .ValidateCapacityForSamplerHeap(HeapType)
+                //.Bind(param1: capacity => Capacity = capacity,
+                //     bind: static (scoped in uint capacity, scoped in Action<uint> setCapacity)
+                //     =>
+                //     {
+                //         setCapacity(capacity);
+                //         return ValueResult.Success<uint, ValueError>(capacity);
+                //     })
+                .SetCapacity(capacity
+                    => Capacity = capacity)
+                .Match(
+                capacity => capacity,
+                error => throw new ArgumentOutOfRangeException(error.Message))
+                ;
 
             if (HeapType
                 is DescriptorHeapType.DepthStencilView
@@ -206,33 +215,34 @@ internal abstract class DescriptorHeapAllocator
         {
             ArgumentOutOfRangeException.ThrowIfZero(Size);
 
-            var index =
-                ValidateDescriptorHandle(
-                    _logger,
-                    descriptorHeapAllocator: this,
-                    descriptorHandle: descriptorHandle)
-                .Bind(
-                    CalculateIndex)
-                .Bind(
-                    param1: _logger,
-                    bind: ValidateHeapDescriptorIndex)
-                .Match(
-                    onSuccess: idh => idh.Index,
-                    onFailure: error => error.ErrorType switch
+            ValidateDescriptorHandle(
+                _logger,
+                descriptorHeapAllocator: this,
+                descriptorHandle: descriptorHandle)
+            .Bind(
+                CalculateIndex)
+            .Bind(
+                param1: _logger,
+                bind: ValidateHeapDescriptorIndex)
+            .Bind(
+                param1: (
+                    frameIndex: _d3D12RenderingEngine.CurrentFrameIndex(),
+                    deferredFreeIndices: _deferredFreeIndices),
+                bind: AddIndex)
+            .Match(
+                onSuccess: _ => { },
+                onFailure: error =>
+                {
+                    if (error is { InnerError: IThrowableError throwableError })
                     {
-                        TypedValueError.ErrorTypes.InvalidOperation
-                            => throw new InvalidOperationException(error.Message),
-
-                        TypedValueError.ErrorTypes.OutOfRange
-                            => throw new ArgumentOutOfRangeException(error.Message),
-
-                        _
-                            => throw new Exception(error.Message),
-                    })
-                ;
-
-            var frameIndex = _d3D12RenderingEngine.CurrentFrameIndex();
-            _deferredFreeIndices[frameIndex].Add((int)index);
+                        throwableError.ThrowAsException();
+                    }
+                    else
+                    {
+                        throw new Exception(error.Message);
+                    }
+                })
+            ;
         }
 
         static ValueResult<IndexDescriptorHandle, TypedValueError> CalculateIndex(
@@ -250,6 +260,17 @@ internal abstract class DescriptorHeapAllocator
                             descriptorHandle: descriptorHandle))
                 : TypedValueError.Unreachable<IndexDescriptorHandle>("Unreachable state!")
                 ;
+
+        static ValueResult<int, TypedValueError> AddIndex(
+            scoped in IndexDescriptorHandle idh,
+            scoped in (uint frameIndex, List<int>[] deferredFreeIndices) context)
+        {
+            var ((frameIndex, deferredFreeIndices), index) = (context, (int)idh.Index);
+
+            deferredFreeIndices[frameIndex].Add(index);
+
+            return ValueResult.Success<int, TypedValueError>(index);
+        }
     }
 
     private static ValueResult<DescriptorHandleValidationContext, TypedValueError> ValidateDescriptorHandle(
@@ -264,9 +285,13 @@ internal abstract class DescriptorHeapAllocator
                     errorMessage: "Given descriptor handle wasn't allocated by this heap allocator!"),
 
             { IsValid: false }
-                => logger.LogAndReturnInvalidOperation<DescriptorHandleValidationContext>(
-                    LogInvalidDescriptorHandle,
-                    errorMessage: "Invalid descriptor handle!"),
+                //=> logger.LogAndReturnInvalidOperation<DescriptorHandleValidationContext>(
+                //    LogInvalidDescriptorHandle,
+                //    errorMessage: "Invalid descriptor handle!"),
+                => logger
+                    .LogAndReturn(LogInvalidDescriptorHandle)
+                    .InvalidOperation<DescriptorHandleValidationContext>(
+                        "Invalid descriptor handle!"),
 
             { CPU.Ptr: var cpuPtr } when cpuPtr < descriptorHeapAllocator.CPU_Start.Ptr
                 => logger.LogAndReturnInvalidOperation<DescriptorHandleValidationContext>(
@@ -283,10 +308,18 @@ internal abstract class DescriptorHeapAllocator
             //        "Invalid CPU pointer offset!"),
 
             { Index: var index } when index > descriptorHeapAllocator.Capacity
-                => logger.LogAndReturnOutOfRange<DescriptorHandleValidationContext, int, uint>(
-                    logAction: (LogIndexCannotBeGreaterThanCapacity, index, descriptorHeapAllocator.Capacity),
-                    parameterName: nameof(descriptorHandle.Index),
-                    "Index cannot be greater than the capacity!"),
+                //=> logger.LogAndReturnOutOfRange<DescriptorHandleValidationContext, int, uint>(
+                //    logAction: (LogIndexCannotBeGreaterThanCapacity, index, descriptorHeapAllocator.Capacity),
+                //    parameterName: nameof(descriptorHandle.Index),
+                //    "Index cannot be greater than the capacity!"),
+                => logger
+                    .LogAndReturn(
+                        LogIndexCannotBeGreaterThanCapacity,
+                        index,
+                        descriptorHeapAllocator.Capacity)
+                    .OutOfRange<DescriptorHandleValidationContext>(
+                        nameof(descriptorHandle.Index),
+                        "Index cannot be greater than the capacity!"),
             _
                 => ValueResult.Success<DescriptorHandleValidationContext, TypedValueError>(
                     new(
@@ -507,6 +540,19 @@ static file class DescriptorHeapAllocatorValidationExtensions
                     (uint)D3D12.MaxShaderVisibleSamplerHeapSize)
                 : ValueResult.Success(capacity);
     }
+
+    internal static ValueResult<uint, ValueError> SetCapacity(
+        this ValueResult<uint, ValueError> capacityResult,
+        Action<uint> setCapacity)
+        => capacityResult
+            .Bind(
+                param1: setCapacity,
+                bind: static (scoped in capacity, scoped in setCapacity)
+                =>
+                {
+                    setCapacity(capacity);
+                    return ValueResult.Success<uint, ValueError>(capacity);
+                });
 }
 
 internal partial class DescriptorHeapAllocatorLoggerExtensions

@@ -49,6 +49,7 @@ public readonly ref struct ValueResult<TError>
     : IResult<TError>
     where TError : IError, allows ref struct
 {
+    [MemberNotNullWhen(false, nameof(Error))]
     public bool IsSuccess { get; }
 
     public TError? Error { get; }
@@ -137,5 +138,51 @@ public static class ValueResult
             logAction.logAction(logger, logAction.logVal1, logAction.logVal2);
         }
         return ValueResult<TValue, ValueError>.Failure(new(errorMessage));
+    }
+
+    public static LogAndReturnResultCallContext LogAndReturn<TLogger>(
+        this TLogger? logger,
+        Action<TLogger> logAction)
+        where TLogger : ILogger
+    {
+        if (logger is not null)
+        {
+            logAction(logger);
+        }
+
+        return new LogAndReturnResultCallContext();
+    }
+
+    public static LogAndReturnResultCallContext LogAndReturn<TLogger, TLogValue1, TLogValue2>(
+        this TLogger? logger,
+        Action<TLogger, TLogValue1, TLogValue2> logAction,
+        TLogValue1 value1,
+        TLogValue2 value2)
+        where TLogger : ILogger
+        where TLogValue1 : allows ref struct
+        where TLogValue2 : allows ref struct
+    {
+        if (logger is not null)
+        {
+            logAction(logger, value1, value2);
+        }
+
+        return new LogAndReturnResultCallContext();
+    }
+
+    public static ValueResult<TValue, ValueError> Failure<TValue>(
+        this LogAndReturnResultCallContext _,
+        string errorMessage)
+        where TValue : allows ref struct
+        => ValueResult<TValue, ValueError>.Failure(new(errorMessage));
+
+    public static ValueResult<TValue, ValueError> Success<TValue>(
+        this LogAndReturnResultCallContext _,
+        TValue value)
+        where TValue : allows ref struct
+        => ValueResult<TValue, ValueError>.Success(value);
+
+    public readonly ref struct LogAndReturnResultCallContext()
+    {
     }
 }

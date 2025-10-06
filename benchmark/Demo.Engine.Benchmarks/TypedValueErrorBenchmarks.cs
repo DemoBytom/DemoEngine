@@ -138,6 +138,16 @@ public class TypedValueErrorBenchmarks
             ),
             ERROR_MESSAGE);
 
+    [Benchmark]
+    public ValueResult<int, ValueError> ValueResult_CallLogAndReturnFailure_WithParams_SourceGeneratedLogger_SplitCall()
+        => ValueResult
+            .LogAndReturn(
+                _logger,
+                LoggingExtensions.LogOutOfRangeError,
+                PARAM_NAME,
+                ERROR_MESSAGE)
+            .Failure<int>(ERROR_MESSAGE);
+
 }
 
 public static partial class LoggingExtensions

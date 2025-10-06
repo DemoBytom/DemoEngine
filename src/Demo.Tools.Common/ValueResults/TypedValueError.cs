@@ -1,6 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 
@@ -98,6 +99,19 @@ public static partial class TypedValueErrorExtensions
 
         return TypedValueError.InvalidOperation<TValue>(errorMessage);
     }
+
+    public static ValueResult<TValue, TypedValueError> InvalidOperation<TValue>(
+        this ValueResult.LogAndReturnResultCallContext _,
+        string errorMessage)
+        where TValue : allows ref struct
+        => TypedValueError.InvalidOperation<TValue>(errorMessage);
+
+    public static ValueResult<TValue, TypedValueError> OutOfRange<TValue>(
+        this ValueResult.LogAndReturnResultCallContext _,
+        string parameterName,
+        string errorMessage)
+        where TValue : allows ref struct
+        => TypedValueError.OutOfRange<TValue>(parameterName, errorMessage);
 }
 
 public readonly ref struct TypedValueError<TError>(
@@ -115,19 +129,24 @@ public readonly ref struct TypedValueError<TError>(
 
 public readonly struct GeneralError(
     string message)
-    : IError
+    : IThrowableError
 {
     public string Message { get; } = message;
 
     [DoesNotReturn]
     public void ThrowAsException()
         => throw new Exception(Message);
+
+    [DoesNotReturn]
+    public TReturn ThrowAsException<TReturn>()
+        where TReturn : allows ref struct
+        => throw new Exception(Message);
 }
 
 public readonly struct ArgumentOutOfRangeError(
     string? parameterName,
     string message)
-    : IError
+    : IThrowableError
 {
     public string Message { get; } = message;
     public string? ParameterName { get; } = parameterName;
@@ -135,26 +154,52 @@ public readonly struct ArgumentOutOfRangeError(
     [DoesNotReturn]
     public void ThrowAsException()
         => throw new ArgumentOutOfRangeException(ParameterName, Message);
+
+    [DoesNotReturn]
+    public TReturn ThrowAsException<TReturn>()
+        where TReturn : allows ref struct
+        => throw new ArgumentOutOfRangeException(Message);
 }
 
 public readonly struct InvalidOperationError(
     string message)
-    : IError
+    : IThrowableError
 {
     public string Message { get; } = message;
 
     [DoesNotReturn]
     public void ThrowAsException()
+        => throw new InvalidOperationException(Message);
+
+    [DoesNotReturn]
+    public TReturn ThrowAsException<TReturn>()
+        where TReturn : allows ref struct
         => throw new InvalidOperationException(Message);
 }
 
 public readonly struct UnreachableError(
     string message)
-    : IError
+    : IThrowableError
 {
     public string Message { get; } = message;
 
     [DoesNotReturn]
     public void ThrowAsException()
-        => throw new InvalidOperationException(Message);
+        => throw new UnreachableException(Message);
+
+    [DoesNotReturn]
+    public TReturn ThrowAsException<TReturn>()
+        where TReturn : allows ref struct
+        => throw new UnreachableException(Message);
+}
+
+public interface IThrowableError
+    : IError
+{
+    [DoesNotReturn]
+    void ThrowAsException();
+
+    [DoesNotReturn]
+    TReturn ThrowAsException<TReturn>()
+        where TReturn : allows ref struct;
 }

@@ -43,6 +43,23 @@ public static class ValueResultExtensions
             ? onSuccess(result.Value)
             : onFailure(result.Error);
 
+    public static void Match<TValue, TError>(
+        this scoped in ValueResult<TValue, TError> result,
+        Action<TValue> onSuccess,
+        Action<TError> onFailure)
+        where TError : IError, allows ref struct
+        where TValue : allows ref struct
+    {
+        if (result.IsSuccess)
+        {
+            onSuccess(result.Value);
+        }
+        else
+        {
+            onFailure(result.Error);
+        }
+    }
+
     public delegate TResult OnSuccessFunc<TValue, TResult>(
         scoped in TValue value)
         where TValue : allows ref struct;
