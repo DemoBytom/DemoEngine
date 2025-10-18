@@ -3,6 +3,7 @@
 
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging;
 
 namespace Demo.Tools.Common.ValueResults;
 
@@ -39,6 +40,7 @@ public static class ValueResultExtensions
         Func<TError, TResult> onFailure)
         where TError : IError, allows ref struct
         where TValue : allows ref struct
+        where TResult : allows ref struct
         => result.IsSuccess
             ? onSuccess(result.Value)
             : onFailure(result.Error);
@@ -58,6 +60,20 @@ public static class ValueResultExtensions
         {
             onFailure(result.Error);
         }
+    }
+
+    public static void MatchFailure<TValue, TError>(
+        this scoped in ValueResult<TValue, TError> result,
+        Action<TError> onFailure)
+        where TError : IError, allows ref struct
+        where TValue : allows ref struct
+    {
+        if (result.IsSuccess)
+        {
+            return;
+        }
+
+        onFailure(result.Error);
     }
 
     public delegate TResult OnSuccessFunc<TValue, TResult>(
@@ -87,6 +103,20 @@ public static class ValueResultExtensions
                 $"{paramName} cannot be zero")
             : ValueResult.Success(value);
 
+    public static ValueResult<TValue, ValueError> ErrorIfZero<TValue, TLogger>(
+        scoped in TValue value,
+        scoped in TLogger logger,
+        Action<TLogger> logOnFailure,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null)
+        where TValue : INumberBase<TValue>
+        where TLogger : ILogger
+        => TValue.IsZero(value)
+            ? logger
+                .LogAndReturn(logOnFailure)
+                .Failure<TValue>(
+                $"{paramName} cannot be zero")
+            : ValueResult.Success(value);
+
     public static ValueResult<TValue, ValueError> ErrorIfGreaterThen<TValue>(
         this scoped in ValueResult<TValue, ValueError> value,
         scoped in TValue other,
@@ -104,6 +134,6 @@ public static class ValueResultExtensions
         where TValue : IComparable<TValue>
         => value.CompareTo(other) > 0
             ? ValueResult.Failure<TValue>(
-                $"{paramName} cannot be greater than {other}")
+                $"{paramName} cannot be greater than {other:##,#}")
             : ValueResult.Success(value);
 }

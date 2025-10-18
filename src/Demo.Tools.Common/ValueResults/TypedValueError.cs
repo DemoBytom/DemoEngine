@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Logging;
 
 namespace Demo.Tools.Common.ValueResults;
 
@@ -58,48 +57,6 @@ public readonly ref struct TypedValueError(
 
 public static partial class TypedValueErrorExtensions
 {
-    public static ValueResult<TValue, TypedValueError> LogAndReturnOutOfRange<TValue>(
-        this ILogger? logger,
-        Action<ILogger> logAction,
-        string parameterName,
-        string errorMessage)
-        where TValue : allows ref struct
-    {
-        if (logger is not null)
-        {
-            logAction(logger);
-        }
-        return TypedValueError.OutOfRange<TValue>(parameterName, errorMessage);
-    }
-
-    public static ValueResult<TValue, TypedValueError> LogAndReturnOutOfRange<TValue, TLogValue1, TLogValue2>(
-        this ILogger? logger,
-        (Action<ILogger, TLogValue1, TLogValue2> logAction, TLogValue1 logVal1, TLogValue2 logVal2) logAction,
-        string parameterName,
-        string errorMessage)
-        where TValue : allows ref struct
-    {
-        if (logger is not null)
-        {
-            logAction.logAction(logger, logAction.logVal1, logAction.logVal2);
-        }
-        return TypedValueError.OutOfRange<TValue>(parameterName, errorMessage);
-    }
-
-    public static ValueResult<TValue, TypedValueError> LogAndReturnInvalidOperation<TValue>(
-        this ILogger? logger,
-        Action<ILogger> logAction,
-        string errorMessage)
-        where TValue : allows ref struct
-    {
-        if (logger is not null)
-        {
-            logAction(logger);
-        }
-
-        return TypedValueError.InvalidOperation<TValue>(errorMessage);
-    }
-
     public static ValueResult<TValue, TypedValueError> InvalidOperation<TValue>(
         this ValueResult.LogAndReturnResultCallContext _,
         string errorMessage)

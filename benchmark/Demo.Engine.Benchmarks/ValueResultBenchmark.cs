@@ -55,6 +55,33 @@ public class ValueResultBenchmark
         ;
 
     [Benchmark]
+    public ValueResult<int, ValueError> Test_Bind_Many_Parameters_InlineCall()
+    => ValueResult
+        .Success(TEST_INT)
+        .Bind(
+            param1: _p1,
+            param2: _p2,
+            param3: _p3,
+            param4: _p4,
+            param5: _p5,
+            param6: _p6,
+            param7: _p7,
+            param8: _p8,
+            bind: static (
+                scoped in iValue,
+                scoped in i1,
+                scoped in i2,
+                scoped in i3,
+                scoped in i4,
+                scoped in i5,
+                scoped in i6,
+                scoped in i7,
+                scoped in i8)
+            => ValueResult.Success(
+                iValue + i1 + i2 + i3 + i4 + i5 + i6 + i7 + i8))
+    ;
+
+    [Benchmark]
     public Result<int> Test_Class_Result_Many_Parameters()
         => Result
             .Success(TEST_INT)
@@ -112,6 +139,15 @@ public class ValueResultBenchmark
             .Bind(BindBigStructHopefullyFunc)
         ;
 
+    [Benchmark]
+    public ValueResult<BigStructHopefully, ValueError> Test_Struct_ValueResult_Inline()
+    => ValueResult
+        .Success(_testStruct)
+        .Bind(static (
+            scoped in value)
+        => ValueResult.Success(value))
+    ;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ValueResult<BigStructHopefully, ValueError> BindBigStructHopefullyFunc(
         scoped in BigStructHopefully value)
@@ -139,6 +175,57 @@ public class ValueResultBenchmark
                 param7: _p7,
                 param8: _p8,
                 BindBigStructHopefullyFunc_Many_Parameters)
+        ;
+
+    [Benchmark]
+    public ValueResult<BigStructHopefully, ValueError> Test_Struct_ValueResult_Many_Parameters_Inline()
+        => ValueResult
+            .Success(_testStruct)
+            .Bind(
+                param1: _p1,
+                param2: _p2,
+                param3: _p3,
+                param4: _p4,
+                param5: _p5,
+                param6: _p6,
+                param7: _p7,
+                param8: _p8,
+                static (
+                    scoped in value,
+                    scoped in i1,
+                    scoped in i2,
+                    scoped in i3,
+                    scoped in i4,
+                    scoped in i5,
+                    scoped in i6,
+                    scoped in i7,
+                    scoped in i8)
+            => ValueResult.Success(
+                new BigStructHopefully()
+                {
+                    SomeInt = value.SomeInt
+                                    + i1
+                                    + i2
+                                    + i3
+                                    + i4
+                                    + i5
+                                    + i6
+                                    + i7
+                                    + i8,
+                    SomeInt2 = value.SomeInt2
+                                    + i1
+                                    + i2
+                                    + i3
+                                    + i4
+                                    + i5
+                                    + i6
+                                    + i7
+                                    + i8,
+                    ThisIsAString = value.ThisIsAnotherString,
+                    ThisIsAnotherString = value.ThisIsAString,
+                    SomeFloat = value.SomeFloat2,
+                    SomeFloat2 = value.SomeFloat,
+                }))
         ;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

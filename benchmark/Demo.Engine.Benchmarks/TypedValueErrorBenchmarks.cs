@@ -63,46 +63,6 @@ public class TypedValueErrorBenchmarks
                 ERROR_MESSAGE));
 
     [Benchmark]
-    public ValueResult<int, TypedValueError> CallLogAndReturnOutOfRangeError_NoExtraParams()
-        => TypedValueErrorExtensions.LogAndReturnOutOfRange<int>(
-            _logger,
-            logger => logger.LogInformation("Logging out of range error"),
-            PARAM_NAME,
-            ERROR_MESSAGE);
-
-    [Benchmark]
-    public ValueResult<int, TypedValueError> CallLogAndReturnOutOfRangeError_NoExtraParams_SourceGeneratedLogger()
-        => TypedValueErrorExtensions.LogAndReturnOutOfRange<int>(
-            _logger,
-            LoggingExtensions.LogOutOfRangeError,
-            PARAM_NAME,
-            ERROR_MESSAGE);
-
-    [Benchmark]
-    public ValueResult<int, TypedValueError> CallLogAndReturnOutOfRangeError_WithParams()
-        => TypedValueErrorExtensions.LogAndReturnOutOfRange<int, string, string>(
-            _logger,
-            (
-                (logger, s1, s2) => logger.LogInformation("Logging out of range error for {paramName}, {errorMessage}", s1, s2),
-                PARAM_NAME,
-                ERROR_MESSAGE
-            ),
-            PARAM_NAME,
-            ERROR_MESSAGE);
-
-    [Benchmark]
-    public ValueResult<int, TypedValueError> CallLogAndReturnOutOfRangeError_WithParams_SourceGeneratedLogger()
-        => TypedValueErrorExtensions.LogAndReturnOutOfRange<int, string, string>(
-            _logger,
-            (
-                LoggingExtensions.LogOutOfRangeError,
-                PARAM_NAME,
-                ERROR_MESSAGE
-            ),
-            PARAM_NAME,
-            ERROR_MESSAGE);
-
-    [Benchmark]
     public ValueResult<int, ValueError> ValueResult_CallLogAndReturnFailure_NoExtraParams()
         => ValueResult.LogAndReturnFailure<int>(
             _logger,

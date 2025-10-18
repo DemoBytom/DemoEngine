@@ -101,20 +101,31 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
             Device,
             CommandListType.Direct);
 
-        //Create RTV Heap
-        this
-            .CreateDescriptorHeaps()
-            .RTV(capacity: 512, isShaderVisible: false, out var rtv)
-            .DSV(capacity: 512, isShaderVisible: false, out var dsv)
-            .SRV(capacity: 4096, isShaderVisible: true, out var srv)
-            .UAV(capacity: 512, isShaderVisible: false, out var uav)
-            .VerifyAllDescriptorsCreatedProperly()
-            ;
+        // Create Descriptor Heaps
+        RTVDescriptorHeapAllocator? rtvInner = null;
+        DSVDescriptorHeapAllocator? dsvInner = null;
+        SRVDescriptorHeapAllocator? srvInner = null;
+        UAVDescriptorHeapAllocator? uavInner = null;
 
-        RTVHeapAllocator = rtv;
-        DSVHeapAllocator = dsv;
-        SRVHeapAllocator = srv;
-        UAVHeapAllocator = uav;
+        if (this
+            .CreateDescriptorHeaps(
+                b => b.RTV(capacity: 512, isShaderVisible: false, rtv => rtvInner = rtv),
+                b => b.DSV(capacity: 512, isShaderVisible: false, dsv => dsvInner = dsv),
+                b => b.SRV(capacity: 4096, isShaderVisible: true, srv => srvInner = srv),
+                b => b.UAV(capacity: 512, isShaderVisible: false, uav => uavInner = uav))
+            is { IsSuccess: false } failureResult)
+        {
+            _logger.LogError("Failed to create descriptor heaps: {errorMessage}",
+                failureResult.Error.Message);
+
+            throw new InvalidOperationException(
+                $"Failed to create descriptor heaps: {failureResult.Error.Message}");
+        }
+
+        RTVHeapAllocator = rtvInner!;
+        DSVHeapAllocator = dsvInner!;
+        SRVHeapAllocator = srvInner!;
+        UAVHeapAllocator = uavInner!;
 
         //renderingSurface = new RenderingSurface(
         //    serviceProvider);
