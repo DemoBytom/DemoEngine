@@ -78,11 +78,27 @@ public static class ValueResultExtensions
 
     public delegate TResult OnSuccessFunc<TValue, TResult>(
         scoped in TValue value)
-        where TValue : allows ref struct;
+        where TValue : allows ref struct
+        where TResult : allows ref struct;
 
     public delegate TResult OnFailureFunc<TError, TResult>(
         scoped in TError error)
-        where TError : IError, allows ref struct;
+        where TError : IError, allows ref struct
+        where TResult : allows ref struct;
+
+    public delegate TResult OnSuccessFunc<TValue, TParam1, TResult>(
+        scoped in TValue value,
+        scoped in TParam1 param1)
+        where TValue : allows ref struct
+        where TParam1 : allows ref struct
+        where TResult : allows ref struct;
+
+    public delegate TResult OnFailureFunc<TError, TParam1, TResult>(
+        scoped in TError error,
+        scoped in TParam1 param1)
+        where TError : IError, allows ref struct
+        where TParam1 : allows ref struct
+        where TResult : allows ref struct;
 
     public static TResult MatchWithDelegate<TValue, TError, TResult>(
         this scoped in ValueResult<TValue, TError> result,
@@ -90,9 +106,23 @@ public static class ValueResultExtensions
         OnFailureFunc<TError, TResult> onFailure)
         where TError : IError, allows ref struct
         where TValue : allows ref struct
+        where TResult : allows ref struct
         => result.IsSuccess
             ? onSuccess(result.Value)
             : onFailure(result.Error);
+
+    public static TResult MatchWithDelegate<TValue, TError, TParam1, TResult>(
+        this scoped in ValueResult<TValue, TError> result,
+        scoped in TParam1 param1,
+        OnSuccessFunc<TValue, TParam1, TResult> onSuccess,
+        OnFailureFunc<TError, TParam1, TResult> onFailure)
+        where TError : IError, allows ref struct
+        where TValue : allows ref struct
+        where TParam1 : allows ref struct
+        where TResult : allows ref struct
+        => result.IsSuccess
+            ? onSuccess(result.Value, param1)
+            : onFailure(result.Error, param1);
 
     public static ValueResult<TValue, ValueError> ErrorIfZero<TValue>(
         scoped in TValue value,

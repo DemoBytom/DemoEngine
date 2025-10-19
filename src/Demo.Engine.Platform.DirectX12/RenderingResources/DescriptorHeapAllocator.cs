@@ -393,99 +393,155 @@ internal abstract class DescriptorHeapAllocator(
 
 internal static class DescriptorHeapAllocatorExtensions
 {
-    public static ValueResult<ValueError> CreateDescriptorHeaps(
-        this ID3D12RenderingEngine renderingEngine,
-        params ReadOnlySpan<Func<DescHeapAllocatorBuilder, ValueResult<ValueError>>> actions)
+    public readonly ref struct DescriptorHeapAllocatorsBuilder<T1, T2, T3, T4>(
+        T1 allocator1,
+        T2 allocator2,
+        T3 allocator3,
+        T4 allocator4)
+        where T1 : DescriptorHeapAllocator
+        where T2 : DescriptorHeapAllocator
+        where T3 : DescriptorHeapAllocator
+        where T4 : DescriptorHeapAllocator
     {
-        var builder = new DescHeapAllocatorBuilder(
-            renderingEngine: renderingEngine);
+        public T1 Allocator1 { get; } = allocator1;
+        public T2 Allocator2 { get; } = allocator2;
+        public T3 Allocator3 { get; } = allocator3;
+        public T4 Allocator4 { get; } = allocator4;
 
-        foreach (var action in actions)
+        public void Deconstruct(
+            out T1 allocator1,
+            out T2 allocator2,
+            out T3 allocator3,
+            out T4 allocator4)
         {
-            // Just invoke to perform creation
-            var result = action.Invoke(
-                builder);
-
-            if (!result.IsSuccess)
-            {
-                return result;
-                //throw new InvalidOperationException(
-                //"Couldn't create descriptor heap allocator!");
-            }
+            allocator1 = Allocator1;
+            allocator2 = Allocator2;
+            allocator3 = Allocator3;
+            allocator4 = Allocator4;
         }
-
-        return ValueResult.Success();
     }
 
-    public static ValueResult<ValueError> RTV(
+    public static ValueResult<DescriptorHeapAllocatorsBuilder<T1, T2, T3, T4>, ValueError> CreateDescriptorHeaps<T1, T2, T3, T4>(
+        this ID3D12RenderingEngine renderingEngine,
+        Func<DescHeapAllocatorBuilder, ValueResult<T1, ValueError>> action1,
+        Func<DescHeapAllocatorBuilder, ValueResult<T2, ValueError>> action2,
+        Func<DescHeapAllocatorBuilder, ValueResult<T3, ValueError>> action3,
+        Func<DescHeapAllocatorBuilder, ValueResult<T4, ValueError>> action4)
+        where T1 : DescriptorHeapAllocator
+        where T2 : DescriptorHeapAllocator
+        where T3 : DescriptorHeapAllocator
+        where T4 : DescriptorHeapAllocator
+        => action1
+            .Invoke(
+                new DescHeapAllocatorBuilder(renderingEngine))
+            .Bind(
+                param1: renderingEngine,
+                param2: action2,
+                static (scoped in allocator1, scoped in re, scoped in action2)
+                    => action2
+                        .Invoke(
+                            new DescHeapAllocatorBuilder(re))
+                        .MatchWithDelegate(
+                            param1: allocator1,
+                            onSuccess: static (scoped in allocator2, scoped in allocator1)
+                                => ValueResult.Success((allocator1, allocator2)),
+                            onFailure: static (scoped in failure, scoped in _)
+                                => ValueResult.Failure<(T1 allocator1, T2 allocator2), ValueError>(failure)))
+            .Bind(
+                param1: renderingEngine,
+                param2: action3,
+                static (scoped in allocators, scoped in re, scoped in action3)
+                    => action3
+                        .Invoke(
+                            new DescHeapAllocatorBuilder(re))
+                        .MatchWithDelegate(
+                            param1: allocators,
+                            onSuccess: static (scoped in allocator3, scoped in allocators)
+                                => ValueResult.Success((allocators.allocator1, allocators.allocator2, allocator3)),
+                            onFailure: static (scoped in failure, scoped in _)
+                                => ValueResult.Failure<(T1 allocator1, T2 allocator2, T3 allocator3), ValueError>(failure)))
+            .Bind(
+                param1: renderingEngine,
+                param2: action4,
+                static (scoped in allocators, scoped in re, scoped in action4)
+                    => action4
+                        .Invoke(
+                            new DescHeapAllocatorBuilder(re))
+                        .MatchWithDelegate(
+                            param1: allocators,
+                            onSuccess: static (scoped in allocator4, scoped in allocators)
+                                => ValueResult.Success((allocators.allocator1, allocators.allocator2, allocators.allocator3, allocator4)),
+                            onFailure: static (scoped in failure, scoped in _)
+                                => ValueResult.Failure<(T1 allocator1, T2 allocator2, T3 allocator3, T4 allocator4), ValueError>(failure)
+                        ))
+            .MatchWithDelegate(
+                onSuccess: static (scoped in allocators)
+                    => ValueResult.Success(
+                        new DescriptorHeapAllocatorsBuilder<T1, T2, T3, T4>(
+                            allocators.allocator1,
+                            allocators.allocator2,
+                            allocators.allocator3,
+                            allocators.allocator4)),
+                onFailure: static (scoped in failure)
+                    => ValueResult.Failure<DescriptorHeapAllocatorsBuilder<T1, T2, T3, T4>, ValueError>(failure));
+
+    public static ValueResult<RTVDescriptorHeapAllocator, ValueError> RTV(
         this DescHeapAllocatorBuilder builder,
         uint capacity,
-        bool isShaderVisible,
-        Action<RTVDescriptorHeapAllocator> setOnSuccess)
+        bool isShaderVisible)
         => builder
             .CreateDescriptorHeapAllocator(
                 capacity,
                 isShaderVisible,
                 createAllocator: renderingEngine
-                    => new RTVDescriptorHeapAllocator(renderingEngine),
-                setOnSuccess: setOnSuccess);
+                    => new RTVDescriptorHeapAllocator(renderingEngine));
 
-    public static ValueResult<ValueError> DSV(
+    public static ValueResult<DSVDescriptorHeapAllocator, ValueError> DSV(
         this DescHeapAllocatorBuilder builder,
         uint capacity,
-        bool isShaderVisible,
-        Action<DSVDescriptorHeapAllocator> setOnSuccess)
+        bool isShaderVisible)
         => builder
             .CreateDescriptorHeapAllocator(
                 capacity,
                 isShaderVisible,
                 createAllocator: renderingEngine
-                    => new DSVDescriptorHeapAllocator(renderingEngine),
-                setOnSuccess: setOnSuccess);
+                    => new DSVDescriptorHeapAllocator(renderingEngine));
 
-    public static ValueResult<ValueError> SRV(
+    public static ValueResult<SRVDescriptorHeapAllocator, ValueError> SRV(
         this DescHeapAllocatorBuilder builder,
         uint capacity,
-        bool isShaderVisible,
-        Action<SRVDescriptorHeapAllocator> setOnSuccess)
+        bool isShaderVisible)
         => builder
             .CreateDescriptorHeapAllocator(
                 capacity,
                 isShaderVisible,
                 createAllocator: renderingEngine
-                    => new SRVDescriptorHeapAllocator(renderingEngine),
-                setOnSuccess: setOnSuccess);
+                    => new SRVDescriptorHeapAllocator(renderingEngine));
 
-    public static ValueResult<ValueError> UAV(
+    public static ValueResult<UAVDescriptorHeapAllocator, ValueError> UAV(
         this DescHeapAllocatorBuilder builder,
         uint capacity,
-        bool isShaderVisible,
-        Action<UAVDescriptorHeapAllocator> setOnSuccess)
+        bool isShaderVisible)
         => builder
             .CreateDescriptorHeapAllocator(
                 capacity,
                 isShaderVisible,
                 createAllocator: renderingEngine
-                    => new UAVDescriptorHeapAllocator(renderingEngine),
-                setOnSuccess: setOnSuccess);
+                    => new UAVDescriptorHeapAllocator(renderingEngine));
 
-    private static ValueResult<ValueError> CreateDescriptorHeapAllocator<TDescriptorHeapAllocator>(
+    private static ValueResult<TDescriptorHeapAllocator, ValueError> CreateDescriptorHeapAllocator<TDescriptorHeapAllocator>(
         this DescHeapAllocatorBuilder builder,
         uint capacity,
         bool isShaderVisible,
-        Func<ID3D12RenderingEngine, TDescriptorHeapAllocator> createAllocator,
-        Action<TDescriptorHeapAllocator> setOnSuccess)
+        Func<ID3D12RenderingEngine, TDescriptorHeapAllocator> createAllocator)
         where TDescriptorHeapAllocator : DescriptorHeapAllocator
     {
         var dsv = createAllocator(builder.RenderingEngine);
         var initializedResult = dsv.Initialize(capacity, isShaderVisible);
 
-        if (initializedResult.IsSuccess)
-        {
-            setOnSuccess(dsv);
-        }
-
-        return initializedResult;
+        return initializedResult.IsSuccess
+            ? ValueResult.Success(dsv)
+            : ValueResult<TDescriptorHeapAllocator, ValueError>.Failure(initializedResult.Error);
     }
 
     internal readonly ref struct DescHeapAllocatorBuilder(
