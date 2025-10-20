@@ -393,7 +393,58 @@ internal abstract class DescriptorHeapAllocator(
 
 internal static class DescriptorHeapAllocatorExtensions
 {
-    public readonly ref struct DescriptorHeapAllocatorsBuilder<T1, T2, T3, T4>(
+    public readonly ref struct DescriptorHeapAllocatorsBuilderResult<T1, T2>(
+        T1 allocator1,
+        T2 allocator2)
+        where T1 : DescriptorHeapAllocator
+        where T2 : DescriptorHeapAllocator
+    {
+        public T1 Allocator1 { get; } = allocator1;
+        public T2 Allocator2 { get; } = allocator2;
+
+        public void Deconstruct(
+            out T1 allocator1,
+            out T2 allocator2)
+        {
+            allocator1 = Allocator1;
+            allocator2 = Allocator2;
+        }
+    }
+
+    public readonly ref struct DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>(
+        T1 allocator1,
+        T2 allocator2,
+        T3 allocator3)
+        where T1 : DescriptorHeapAllocator
+        where T2 : DescriptorHeapAllocator
+        where T3 : DescriptorHeapAllocator
+    {
+        public T1 Allocator1 { get; } = allocator1;
+        public T2 Allocator2 { get; } = allocator2;
+        public T3 Allocator3 { get; } = allocator3;
+
+        public DescriptorHeapAllocatorsBuilderResult(
+            DescriptorHeapAllocatorsBuilderResult<T1, T2> result,
+            T3 allocator3)
+            : this(
+                  result.Allocator1,
+                  result.Allocator2,
+                  allocator3)
+        {
+        }
+
+        public void Deconstruct(
+            out T1 allocator1,
+            out T2 allocator2,
+            out T3 allocator3)
+        {
+            allocator1 = Allocator1;
+            allocator2 = Allocator2;
+            allocator3 = Allocator3;
+        }
+    }
+
+    public readonly ref struct DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>(
         T1 allocator1,
         T2 allocator2,
         T3 allocator3,
@@ -408,6 +459,17 @@ internal static class DescriptorHeapAllocatorExtensions
         public T3 Allocator3 { get; } = allocator3;
         public T4 Allocator4 { get; } = allocator4;
 
+        public DescriptorHeapAllocatorsBuilderResult(
+            DescriptorHeapAllocatorsBuilderResult<T1, T2, T3> result,
+            T4 allocator4)
+            : this(
+                  result.Allocator1,
+                  result.Allocator2,
+                  result.Allocator3,
+                  allocator4)
+        {
+        }
+
         public void Deconstruct(
             out T1 allocator1,
             out T2 allocator2,
@@ -421,7 +483,7 @@ internal static class DescriptorHeapAllocatorExtensions
         }
     }
 
-    public static ValueResult<DescriptorHeapAllocatorsBuilder<T1, T2, T3, T4>, ValueError> CreateDescriptorHeaps<T1, T2, T3, T4>(
+    public static ValueResult<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>, ValueError> CreateDescriptorHeaps<T1, T2, T3, T4>(
         this ID3D12RenderingEngine renderingEngine,
         Func<DescHeapAllocatorBuilder, ValueResult<T1, ValueError>> action1,
         Func<DescHeapAllocatorBuilder, ValueResult<T2, ValueError>> action2,
@@ -444,9 +506,9 @@ internal static class DescriptorHeapAllocatorExtensions
                         .MatchWithDelegate(
                             param1: allocator1,
                             onSuccess: static (scoped in allocator2, scoped in allocator1)
-                                => ValueResult.Success((allocator1, allocator2)),
+                                => ValueResult.Success(new DescriptorHeapAllocatorsBuilderResult<T1, T2>(allocator1, allocator2)),
                             onFailure: static (scoped in failure, scoped in _)
-                                => ValueResult.Failure<(T1 allocator1, T2 allocator2), ValueError>(failure)))
+                                => ValueResult.Failure<DescriptorHeapAllocatorsBuilderResult<T1, T2>>(failure)))
             .Bind(
                 param1: renderingEngine,
                 param2: action3,
@@ -457,9 +519,9 @@ internal static class DescriptorHeapAllocatorExtensions
                         .MatchWithDelegate(
                             param1: allocators,
                             onSuccess: static (scoped in allocator3, scoped in allocators)
-                                => ValueResult.Success((allocators.allocator1, allocators.allocator2, allocator3)),
+                                => ValueResult.Success(new DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>(allocators, allocator3)),
                             onFailure: static (scoped in failure, scoped in _)
-                                => ValueResult.Failure<(T1 allocator1, T2 allocator2, T3 allocator3), ValueError>(failure)))
+                                => ValueResult.Failure<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>>(failure)))
             .Bind(
                 param1: renderingEngine,
                 param2: action4,
@@ -470,20 +532,11 @@ internal static class DescriptorHeapAllocatorExtensions
                         .MatchWithDelegate(
                             param1: allocators,
                             onSuccess: static (scoped in allocator4, scoped in allocators)
-                                => ValueResult.Success((allocators.allocator1, allocators.allocator2, allocators.allocator3, allocator4)),
+                                => ValueResult.Success(new DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>(allocators, allocator4)),
                             onFailure: static (scoped in failure, scoped in _)
-                                => ValueResult.Failure<(T1 allocator1, T2 allocator2, T3 allocator3, T4 allocator4), ValueError>(failure)
+                                => ValueResult.Failure<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>>(failure)
                         ))
-            .MatchWithDelegate(
-                onSuccess: static (scoped in allocators)
-                    => ValueResult.Success(
-                        new DescriptorHeapAllocatorsBuilder<T1, T2, T3, T4>(
-                            allocators.allocator1,
-                            allocators.allocator2,
-                            allocators.allocator3,
-                            allocators.allocator4)),
-                onFailure: static (scoped in failure)
-                    => ValueResult.Failure<DescriptorHeapAllocatorsBuilder<T1, T2, T3, T4>, ValueError>(failure));
+            ;
 
     public static ValueResult<RTVDescriptorHeapAllocator, ValueError> RTV(
         this DescHeapAllocatorBuilder builder,

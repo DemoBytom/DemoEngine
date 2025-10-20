@@ -17,6 +17,10 @@ public readonly ref struct ValueResult<TValue, TError>
     [MemberNotNullWhen(false, nameof(Error))]
     public bool IsSuccess { get; }
 
+    [MemberNotNullWhen(false, nameof(Value))]
+    [MemberNotNullWhen(true, nameof(Error))]
+    public bool IsError => !IsSuccess;
+
     public TValue? Value { get; }
     public TError? Error { get; }
 
@@ -51,6 +55,9 @@ public readonly ref struct ValueResult<TError>
 {
     [MemberNotNullWhen(false, nameof(Error))]
     public bool IsSuccess { get; }
+
+    [MemberNotNullWhen(true, nameof(Error))]
+    public bool IsError => !IsSuccess;
 
     public TError? Error { get; }
 
@@ -97,6 +104,11 @@ public static class ValueResult
         string error)
         where TValue : allows ref struct
         => ValueResult<TValue, ValueError>.Failure(new(error));
+
+    public static ValueResult<TValue, ValueError> Failure<TValue>(
+        ValueError error)
+        where TValue : allows ref struct
+        => ValueResult<TValue, ValueError>.Failure(error);
 
     public static ValueResult<ValueError> Success()
         => ValueResult<ValueError>.Success();

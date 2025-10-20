@@ -110,7 +110,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
             b => b.UAV(capacity: 512, isShaderVisible: false))
             ;
 
-        if (!descriptorHeaps.IsSuccess)
+        if (descriptorHeaps.IsError)
         {
             _logger.LogError("Failed to create descriptor heaps: {errorMessage}",
                 descriptorHeaps.Error.Message);
