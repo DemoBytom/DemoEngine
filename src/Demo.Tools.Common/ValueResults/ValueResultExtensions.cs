@@ -14,6 +14,13 @@ public static class ValueResultExtensions
         where TValue1 : allows ref struct
         where TValue2 : allows ref struct;
 
+    public delegate TValue2 MapFunc<TValue1, TValue2, TParam1>(
+        scoped in TValue1 value,
+        scoped in TParam1 param1)
+        where TValue1 : allows ref struct
+        where TValue2 : allows ref struct
+        where TParam1 : allows ref struct;
+
     public static ValueResult<TValue2, TError> Map<TValue1, TValue2, TError>(
         this scoped in ValueResult<TValue1, TError> result,
         MapFunc<TValue1, TValue2> map)
@@ -22,6 +29,18 @@ public static class ValueResultExtensions
         where TValue2 : allows ref struct
         => result.IsSuccess
             ? ValueResult<TValue2, TError>.Success(map(result.Value))
+            : ValueResult<TValue2, TError>.Failure(result.Error);
+
+    public static ValueResult<TValue2, TError> Map<TValue1, TValue2, TError, TParam1>(
+        this scoped in ValueResult<TValue1, TError> result,
+        scoped in TParam1 param1,
+        MapFunc<TValue1, TValue2, TParam1> map)
+        where TError : IError, allows ref struct
+        where TValue1 : allows ref struct
+        where TValue2 : allows ref struct
+        where TParam1 : allows ref struct
+        => result.IsSuccess
+            ? ValueResult<TValue2, TError>.Success(map(result.Value, param1))
             : ValueResult<TValue2, TError>.Failure(result.Error);
 
     public static ValueResult<TValue, TNewError> MapError<TValue, TError, TNewError>(

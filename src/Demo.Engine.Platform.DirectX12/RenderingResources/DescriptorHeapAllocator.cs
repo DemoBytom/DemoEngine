@@ -396,7 +396,10 @@ internal static class DescriptorHeapAllocatorExtensions
     public readonly ref struct DescriptorHeapAllocatorsBuilderResult<T1, T2>(
         T1 allocator1,
         T2 allocator2)
-        : IDescriptorHeapAllocatorsBuilderResult<DescriptorHeapAllocatorsBuilderResult<T1, T2>, T1, T2>
+        : IDescriptorHeapAllocatorsBuilderResult<
+            DescriptorHeapAllocatorsBuilderResult<T1, T2>,
+            T1,
+            T2>
         where T1 : DescriptorHeapAllocator
         where T2 : DescriptorHeapAllocator
     {
@@ -414,23 +417,19 @@ internal static class DescriptorHeapAllocatorExtensions
         public static DescriptorHeapAllocatorsBuilderResult<T1, T2> Create(
             T1 param1,
             T2 param2)
-            => new(param1, param2);
-
-        public static ValueResult<DescriptorHeapAllocatorsBuilderResult<T1, T2>, ValueError> BindResult(
-            scoped in T1 allocators,
-            scoped in ID3D12RenderingEngine re,
-            scoped in Func<DescHeapAllocatorBuilder, ValueResult<T2, ValueError>> action)
-            => InvokeAndMatch<DescriptorHeapAllocatorsBuilderResult<T1, T2>, T1, T2>(
-                allocators,
-                re,
-                action);
+            => new(
+                allocator1: param1,
+                allocator2: param2);
     }
 
     public readonly ref struct DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>(
         T1 allocator1,
         T2 allocator2,
         T3 allocator3)
-        : IDescriptorHeapAllocatorsBuilderResult<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>, DescriptorHeapAllocatorsBuilderResult<T1, T2>, T3>
+        : IDescriptorHeapAllocatorsBuilderResult<
+            DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>,
+            DescriptorHeapAllocatorsBuilderResult<T1, T2>,
+            T3>
         where T1 : DescriptorHeapAllocator
         where T2 : DescriptorHeapAllocator
         where T3 : DescriptorHeapAllocator
@@ -438,16 +437,6 @@ internal static class DescriptorHeapAllocatorExtensions
         public T1 Allocator1 { get; } = allocator1;
         public T2 Allocator2 { get; } = allocator2;
         public T3 Allocator3 { get; } = allocator3;
-
-        public DescriptorHeapAllocatorsBuilderResult(
-            DescriptorHeapAllocatorsBuilderResult<T1, T2> result,
-            T3 allocator3)
-            : this(
-                  result.Allocator1,
-                  result.Allocator2,
-                  allocator3)
-        {
-        }
 
         public void Deconstruct(
             out T1 allocator1,
@@ -462,16 +451,10 @@ internal static class DescriptorHeapAllocatorExtensions
         public static DescriptorHeapAllocatorsBuilderResult<T1, T2, T3> Create(
             DescriptorHeapAllocatorsBuilderResult<T1, T2> param1,
             T3 param2)
-            => new(param1, param2);
-
-        public static ValueResult<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>, ValueError> BindResult(
-            scoped in DescriptorHeapAllocatorsBuilderResult<T1, T2> allocators,
-            scoped in ID3D12RenderingEngine re,
-            scoped in Func<DescHeapAllocatorBuilder, ValueResult<T3, ValueError>> action)
-            => InvokeAndMatch<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>, DescriptorHeapAllocatorsBuilderResult<T1, T2>, T3>(
-                allocators,
-                re,
-                action);
+            => new(
+                allocator1: param1.Allocator1,
+                allocator2: param1.Allocator2,
+                allocator3: param2);
     }
 
     public readonly ref struct DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>(
@@ -479,7 +462,10 @@ internal static class DescriptorHeapAllocatorExtensions
         T2 allocator2,
         T3 allocator3,
         T4 allocator4)
-        : IDescriptorHeapAllocatorsBuilderResult<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>, DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>, T4>
+        : IDescriptorHeapAllocatorsBuilderResult<
+            DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>,
+            DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>,
+            T4>
         where T1 : DescriptorHeapAllocator
         where T2 : DescriptorHeapAllocator
         where T3 : DescriptorHeapAllocator
@@ -489,17 +475,6 @@ internal static class DescriptorHeapAllocatorExtensions
         public T2 Allocator2 { get; } = allocator2;
         public T3 Allocator3 { get; } = allocator3;
         public T4 Allocator4 { get; } = allocator4;
-
-        public DescriptorHeapAllocatorsBuilderResult(
-            DescriptorHeapAllocatorsBuilderResult<T1, T2, T3> result,
-            T4 allocator4)
-            : this(
-                  result.Allocator1,
-                  result.Allocator2,
-                  result.Allocator3,
-                  allocator4)
-        {
-        }
 
         public void Deconstruct(
             out T1 allocator1,
@@ -516,16 +491,31 @@ internal static class DescriptorHeapAllocatorExtensions
         public static DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4> Create(
             DescriptorHeapAllocatorsBuilderResult<T1, T2, T3> param1,
             T4 param2)
-            => new(param1, param2);
+            => new(
+                allocator1: param1.Allocator1,
+                allocator2: param1.Allocator2,
+                allocator3: param1.Allocator3,
+                allocator4: param2);
+    }
 
-        public static ValueResult<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>, ValueError> BindResult(
-            scoped in DescriptorHeapAllocatorsBuilderResult<T1, T2, T3> allocators,
+    extension<TResult, TAllocators, TParam>(TResult result)
+        where TResult : IDescriptorHeapAllocatorsBuilderResult<TResult, TAllocators, TParam>, allows ref struct
+        where TParam : DescriptorHeapAllocator
+        where TAllocators : allows ref struct
+    {
+
+        public static ValueResult<TResult, ValueError> BindResult(
+            scoped in TAllocators allocators,
             scoped in ID3D12RenderingEngine re,
-            scoped in Func<DescHeapAllocatorBuilder, ValueResult<T4, ValueError>> action)
-            => InvokeAndMatch<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>, DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>, T4>(
-                allocators,
-                re,
-                action);
+            scoped in Func<DescHeapAllocatorBuilder, ValueResult<TParam, ValueError>> action)
+            => action
+                .Invoke(
+                    new DescHeapAllocatorBuilder(re))
+                .Map(
+                    param1: allocators,
+                    map: static (scoped in allocator, scoped in allocators)
+                        => TResult.Create(allocators, allocator))
+            ;
     }
 
     public static ValueResult<DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>, ValueError> CreateDescriptorHeaps<T1, T2, T3, T4>(
@@ -544,34 +534,19 @@ internal static class DescriptorHeapAllocatorExtensions
             .Bind(
                 param1: renderingEngine,
                 param2: action2,
-                bind: DescriptorHeapAllocatorsBuilderResult<T1, T2>.BindResult)
+                bind: static (scoped in allocators, scoped in renderingEngine, scoped in action2)
+                    => DescriptorHeapAllocatorsBuilderResult<T1, T2>.BindResult(allocators, renderingEngine, action2))
             .Bind(
                 param1: renderingEngine,
                 param2: action3,
-                bind: DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>.BindResult)
+                bind: static (scoped in allocators, scoped in renderingEngine, scoped in action3)
+                    => DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>.BindResult(allocators, renderingEngine, action3))
             .Bind(
                 param1: renderingEngine,
                 param2: action4,
-                bind: DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>.BindResult)
+                bind: static (scoped in allocators, scoped in renderingEngine, scoped in action4)
+                    => DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>.BindResult(allocators, renderingEngine, action4))
             ;
-
-    private static ValueResult<TResult, ValueError> InvokeAndMatch<TResult, TAllocators, TParam>(
-        scoped in TAllocators allocators,
-        scoped in ID3D12RenderingEngine re,
-        scoped in Func<DescHeapAllocatorBuilder, ValueResult<TParam, ValueError>> action)
-        where TResult : IDescriptorHeapAllocatorsBuilderResult<TResult, TAllocators, TParam>, allows ref struct
-        where TParam : DescriptorHeapAllocator
-        where TAllocators : allows ref struct
-        => action
-            .Invoke(
-                new DescHeapAllocatorBuilder(re))
-            .MatchWithDelegate(
-                param1: allocators,
-                onSuccess: static (scoped in allocator, scoped in allocators)
-                    => ValueResult.Success(TResult.Create(allocators, allocator)),
-                onFailure: static (scoped in failure, scoped in _)
-                    => ValueResult.Failure<TResult>(failure)
-            );
 
     internal interface IDescriptorHeapAllocatorsBuilderResult<TResult, TAllocators, TParam>
         where TResult : IDescriptorHeapAllocatorsBuilderResult<TResult, TAllocators, TParam>, allows ref struct
@@ -579,70 +554,63 @@ internal static class DescriptorHeapAllocatorExtensions
         where TParam : DescriptorHeapAllocator
     {
         static abstract TResult Create(TAllocators param1, TParam param2);
-
-        static abstract ValueResult<TResult, ValueError> BindResult(
-            scoped in TAllocators allocators,
-            scoped in ID3D12RenderingEngine re,
-            scoped in Func<DescHeapAllocatorBuilder, ValueResult<TParam, ValueError>> action);
     }
 
-    public static ValueResult<RTVDescriptorHeapAllocator, ValueError> RTV(
-        this DescHeapAllocatorBuilder builder,
-        uint capacity,
-        bool isShaderVisible)
-        => builder
-            .CreateDescriptorHeapAllocator(
-                capacity,
-                isShaderVisible,
-                createAllocator: renderingEngine
-                    => new RTVDescriptorHeapAllocator(renderingEngine));
-
-    public static ValueResult<DSVDescriptorHeapAllocator, ValueError> DSV(
-        this DescHeapAllocatorBuilder builder,
-        uint capacity,
-        bool isShaderVisible)
-        => builder
-            .CreateDescriptorHeapAllocator(
-                capacity,
-                isShaderVisible,
-                createAllocator: renderingEngine
-                    => new DSVDescriptorHeapAllocator(renderingEngine));
-
-    public static ValueResult<SRVDescriptorHeapAllocator, ValueError> SRV(
-        this DescHeapAllocatorBuilder builder,
-        uint capacity,
-        bool isShaderVisible)
-        => builder
-            .CreateDescriptorHeapAllocator(
-                capacity,
-                isShaderVisible,
-                createAllocator: renderingEngine
-                    => new SRVDescriptorHeapAllocator(renderingEngine));
-
-    public static ValueResult<UAVDescriptorHeapAllocator, ValueError> UAV(
-        this DescHeapAllocatorBuilder builder,
-        uint capacity,
-        bool isShaderVisible)
-        => builder
-            .CreateDescriptorHeapAllocator(
-                capacity,
-                isShaderVisible,
-                createAllocator: renderingEngine
-                    => new UAVDescriptorHeapAllocator(renderingEngine));
-
-    private static ValueResult<TDescriptorHeapAllocator, ValueError> CreateDescriptorHeapAllocator<TDescriptorHeapAllocator>(
-        this DescHeapAllocatorBuilder builder,
-        uint capacity,
-        bool isShaderVisible,
-        Func<ID3D12RenderingEngine, TDescriptorHeapAllocator> createAllocator)
-        where TDescriptorHeapAllocator : DescriptorHeapAllocator
+    extension(DescHeapAllocatorBuilder builder)
     {
-        var dsv = createAllocator(builder.RenderingEngine);
-        var initializedResult = dsv.Initialize(capacity, isShaderVisible);
+        public ValueResult<RTVDescriptorHeapAllocator, ValueError> RTV(
+            uint capacity,
+            bool isShaderVisible)
+            => builder
+                .CreateDescriptorHeapAllocator(
+                    capacity,
+                    isShaderVisible,
+                    createAllocator: renderingEngine
+                        => new RTVDescriptorHeapAllocator(renderingEngine));
 
-        return initializedResult.IsSuccess
-            ? ValueResult.Success(dsv)
-            : ValueResult.Failure<TDescriptorHeapAllocator>(initializedResult.Error);
+        public ValueResult<DSVDescriptorHeapAllocator, ValueError> DSV(
+            uint capacity,
+            bool isShaderVisible)
+            => builder
+                .CreateDescriptorHeapAllocator(
+                    capacity,
+                    isShaderVisible,
+                    createAllocator: renderingEngine
+                        => new DSVDescriptorHeapAllocator(renderingEngine));
+
+        public ValueResult<SRVDescriptorHeapAllocator, ValueError> SRV(
+            uint capacity,
+            bool isShaderVisible)
+            => builder
+                .CreateDescriptorHeapAllocator(
+                    capacity,
+                    isShaderVisible,
+                    createAllocator: renderingEngine
+                        => new SRVDescriptorHeapAllocator(renderingEngine));
+
+        public ValueResult<UAVDescriptorHeapAllocator, ValueError> UAV(
+            uint capacity,
+            bool isShaderVisible)
+            => builder
+                .CreateDescriptorHeapAllocator(
+                    capacity,
+                    isShaderVisible,
+                    createAllocator: static renderingEngine
+                        => new UAVDescriptorHeapAllocator(renderingEngine));
+
+        private ValueResult<TDescriptorHeapAllocator, ValueError> CreateDescriptorHeapAllocator<TDescriptorHeapAllocator>(
+            uint capacity,
+            bool isShaderVisible,
+            Func<ID3D12RenderingEngine, TDescriptorHeapAllocator> createAllocator)
+            where TDescriptorHeapAllocator : DescriptorHeapAllocator
+        {
+            var dsv = createAllocator(builder.RenderingEngine);
+            var initializedResult = dsv.Initialize(capacity, isShaderVisible);
+
+            return initializedResult.IsSuccess
+                ? ValueResult.Success(dsv)
+                : ValueResult.Failure<TDescriptorHeapAllocator>(initializedResult.Error);
+        }
     }
 
     internal readonly ref struct DescHeapAllocatorBuilder(
