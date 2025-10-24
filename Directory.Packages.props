@@ -7,6 +7,8 @@
     <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.3" />
     <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.3" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
     <PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="9.0.9" />
@@ -22,6 +24,8 @@
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
     <PackageVersion Include="System.Text.Json" Version="9.0.9" />
+    <PackageVersion Include="Verify.SourceGenerators" Version="2.5.0" />
+    <PackageVersion Include="Verify.Xunit" Version="31.0.4" />
     <PackageVersion Include="Vortice.Dxc" Version="3.6.2" />
     <PackageVersion Include="Vortice.Mathematics" Version="1.9.3" />
     <PackageVersion Include="Vortice.D3DCompiler" Version="3.6.2" />
