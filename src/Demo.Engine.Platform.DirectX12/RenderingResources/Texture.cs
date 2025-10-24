@@ -4,7 +4,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
-using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocator;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
@@ -17,7 +16,7 @@ internal class Texture
 
     public ID3D12Resource Resource { get; }
 
-    public DescriptorHandle SRV { get; }
+    public DescriptorHandle<SRVDescriptorHeapAllocator> SRV { get; }
 
     /// <summary>
     /// Creates Texture resource

@@ -9,21 +9,21 @@ namespace Demo.Engine.Platform.DirectX12;
 
 internal interface ID3D12RenderingEngine : IRenderingEngine
 {
-    public ID3D12Device14 Device { get; }
+    ID3D12Device14 Device { get; }
 
-    public ID3D12GraphicsCommandList10 CommandList { get; }
-    public RTVDescriptorHeapAllocator RTVHeapAllocator { get; }
-    public SRVDescriptorHeapAllocator SRVHeapAllocator { get; }
-    public DSVDescriptorHeapAllocator DSVHeapAllocator { get; }
-    public UAVDescriptorHeapAllocator UAVHeapAllocator { get; }
+    ID3D12GraphicsCommandList10 CommandList { get; }
+    RTVDescriptorHeapAllocator RTVHeapAllocator { get; }
+    SRVDescriptorHeapAllocator SRVHeapAllocator { get; }
+    DSVDescriptorHeapAllocator DSVHeapAllocator { get; }
+    UAVDescriptorHeapAllocator UAVHeapAllocator { get; }
 
-    public void InitCommandList();
+    void InitCommandList();
 
-    public void ExecuteCommandList();
+    void ExecuteCommandList();
 
-    public uint CurrentFrameIndex();
+    uint CurrentFrameIndex();
 
-    public void SetDeferredReleasesFlag();
+    void SetDeferredReleasesFlag();
 
     void DeferredRelease(IDisposable disposable);
 

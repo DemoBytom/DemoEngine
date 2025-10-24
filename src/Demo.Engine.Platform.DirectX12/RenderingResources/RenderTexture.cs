@@ -2,7 +2,6 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Vortice.Direct3D12;
-using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocator;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
@@ -11,10 +10,10 @@ internal class RenderTexture
 {
     private bool _disposedValue;
     private readonly Texture _texture;
-    private readonly DescriptorHandle[] _rtv = new DescriptorHandle[Common.MAX_MIPS];
+    private readonly DescriptorHandle<RTVDescriptorHeapAllocator>[] _rtv = new DescriptorHandle<RTVDescriptorHeapAllocator>[Common.MAX_MIPS];
     private ushort _mipCount;
 
-    public DescriptorHandle SRV => _texture.SRV;
+    public DescriptorHandle<SRVDescriptorHeapAllocator> SRV => _texture.SRV;
     public ID3D12Resource Resource => _texture.Resource;
 
     private RenderTexture(

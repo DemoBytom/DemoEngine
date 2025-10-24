@@ -102,7 +102,6 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
             CommandListType.Direct);
 
         // Create Descriptor Heaps
-
         var descriptorHeaps = this.CreateDescriptorHeaps(
             b => b.RTV(capacity: 512, isShaderVisible: false),
             b => b.DSV(capacity: 512, isShaderVisible: false),

@@ -1,48 +1,49 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Demo.Tools.Common.ValueResults;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
-using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocator;
 using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocatorLoggerExtensions;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
 internal sealed class RTVDescriptorHeapAllocator(
     ID3D12RenderingEngine d3D12RenderingEngine)
-    : DescriptorHeapAllocator(
+    : DescriptorHeapAllocator<RTVDescriptorHeapAllocator>(
         d3D12RenderingEngine.GetRequiredService<ILogger<RTVDescriptorHeapAllocator>>(),
         d3D12RenderingEngine,
         DescriptorHeapType.RenderTargetView);
 
 internal sealed class DSVDescriptorHeapAllocator(
     ID3D12RenderingEngine d3D12RenderingEngine)
-    : DescriptorHeapAllocator(
+    : DescriptorHeapAllocator<DSVDescriptorHeapAllocator>(
         d3D12RenderingEngine.GetRequiredService<ILogger<DSVDescriptorHeapAllocator>>(),
         d3D12RenderingEngine,
         DescriptorHeapType.DepthStencilView);
 
 internal sealed class SRVDescriptorHeapAllocator(
     ID3D12RenderingEngine d3D12RenderingEngine)
-    : DescriptorHeapAllocator(
+    : DescriptorHeapAllocator<SRVDescriptorHeapAllocator>(
         d3D12RenderingEngine.GetRequiredService<ILogger<SRVDescriptorHeapAllocator>>(),
         d3D12RenderingEngine,
         DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
 
 internal sealed class UAVDescriptorHeapAllocator(
     ID3D12RenderingEngine d3D12RenderingEngine)
-    : DescriptorHeapAllocator(
+    : DescriptorHeapAllocator<UAVDescriptorHeapAllocator>(
         d3D12RenderingEngine.GetRequiredService<ILogger<UAVDescriptorHeapAllocator>>(),
         d3D12RenderingEngine,
         DescriptorHeapType.ConstantBufferViewShaderResourceViewUnorderedAccessView);
 
-internal abstract class DescriptorHeapAllocator(
-    ILogger<DescriptorHeapAllocator> logger,
+internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
+    ILogger<TDescriptorHeapAllocator> logger,
     ID3D12RenderingEngine d3D12RenderingEngine,
     DescriptorHeapType heapType)
     : IDisposable
+    where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
 {
     public CpuDescriptorHandle CPU_Start { get; private set; }
 
@@ -76,10 +77,10 @@ internal abstract class DescriptorHeapAllocator(
     public bool IsShaderVisible { get; private set; }
 
     private readonly Lock _lock = new();
-    private readonly ILogger<DescriptorHeapAllocator> _logger = logger;
+    private readonly ILogger<TDescriptorHeapAllocator> _logger = logger;
     private readonly ID3D12RenderingEngine _d3D12RenderingEngine = d3D12RenderingEngine;
 
-    public ValueResult<ValueError> Initialize(
+    public ValueResult<TDescriptorHeapAllocator, ValueError> Initialize(
         uint capacity,
         bool isShaderVisible)
     {
@@ -93,7 +94,7 @@ internal abstract class DescriptorHeapAllocator(
                     heapType: HeapType,
                     errorMessage: capacitySetResult.Error.Message);
 
-                return ValueResult.Failure(capacitySetResult.Error);
+                return ValueResult.Failure<TDescriptorHeapAllocator>(capacitySetResult.Error);
             }
 
             if (HeapType
@@ -157,7 +158,7 @@ internal abstract class DescriptorHeapAllocator(
 
             IsShaderVisible = isShaderVisible;
 
-            return ValueResult.Success();
+            return ValueResult.Success<TDescriptorHeapAllocator>(this);
         }
     }
 
@@ -179,7 +180,7 @@ internal abstract class DescriptorHeapAllocator(
                     => ValueResult.Failure(failure))
             ;
 
-    public DescriptorHandle Allocate()
+    public DescriptorHandle<TDescriptorHeapAllocator> Allocate()
     {
         lock (_lock)
         {
@@ -192,7 +193,7 @@ internal abstract class DescriptorHeapAllocator(
 
             ++Size;
 
-            return new DescriptorHandle(
+            return new DescriptorHandle<TDescriptorHeapAllocator>(
                 cpu: new CpuDescriptorHandle(
                     other: CPU_Start,
                     offsetInDescriptors: index,
@@ -209,7 +210,7 @@ internal abstract class DescriptorHeapAllocator(
     }
 
     public void Free(
-        in DescriptorHandle descriptorHandle)
+        in DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)
     {
         lock (_lock)
         {
@@ -240,34 +241,34 @@ internal abstract class DescriptorHeapAllocator(
         }
     }
 
-    private static ValueResult<(DescriptorHeapAllocator allocator, DescriptorHandle descriptorHandle), TypedValueError> ValidateDescriptorHandle(
+    private static ValueResult<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle), TypedValueError> ValidateDescriptorHandle(
         in ILogger logger,
-        scoped in DescriptorHeapAllocator descriptorHeapAllocator,
-        scoped in DescriptorHandle descriptorHandle)
+        scoped in TDescriptorHeapAllocator descriptorHeapAllocator,
+        scoped in DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)
         => descriptorHandle switch
         {
             { Container: var container } when container != descriptorHeapAllocator
                 => logger
                     .LogAndReturn(LogDescriptorHandleWasntAllocatedByThisHeapAllocator)
-                    .InvalidOperation<(DescriptorHeapAllocator allocator, DescriptorHandle descriptorHandle)>(
+                    .InvalidOperation<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)>(
                         errorMessage: "Given descriptor handle wasn't allocated by this heap allocator!"),
 
             { IsValid: false }
                 => logger
                     .LogAndReturn(LogInvalidDescriptorHandle)
-                    .InvalidOperation<(DescriptorHeapAllocator allocator, DescriptorHandle descriptorHandle)>(
+                    .InvalidOperation<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)>(
                         errorMessage: "Invalid descriptor handle!"),
 
             { CPU.Ptr: var cpuPtr } when cpuPtr < descriptorHeapAllocator.CPU_Start.Ptr
                 => logger
                     .LogAndReturn(LogInvalidCpuPointer)
-                    .InvalidOperation<(DescriptorHeapAllocator allocator, DescriptorHandle descriptorHandle)>(
+                    .InvalidOperation<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)>(
                         errorMessage: "Invalid CPU pointer!"),
 
             { CPU.Ptr: var cpuPtr } when (cpuPtr - descriptorHeapAllocator.CPU_Start.Ptr) % descriptorHeapAllocator.DescriptorSize != 0
                 => logger
                     .LogAndReturn(LogInvalidCpuPointerOffset)
-                    .InvalidOperation<(DescriptorHeapAllocator allocator, DescriptorHandle descriptorHandle)>(
+                    .InvalidOperation<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)>(
                         errorMessage: "Invalid CPU pointer offset!"),
 
             { Index: var index } when index > descriptorHeapAllocator.Capacity
@@ -276,11 +277,11 @@ internal abstract class DescriptorHeapAllocator(
                         LogIndexCannotBeGreaterThanCapacity,
                         index,
                         descriptorHeapAllocator.Capacity)
-                    .OutOfRange<(DescriptorHeapAllocator allocator, DescriptorHandle descriptorHandle)>(
+                    .OutOfRange<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)>(
                         nameof(descriptorHandle.Index),
                         "Index cannot be greater than the capacity!"),
             _
-                => ValueResult.Success<(DescriptorHeapAllocator allocator, DescriptorHandle descriptorHandle), TypedValueError>(
+                => ValueResult.Success<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle), TypedValueError>(
                     new(
                         descriptorHeapAllocator,
                         descriptorHandle)),
@@ -355,40 +356,46 @@ internal abstract class DescriptorHeapAllocator(
         }
     }
 
-    internal readonly struct DescriptorHandle
-        : IDisposable
+    public static implicit operator TDescriptorHeapAllocator(
+        DescriptorHeapAllocator<TDescriptorHeapAllocator> allocator)
+        => allocator as TDescriptorHeapAllocator
+        ?? throw new UnreachableException();
+}
+
+internal readonly struct DescriptorHandle<TDescriptorHeapAllocator>
+    : IDisposable
+    where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
+{
+    public CpuDescriptorHandle? CPU { get; }
+    public GpuDescriptorHandle? GPU { get; }
+    public TDescriptorHeapAllocator Container { get; }
+    public int Index { get; }
+
+    [MemberNotNullWhen(true, nameof(CPU))]
+    public readonly bool IsValid => CPU is not null;
+
+    [MemberNotNullWhen(true, nameof(GPU))]
+    public readonly bool IsSHaderVisible => GPU is not null;
+
+    public DescriptorHandle()
+        => throw new InvalidOperationException(
+            "Descriptor Handle cannot be created without proper descriptor handles!");
+
+    public DescriptorHandle(
+        CpuDescriptorHandle cpu,
+        GpuDescriptorHandle? gpu,
+        TDescriptorHeapAllocator heapAlocator,
+        int index)
     {
-        public CpuDescriptorHandle? CPU { get; }
-        public GpuDescriptorHandle? GPU { get; }
-        public DescriptorHeapAllocator Container { get; }
-        public int Index { get; }
+        CPU = cpu;
+        GPU = gpu;
 
-        [MemberNotNullWhen(true, nameof(CPU))]
-        public readonly bool IsValid => CPU is not null;
-
-        [MemberNotNullWhen(true, nameof(GPU))]
-        public readonly bool IsSHaderVisible => GPU is not null;
-
-        public DescriptorHandle()
-            => throw new InvalidOperationException(
-                "Descriptor Handle cannot be created without proper descriptor handles!");
-
-        public DescriptorHandle(
-            CpuDescriptorHandle cpu,
-            GpuDescriptorHandle? gpu,
-            DescriptorHeapAllocator heapAlocator,
-            int index)
-        {
-            CPU = cpu;
-            GPU = gpu;
-
-            Container = heapAlocator;
-            Index = index;
-        }
-
-        public void Dispose()
-            => Container.Free(this);
+        Container = heapAlocator;
+        Index = index;
     }
+
+    public void Dispose()
+        => Container.Free(this);
 }
 
 internal static class DescriptorHeapAllocatorExtensions
@@ -400,8 +407,8 @@ internal static class DescriptorHeapAllocatorExtensions
             DescriptorHeapAllocatorsBuilderResult<T1, T2>,
             T1,
             T2>
-        where T1 : DescriptorHeapAllocator
-        where T2 : DescriptorHeapAllocator
+        where T1 : DescriptorHeapAllocator<T1>
+        where T2 : DescriptorHeapAllocator<T2>
     {
         public T1 Allocator1 { get; } = allocator1;
         public T2 Allocator2 { get; } = allocator2;
@@ -430,9 +437,9 @@ internal static class DescriptorHeapAllocatorExtensions
             DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>,
             DescriptorHeapAllocatorsBuilderResult<T1, T2>,
             T3>
-        where T1 : DescriptorHeapAllocator
-        where T2 : DescriptorHeapAllocator
-        where T3 : DescriptorHeapAllocator
+        where T1 : DescriptorHeapAllocator<T1>
+        where T2 : DescriptorHeapAllocator<T2>
+        where T3 : DescriptorHeapAllocator<T3>
     {
         public T1 Allocator1 { get; } = allocator1;
         public T2 Allocator2 { get; } = allocator2;
@@ -466,10 +473,10 @@ internal static class DescriptorHeapAllocatorExtensions
             DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>,
             DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>,
             T4>
-        where T1 : DescriptorHeapAllocator
-        where T2 : DescriptorHeapAllocator
-        where T3 : DescriptorHeapAllocator
-        where T4 : DescriptorHeapAllocator
+        where T1 : DescriptorHeapAllocator<T1>
+        where T2 : DescriptorHeapAllocator<T2>
+        where T3 : DescriptorHeapAllocator<T3>
+        where T4 : DescriptorHeapAllocator<T4>
     {
         public T1 Allocator1 { get; } = allocator1;
         public T2 Allocator2 { get; } = allocator2;
@@ -500,7 +507,7 @@ internal static class DescriptorHeapAllocatorExtensions
 
     extension<TResult, TAllocators, TParam>(TResult result)
         where TResult : IDescriptorHeapAllocatorsBuilderResult<TResult, TAllocators, TParam>, allows ref struct
-        where TParam : DescriptorHeapAllocator
+        where TParam : DescriptorHeapAllocator<TParam>
         where TAllocators : allows ref struct
     {
 
@@ -524,10 +531,10 @@ internal static class DescriptorHeapAllocatorExtensions
         Func<DescHeapAllocatorBuilder, ValueResult<T2, ValueError>> action2,
         Func<DescHeapAllocatorBuilder, ValueResult<T3, ValueError>> action3,
         Func<DescHeapAllocatorBuilder, ValueResult<T4, ValueError>> action4)
-        where T1 : DescriptorHeapAllocator
-        where T2 : DescriptorHeapAllocator
-        where T3 : DescriptorHeapAllocator
-        where T4 : DescriptorHeapAllocator
+        where T1 : DescriptorHeapAllocator<T1>
+        where T2 : DescriptorHeapAllocator<T2>
+        where T3 : DescriptorHeapAllocator<T3>
+        where T4 : DescriptorHeapAllocator<T4>
         => action1
             .Invoke(
                 new DescHeapAllocatorBuilder(renderingEngine))
@@ -551,7 +558,7 @@ internal static class DescriptorHeapAllocatorExtensions
     internal interface IDescriptorHeapAllocatorsBuilderResult<TResult, TAllocators, TParam>
         where TResult : IDescriptorHeapAllocatorsBuilderResult<TResult, TAllocators, TParam>, allows ref struct
         where TAllocators : allows ref struct
-        where TParam : DescriptorHeapAllocator
+        where TParam : DescriptorHeapAllocator<TParam>
     {
         static abstract TResult Create(TAllocators param1, TParam param2);
     }
@@ -602,15 +609,10 @@ internal static class DescriptorHeapAllocatorExtensions
             uint capacity,
             bool isShaderVisible,
             Func<ID3D12RenderingEngine, TDescriptorHeapAllocator> createAllocator)
-            where TDescriptorHeapAllocator : DescriptorHeapAllocator
-        {
-            var dsv = createAllocator(builder.RenderingEngine);
-            var initializedResult = dsv.Initialize(capacity, isShaderVisible);
-
-            return initializedResult.IsSuccess
-                ? ValueResult.Success(dsv)
-                : ValueResult.Failure<TDescriptorHeapAllocator>(initializedResult.Error);
-        }
+            where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
+            => createAllocator(builder.RenderingEngine)
+                .Initialize(capacity, isShaderVisible)
+            ;
     }
 
     internal readonly ref struct DescHeapAllocatorBuilder(
@@ -651,16 +653,18 @@ static file class DescriptorHeapAllocatorValidationExtensions
                 })
         ;
 
-    internal readonly ref struct IndexDescriptorHandle(
+    internal readonly ref struct IndexDescriptorHandle<TDescriptorHeapAllocator>(
         uint index,
-        DescriptorHandle descriptorHandle)
+        DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)
+        where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
     {
         public uint Index { get; } = index;
-        public DescriptorHandle DescriptorHandle { get; } = descriptorHandle;
+        public DescriptorHandle<TDescriptorHeapAllocator> DescriptorHandle { get; } = descriptorHandle;
     }
 
-    internal static ValueResult<IndexDescriptorHandle, TypedValueError> CalculateIndex(
-        this ValueResult<(DescriptorHeapAllocator allocator, DescriptorHandle descriptorHandle), TypedValueError> validationContext)
+    internal static ValueResult<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError> CalculateIndex<TDescriptorHeapAllocator>(
+        this ValueResult<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle), TypedValueError> validationContext)
+        where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
         => validationContext
             .Bind(
                 bind: static (
@@ -672,17 +676,18 @@ static file class DescriptorHeapAllocatorValidationExtensions
                 and { CPU.Ptr: var descriptorHandlePointer },
             }
                 ? ValueResult
-                    .Success<IndexDescriptorHandle, TypedValueError>(
+                    .Success<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError>(
                         new(
                             index: (uint)(descriptorHandlePointer - allocator.CPU_Start.Ptr) / allocator.DescriptorSize,
                             descriptorHandle: descriptorHandle))
-                : TypedValueError.Unreachable<IndexDescriptorHandle>("Unreachable state!"))
+                : TypedValueError.Unreachable<IndexDescriptorHandle<TDescriptorHeapAllocator>>("Unreachable state!"))
         ;
 
-    internal static ValueResult<IndexDescriptorHandle, TypedValueError> ValidateHeapDescriptorIndex<TLogger>(
-        this ValueResult<IndexDescriptorHandle, TypedValueError> indexDescriptorHandleResult,
+    internal static ValueResult<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError> ValidateHeapDescriptorIndex<TLogger, TDescriptorHeapAllocator>(
+        this ValueResult<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError> indexDescriptorHandleResult,
         scoped in TLogger logger)
         where TLogger : ILogger
+        where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
         => indexDescriptorHandleResult
             .Bind(
                 param1: logger,
@@ -690,17 +695,18 @@ static file class DescriptorHeapAllocatorValidationExtensions
                     scoped in indexDescriptorHandle,
                     scoped in logger)
             => indexDescriptorHandle.DescriptorHandle.Index == indexDescriptorHandle.Index
-                ? ValueResult.Success<IndexDescriptorHandle, TypedValueError>(indexDescriptorHandle)
+                ? ValueResult.Success<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError>(indexDescriptorHandle)
                 : logger
                     .LogAndReturn(logger => LogInvalidHeapDescriptorIndex(logger))
-                    .InvalidOperation<IndexDescriptorHandle>(
+                    .InvalidOperation<IndexDescriptorHandle<TDescriptorHeapAllocator>>(
                         errorMessage: "Invalid heap descriptor index!"))
         ;
 
-    public static ValueResult<int, TypedValueError> AddIndex(
-        this ValueResult<IndexDescriptorHandle, TypedValueError> indexDescriptorHandleResult,
+    public static ValueResult<int, TypedValueError> AddIndex<TDescriptorHeapAllocator>(
+        this ValueResult<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError> indexDescriptorHandleResult,
         scoped in uint frameIndex,
         scoped in IList<int>[] deferredFreeIndices)
+        where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
         => indexDescriptorHandleResult
             .Bind(
                 param1: frameIndex,

@@ -240,14 +240,14 @@ internal sealed class RenderingSurface
         /// <summary>
         /// Render Target View
         /// </summary>
-        public DescriptorHeapAllocator.DescriptorHandle RTV { get; }
+        public DescriptorHandle<RTVDescriptorHeapAllocator> RTV { get; }
 
         public RenderTargetData()
           => throw new InvalidOperationException(
               "Render target data cannot be created without proper descriptor handles!");
 
         public RenderTargetData(
-            DescriptorHeapAllocator.DescriptorHandle rtv)
+            DescriptorHandle<RTVDescriptorHeapAllocator> rtv)
             => RTV = rtv;
     }
 

@@ -3,7 +3,6 @@
 
 using Vortice.Direct3D12;
 using Vortice.DXGI;
-using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocator;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
@@ -12,14 +11,14 @@ internal class DepthBufferTexture
 {
     private bool _disposedValue;
     private readonly Texture _texture;
-    private readonly DescriptorHandle _dsv;
+    private readonly DescriptorHandle<DSVDescriptorHeapAllocator> _dsv;
 
     public CpuDescriptorHandle DSV
         => _dsv is { IsValid: true } dsv
         ? dsv.CPU.Value
         : throw new InvalidOperationException("Invalid descriptor handle");
 
-    public DescriptorHandle SRV => _texture.SRV;
+    public DescriptorHandle<SRVDescriptorHeapAllocator> SRV => _texture.SRV;
     public ID3D12Resource Resource => _texture.Resource;
 
     private DepthBufferTexture(
