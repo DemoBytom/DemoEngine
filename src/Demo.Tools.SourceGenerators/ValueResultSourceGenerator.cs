@@ -10,24 +10,21 @@ namespace Demo.Tools.SourceGenerators;
 [Generator]
 public class ValueResultSourceGenerator : IIncrementalGenerator
 {
-    public void Initialize(IncrementalGeneratorInitializationContext context)
-    {
-        context.RegisterPostInitializationOutput(ctx => ctx.AddSource(
-            "EnumExtensionsAttribute.g.cs",
-            SourceText.From(SourceGenerationHelper.ATTRIBUTE, Encoding.UTF8)));
-    }
-}
 
-internal static class SourceGenerationHelper
-{
-    public const string ATTRIBUTE =
-        """
-        namespace Demo.Tools.Temp
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+        => context.RegisterPostInitializationOutput(ctx
+            =>
         {
-            [System.AttributeUsage(System.AttributeTargets.Enum)]
-            public class TestAttribute : global::System.Attribute
-            {
-            }
-        }
-        """;
+            ctx.AddSource(
+                "BindExtensions.g.cs",
+                SourceText.From(
+                    BindExtensionGenerator.GenerateBindExtensions(NUMBER_OF_GENERIC_PARAMETERS),
+                    Encoding.UTF8));
+
+            ctx.AddSource(
+                "MapExtensions.g.cs",
+                SourceText.From(
+                    MapExtensionGenerator.GenerateMapExtensions(NUMBER_OF_GENERIC_PARAMETERS),
+                    Encoding.UTF8));
+        });
 }
