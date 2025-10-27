@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 namespace Demo.Engine.Core.ValueObjects;
+
 public readonly record struct RenderingSurfaceId(
     Guid Value)
 {

@@ -10,6 +10,7 @@ using SharpGen.Runtime;
 using Vortice.Dxc;
 
 namespace Demo.Engine.Platform.DirectX12.Shaders;
+
 internal record struct ShaderFileInfo(
     string File,
     string Function,

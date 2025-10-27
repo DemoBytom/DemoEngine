@@ -6,6 +6,7 @@ using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.ObjectPool;
 
 namespace Demo.Engine.Core.Features.StaThread;
+
 internal sealed class StaThreadWriter(
     ChannelWriter<StaThreadRequests> channelWriter,
     ObjectPool<StaThreadRequests.DoEventsOkRequest> doEventsOkPool)
