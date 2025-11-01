@@ -184,7 +184,7 @@ internal partial class Build : NukeBuild
             ReadOnlySpan<(string os, string arch)> rids =
             [
                 ("win", "x64"),
-                ("win", "arm64"),
+                //("win", "arm64"),
             ];
 
             foreach (var testProj in TestProjects)
@@ -251,6 +251,11 @@ internal partial class Build : NukeBuild
                     .SetReports(ArtifactsDirectory / "*.xml")
                     .SetReportTypes(ReportTypes.MarkdownSummaryGithub)
                     .SetTargetDirectory(ArtifactsDirectory / "coverageGitHub"));
+
+                var summary = File.ReadAllText(ArtifactsDirectory / "coverageGitHub" / "SummaryGithub.md");
+                Nuke.Common.EnvironmentInfo.SetVariable(
+                    "GITHUB_STEP_SUMMARY",
+                    summary);
             }
             else
             {
@@ -371,8 +376,10 @@ internal partial class Build : NukeBuild
             .SetInformationalVersion(_gitVersion.InformationalVersion)
             .SetOutput(outputDir)
             .When(string.IsNullOrEmpty(rid), _ => _
-                .SetNoRestore(InvokedTargets.Contains(Restore))
-                .SetNoBuild(InvokedTargets.Contains(Compile)))
+            //    .SetNoRestore(InvokedTargets.Contains(Restore))
+            //    .SetNoBuild(InvokedTargets.Contains(Compile)))
+                .SetNoRestore(false)
+                .SetNoBuild(false))
             .When(!string.IsNullOrEmpty(rid), _ => _
                 .SetNoRestore(false)
                 .SetNoBuild(false)
