@@ -4,7 +4,7 @@ namespace Demo.Tools.SourceGenerators.UTs;
 
 public class VerifyChecksTests
 {
-    [Fact]
+    [Test]
     public Task Run()
         => VerifyChecks.Run();
 }

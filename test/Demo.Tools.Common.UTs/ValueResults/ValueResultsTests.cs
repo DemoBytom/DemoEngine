@@ -3,13 +3,12 @@
 
 using Demo.Tools.Common.ValueResults;
 using Shouldly;
-using Xunit;
 
 namespace Demo.Tools.Common.UTs.ValueResults;
 
 public class ValueResultsTests
 {
-    [Fact]
+    [Test]
     public void TestGeneralTypedError()
     {
         var result = TypedValueError.General<int>("General Error");
@@ -20,7 +19,7 @@ public class ValueResultsTests
         result.Error.InnerError.Message.ShouldBe("General Error");
     }
 
-    [Fact]
+    [Test]
     public void OutOfRangeError()
     {
         var error = new TypedValueError(
@@ -35,7 +34,7 @@ public class ValueResultsTests
         error.InnerError.Message.ShouldBe("Error Message");
     }
 
-    [Fact]
+    [Test]
     public void OutOfRangeError_Generic()
     {
         var error = TypedValueError.OutOfRange<int>(

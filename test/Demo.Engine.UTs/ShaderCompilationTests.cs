@@ -11,14 +11,13 @@ namespace Demo.Engine.UTs;
 
 public class ShaderCompilationTests
 {
-    [Fact]
+    [Test]
     public async Task TestShaderDiscSaveAsync()
     {
         // Arrange
         var loggerMock = Substitute.For<ILogger<ShaderCompiler>>();
         var loggerMock2 = Substitute.For<ILogger<EngineShaderManager>>();
         var contentFileProvider = Substitute.For<IContentFileProvider>();
-
         //I expect a 34 byte file
         var fileBuffer = new byte[34];
 
@@ -47,12 +46,12 @@ public class ShaderCompilationTests
 
         shader.ID.ShouldBe(ShaderId.FullscreenTriangle);
         shader.Size.ShouldBe(6);
-        shader.ShaderBlob.ToArray().ShouldBe(new byte[] { 55, 123, 55, 46, 23, 123 });
+        shader.ShaderBlob.ToArray().ShouldBe([55, 123, 55, 46, 23, 123]);
 
         var shader2 = engineShaderManager.GetShader((ShaderId)2);
         shader2.ID.ShouldBe((ShaderId)2);
         shader2.Size.ShouldBe(4);
-        shader2.ShaderBlob.ToArray().ShouldBe(new byte[] { 154, 21, 14, 33 });
+        shader2.ShaderBlob.ToArray().ShouldBe([154, 21, 14, 33]);
 
         static async IAsyncEnumerable<Task<ShaderContent>> GetShaders()
         {

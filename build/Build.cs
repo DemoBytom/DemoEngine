@@ -179,26 +179,57 @@ internal partial class Build : NukeBuild
         //.Produces(
         //    ArtifactsDirectory / "*.trx",
         //    ArtifactsDirectory / "*.xml")
-        .Executes(() => DotNetTest(_ => _
-            .SetNoRestore(InvokedTargets.Contains(Restore))
-            .SetNoBuild(InvokedTargets.Contains(Compile))
-            .SetConfiguration(Configuration)
-            //.SetProperty("Platform", "x64")
-            .SetProperty("CollectCoverage", true)
-            .SetProperty("CoverletOutputFormat", "opencover")
-            //.SetProperty("ExcludeByFile", "*.Generated.cs")
-            .SetResultsDirectory(ArtifactsDirectory)
-            .CombineWith(TestProjects, (oo, testProj) => oo
-                .SetProjectFile(testProj)
-                .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
-                .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
-            /* For now the parallel execution seems to be broken due to new code coverage collection
-             * when running dotnet test.
-             * dotnet test seems to be trying to restore projects that are currently being tested in parallel,
-             * In future consider moving to dotnet test *.sln and let that handle parallelism 
-             */
-            degreeOfParallelism: 1,//TestProjects.Length,
-            completeOnFailure: true));
+        .Executes(() =>
+        {
+            ReadOnlySpan<(string os, string arch)> rids =
+            [
+                ("win", "x64"),
+                ("win", "arm64"),
+            ];
+
+            foreach (var testProj in TestProjects)
+            {
+                foreach (var (os, arch) in rids)
+                {
+                    var coverageOutput = ArtifactsDirectory / $"{testProj.Name}.{os}-{arch}.xml";
+
+                    DotNetRun(run => run
+                        .SetProjectFile(testProj)
+                        .SetConfiguration("release")
+                        //.SetNoRestore(InvokedTargets.Contains(Restore))
+                        //.SetNoBuild(InvokedTargets.Contains(Compile))
+                        .AddProcessAdditionalArguments(
+                            "--arch", arch,
+                            "--os", os,
+                            "--coverage",
+                            "--coverage-output-format", "cobertura",
+                            "--disable-logo",
+                            "--coverage-output", coverageOutput)
+                        );
+                }
+            }
+
+            //return DotNetTest(_ => _
+            //            .SetNoRestore(InvokedTargets.Contains(Restore))
+            //            .SetNoBuild(InvokedTargets.Contains(Compile))
+            //            .SetConfiguration(Configuration)
+            //            //.SetProperty("Platform", "x64")
+            //            .SetProperty("CollectCoverage", true)
+            //            .SetProperty("CoverletOutputFormat", "opencover")
+            //            //.SetProperty("ExcludeByFile", "*.Generated.cs")
+            //            .SetResultsDirectory(ArtifactsDirectory)
+            //            .CombineWith(TestProjects, (oo, testProj) => oo
+            //                .SetProjectFile(testProj)
+            //                .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
+            //                .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
+            //            /* For now the parallel execution seems to be broken due to new code coverage collection
+            //             * when running dotnet test.
+            //             * dotnet test seems to be trying to restore projects that are currently being tested in parallel,
+            //             * In future consider moving to dotnet test *.sln and let that handle parallelism 
+            //             */
+            //            degreeOfParallelism: 1,//TestProjects.Length,
+            //            completeOnFailure: true);
+        });
 
     public Target Coverage => t => t
         .TriggeredBy(Test)
@@ -210,6 +241,21 @@ internal partial class Build : NukeBuild
                 .SetReports(ArtifactsDirectory / "*.xml")
                 .SetReportTypes(ReportTypes.HtmlInline)
                 .SetTargetDirectory(ArtifactsDirectory / "coverage"));
+
+            // TODO work more on that summary for GH Actions
+            // https://github.blog/news-insights/product-news/supercharging-github-actions-with-job-summaries/
+            if (GitHubActions.Instance is not null)
+            {
+                Log.Logger.Information("Generationg GitHub Actions coverage");
+                _ = ReportGenerator(_ => _
+                    .SetReports(ArtifactsDirectory / "*.xml")
+                    .SetReportTypes(ReportTypes.MarkdownSummaryGithub)
+                    .SetTargetDirectory(ArtifactsDirectory / "coverageGitHub"));
+            }
+            else
+            {
+                Log.Logger.Information("GitHub Actions host not detected!");
+            }
 
             if (ScheduledTargets.Contains(UploadCoveralls))
             {
@@ -225,7 +271,7 @@ internal partial class Build : NukeBuild
         });
 
     public Target Publish => _ => _
-        .DependsOn(Compile, Test)
+        .DependsOn(Clean, Compile, Test)
         .After(Test)
         .Produces(
             ArtifactsDirectory / "Demo.Engine.zip",
@@ -294,7 +340,7 @@ internal partial class Build : NukeBuild
                 );
         });
 
-    private void PublishApp(string projectName, string? rid = null)
+    private void PublishApp(string projectName, string? rid = null, bool zipProject = true)
     {
         AbsolutePath outputDir;
         if (string.IsNullOrEmpty(rid))
@@ -344,11 +390,13 @@ internal partial class Build : NukeBuild
                 .SetProperty("PublishReadyToRun", true)
                 ))
             ;
-
-        outputDir.ZipTo(
-            archiveFile: $"{outputDir}.zip",
-            compressionLevel: CompressionLevel.Optimal,
-            fileMode: FileMode.Create);
+        if (zipProject)
+        {
+            outputDir.ZipTo(
+                archiveFile: $"{outputDir}.zip",
+                compressionLevel: CompressionLevel.Optimal,
+                fileMode: FileMode.Create);
+        }
     }
 
     public Target Full => _ => _

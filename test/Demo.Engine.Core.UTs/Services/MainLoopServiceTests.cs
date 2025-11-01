@@ -15,7 +15,6 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Shouldly;
-using Xunit;
 
 namespace Demo.Engine.Core.UTs.Services;
 
@@ -55,7 +54,7 @@ public class MainLoopServiceTests
             _subMainLoopLifetime,
             _subLoopJob);
 
-    [Fact]
+    [Test]
     [SuppressMessage(
         category: "Reliability",
         checkId: "CA2012:Use ValueTasks correctly",
@@ -98,10 +97,10 @@ public class MainLoopServiceTests
             out Arg.Any<IRenderingSurface>()!)
             .Returns(parameters
             =>
-            {
-                parameters[1] = renderingSurface;
-                return true;
-            });
+        {
+            parameters[1] = renderingSurface;
+            return true;
+        });
 
         _ = renderingSurface.ShouldNotBeNull();
 

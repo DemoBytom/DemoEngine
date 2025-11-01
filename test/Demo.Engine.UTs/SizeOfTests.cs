@@ -10,7 +10,7 @@ namespace Demo.Engine.UTs;
 
 public class SizeOfTests
 {
-    [Fact]
+    [Test]
     public void TestSizeOf_CubeFacesColors()
     {
         var unsafeSizeOf = (uint)Unsafe.SizeOf<CubeFacesColors>();
@@ -20,7 +20,7 @@ public class SizeOfTests
         sizeOf.ShouldBe(unsafeSizeOf);
     }
 
-    [Fact]
+    [Test]
     public void TestSizeOf_Vertex()
     {
         var unsafeSizeOf = (uint)Unsafe.SizeOf<Vertex>();

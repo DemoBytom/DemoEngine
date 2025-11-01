@@ -8,7 +8,7 @@ namespace Demo.Engine.UTs;
 
 public class ScopeTests
 {
-    [Fact]
+    [Test]
     public void TestScopes()
     {
         var services = new ServiceCollection();
