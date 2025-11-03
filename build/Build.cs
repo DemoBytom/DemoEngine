@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.IO.Compression;
+using System.IO.Pipelines;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Execution;
@@ -235,31 +236,31 @@ internal partial class Build : NukeBuild
         .TriggeredBy(Test)
         .DependsOn(Test)
         .Produces(ArtifactsDirectory / "coverage.zip")
-        .Executes(() =>
+        .Executes(async () =>
         {
             _ = ReportGenerator(_ => _
                 .SetReports(ArtifactsDirectory / "*.xml")
                 .SetReportTypes(ReportTypes.HtmlInline)
                 .SetTargetDirectory(ArtifactsDirectory / "coverage"));
 
-            // TODO work more on that summary for GH Actions
-            // https://github.blog/news-insights/product-news/supercharging-github-actions-with-job-summaries/
             if (GitHubActions.Instance is not null)
             {
-                Log.Logger.Information("Generationg GitHub Actions coverage");
                 _ = ReportGenerator(_ => _
                     .SetReports(ArtifactsDirectory / "*.xml")
                     .SetReportTypes(ReportTypes.MarkdownSummaryGithub)
-                    .SetTargetDirectory(ArtifactsDirectory / "coverageGitHub"));
+                    .SetTargetDirectory(ArtifactsDirectory / "coverageGitHub"))
+                ;
 
-                var summary = File.ReadAllText(ArtifactsDirectory / "coverageGitHub" / "SummaryGithub.md");
-                Nuke.Common.EnvironmentInfo.SetVariable(
-                    "GITHUB_STEP_SUMMARY",
-                    summary);
-            }
-            else
-            {
-                Log.Logger.Information("GitHub Actions host not detected!");
+                using var summary = File.OpenRead(
+                    ArtifactsDirectory / "coverageGitHub" / "SummaryGithub.md");
+                var pipeReader = PipeReader.Create(summary);
+
+                using var githubSummary = File.Open(
+                    EnvironmentInfo.GetVariable("GITHUB_STEP_SUMMARY"),
+                    FileMode.Append);
+                var pipeWriter = PipeWriter.Create(githubSummary);
+
+                await pipeReader.CopyToAsync(pipeWriter);
             }
 
             if (ScheduledTargets.Contains(UploadCoveralls))
