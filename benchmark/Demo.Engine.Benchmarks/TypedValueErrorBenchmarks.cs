@@ -12,8 +12,8 @@ namespace Demo.Engine.Benchmarks;
 
 [MemoryDiagnoser]
 [JitStatsDiagnoser]
-[SimpleJob(runtimeMoniker: RuntimeMoniker.Net90, baseline: true)]
-//[SimpleJob(runtimeMoniker: RuntimeMoniker.Net10_0)]
+//[SimpleJob(runtimeMoniker: RuntimeMoniker.Net90, baseline: true)]
+[SimpleJob(runtimeMoniker: RuntimeMoniker.Net10_0)]
 public class TypedValueErrorBenchmarks
 {
     private readonly ILogger<TypedValueErrorBenchmarks> _logger;
