@@ -4,13 +4,12 @@
 using Demo.Tools.Common.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Xunit;
 
 namespace Demo.Tools.Common.UTs.Extensions.DependencyInjection;
 
 public class ScopedDIExtensionsTests
 {
-    [Fact]
+    [Test]
     public void AddScoped_Multiple_Interfaces_Control_Sample()
     {
         // Arrange
@@ -36,7 +35,7 @@ public class ScopedDIExtensionsTests
         counter.ConstructedNo.ShouldBe(3);
     }
 
-    [Fact]
+    [Test]
     public void AddScoped_2_Interfaces_ExpectedBehavior()
     {
         // Arrange
@@ -73,7 +72,7 @@ public class ScopedDIExtensionsTests
         private int _constructedNo;
         public int ConstructedNo => _constructedNo;
 
-        public void Tick() =>
-            Interlocked.Increment(ref _constructedNo);
+        public void Tick()
+            => Interlocked.Increment(ref _constructedNo);
     }
 }

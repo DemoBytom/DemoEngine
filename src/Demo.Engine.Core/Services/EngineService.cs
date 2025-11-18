@@ -1,177 +1,119 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System.Numerics;
-using Demo.Engine.Core.Components.Keyboard;
+using System.Reflection;
+using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
+using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Engine.Core.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Vortice.Mathematics;
 
 namespace Demo.Engine.Core.Services;
 
-public class EngineService : ServiceBase
+internal sealed class EngineService(
+    ILogger<EngineService> logger,
+    IHostApplicationLifetime hostApplicationLifetime,
+    IServiceScopeFactory scopeFactory,
+    IMainLoopLifetime mainLoopLifetime)
+    : IHostedService,
+      IDisposable
 {
+    private readonly ILogger<EngineService> _logger = logger;
+    private readonly IHostApplicationLifetime _hostApplicationLifetime = hostApplicationLifetime;
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+    private readonly IMainLoopLifetime _mainLoopLifetime = mainLoopLifetime;
+    private readonly string _serviceName = "Engine";
+    private Task? _executingTask;
+    private bool _stopRequested;
     private bool _disposedValue;
-    private readonly CancellationTokenSource _loopCancellationTokenSource = new();
-    private readonly IServiceScopeFactory _scopeFactory;
 
-    public EngineService(
-        IHostApplicationLifetime applicationLifetime,
-        ILogger<EngineService> logger,
-        IServiceScopeFactory scopeFactory)
-        : base("Engine",
-              logger, applicationLifetime)
-        => _scopeFactory = scopeFactory;
+    private readonly string _version = Assembly
+        .GetEntryAssembly()
+        ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+        ?.InformationalVersion ?? "0.0.0";
 
-    private IServiceProvider? _sp;
-
-    protected override async Task ExecuteAsync()
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        using var scope = _scopeFactory.CreateScope();
-        _sp = scope.ServiceProvider;
-        _drawables = Array.Empty<ICube>(); /* new[]
-            {
-                    scope.ServiceProvider.GetRequiredService<ICube>(),
-                    //scope.ServiceProvider.GetRequiredService<ICube>()
-            };*/
-        var mainLoop = scope.ServiceProvider.GetRequiredService<IMainLoopService>();
+        _logger.LogInformation("{serviceName} starting! v{version}", _serviceName, _version);
+        _executingTask = DoWorkAsync();
 
-        await mainLoop.RunAsync(
-            Update,
-            Render,
-            _loopCancellationTokenSource.Token);
-        _sp = null;
+        return _executingTask.IsCompleted
+            ? _executingTask
+            : Task.CompletedTask;
     }
 
-    private float _r, _g, _b = 0.0f;
-
-    private float _sin = 0.0f;
-
-    //private bool _dontCreate = false;
-    private Task Update(
-        KeyboardHandle keyboardHandle,
-        KeyboardCharCache keyboardCharCache)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.OemOpenBrackets))
+        _logger.LogInformation("{serviceName} stopping!", _serviceName);
+
+        _stopRequested = true;
+        if (_executingTask is null)
         {
-            keyboardCharCache.Clear();
+            return;
         }
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.OemCloseBrackets))
+
+        _ = await Task.WhenAny(
+            _executingTask,
+            Task.Delay(Timeout.Infinite, cancellationToken));
+    }
+
+    private async Task DoWorkAsync()
+    {
+        try
         {
-            var str = keyboardCharCache?.ReadCache();
-            if (!string.IsNullOrEmpty(str))
+            using var scope = _scopeFactory.CreateScope();
+            var serviceProvider = scope.ServiceProvider;
+            var osMessageHandler = serviceProvider.GetRequiredService<IOSMessageHandler>();
+            var renderingEngine = serviceProvider.GetRequiredService<IRenderingEngine>();
+
+            var mainLoopService = serviceProvider.GetRequiredService<IMainLoopService>();
+            var executeAsync = mainLoopService.ExecutingTask;
+
+            var staThreadService = serviceProvider.GetRequiredService<IStaThreadService>();
+            var runStaThread = staThreadService.ExecutingTask;
+
+            await Task.WhenAll(
+                [
+                    executeAsync,
+                    runStaThread
+                ]);
+        }
+        catch (OperationCanceledException)
+        {
+            _mainLoopLifetime.Cancel();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "{serviceName} failed with error! {errorMessage}", _serviceName, ex.Message);
+        }
+        finally
+        {
+            if (!_stopRequested)
             {
-                _logger.LogInformation(str);
+                _hostApplicationLifetime.StopApplication();
             }
         }
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))
-        {
-            _loopCancellationTokenSource.Cancel();
-        }
-
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.Back)
-            && _drawables.ElementAtOrDefault(0) is IDisposable d)
-        {
-            System.Diagnostics.Debug.WriteLine("Removing cube!");
-
-            _drawables = _drawables.Length > 0
-                ? _drawables[1..]
-                : Array.Empty<ICube>();
-
-            d?.Dispose();
-
-            System.Diagnostics.Debug.WriteLine("Cube removed!");
-        }
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter)
-            && _drawables.Length < 2
-            && _sp is not null)
-        {
-            System.Diagnostics.Debug.WriteLine("Adding new Cube!");
-            _drawables = new List<ICube>(_drawables)
-                {
-                    _sp.GetRequiredService<ICube>()
-                }.ToArray();
-            System.Diagnostics.Debug.WriteLine("Cube added!!");
-        }
-
-        if (_drawables.Length == 2)
-        {
-            foreach (var drawable in _drawables)
-            {
-                (drawable as IDisposable)?.Dispose();
-            }
-
-            _drawables = Array.Empty<ICube>();
-        }
-        else if (_drawables.Length < 2 && _sp is not null /*&& _dontCreate == false*/)
-        {
-            _drawables = new List<ICube>(_drawables)
-                {
-                    _sp.GetRequiredService<ICube>()
-                }.ToArray();
-            //_dontCreate = true;
-        }
-
-        //Share the rainbow
-        _r = MathF.Sin((_sin + 0) * MathF.PI / 180);
-        _g = MathF.Sin((_sin + 120) * MathF.PI / 180);
-        _b = MathF.Sin((_sin + 240) * MathF.PI / 180);
-
-        //Taste the rainbow
-        if (++_sin > 360)
-        {
-            _sin = 0;
-        }
-
-        _drawables.ElementAtOrDefault(0)
-            ?.Update(Vector3.Zero, _angleInRadians);
-        _drawables.ElementAtOrDefault(1)
-            ?.Update(new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
-
-        return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// https://bitbucket.org/snippets/DemoBytom/aejA59/maps-value-between-from-one-min-max-range
-    /// </summary>
-    public static float Map(float value, float inMin, float inMax, float outMin, float outMax) =>
-        ((value - inMin) * (outMax - outMin) / (inMax - inMin)) + outMin;
-
-    private float _angleInRadians = 0.0f;
-    private ICube[] _drawables = Array.Empty<ICube>();
-    private const float TWO_PI = MathHelper.TwoPi;
-
-    private Task Render(IRenderingEngine renderingEngine)
-
-    {
-        _angleInRadians = (_angleInRadians + 0.01f) % TWO_PI;
-
-        renderingEngine.BeginScene(new Color4(_r, _g, _b, 1.0f));
-        renderingEngine.Draw(_drawables);
-        _ = renderingEngine.EndScene();
-
-        return Task.CompletedTask;
-    }
-
-    #region IDisposable
-
-    protected override void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {
             if (disposing)
             {
-                _loopCancellationTokenSource.Dispose();
+                _hostApplicationLifetime.StopApplication();
             }
 
             _disposedValue = true;
         }
-        base.Dispose(disposing);
     }
 
-    #endregion IDisposable
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }

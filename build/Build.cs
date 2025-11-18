@@ -1,11 +1,9 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Compression;
-using System.Linq;
+using System.IO.Pipelines;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Execution;
@@ -158,7 +156,9 @@ internal partial class Build : NukeBuild
 
     public Target VerifyCodeFormat => _ => _
         .Executes(() => DotNet(
-            @"format -v n --verify-no-changes --exclude .\src\Demo.Engine\Program.cs"));
+            /* `--exclude **\Program.cs` 
+             * to work around the fact that it still doesn't handle top level statements properly */
+            @"format -v n --verify-no-changes --exclude **\Program.cs"));
 
 #pragma warning restore CA1822 // Mark members as static
 
@@ -168,7 +168,7 @@ internal partial class Build : NukeBuild
             .SetProjectFile(Solution)
             .SetNoRestore(InvokedTargets.Contains(Restore))
             .SetConfiguration(Configuration)
-            .SetProperty("Platform", "x64")
+            //.SetProperty("Platform", "x64")
             .SetAssemblyVersion(_gitVersion.AssemblySemVer)
             .SetFileVersion(_gitVersion.AssemblySemFileVer)
             .SetInformationalVersion(_gitVersion.InformationalVersion)
@@ -180,32 +180,88 @@ internal partial class Build : NukeBuild
         //.Produces(
         //    ArtifactsDirectory / "*.trx",
         //    ArtifactsDirectory / "*.xml")
-        .Executes(() => DotNetTest(_ => _
-            .SetNoRestore(InvokedTargets.Contains(Restore))
-            .SetNoBuild(InvokedTargets.Contains(Compile))
-            .SetConfiguration(Configuration)
-            .SetProperty("Platform", "x64")
-            .SetProperty("CollectCoverage", true)
-            .SetProperty("CoverletOutputFormat", "opencover")
-            //.SetProperty("ExcludeByFile", "*.Generated.cs")
-            .SetResultsDirectory(ArtifactsDirectory)
-            .CombineWith(TestProjects, (oo, testProj) => oo
-                .SetProjectFile(testProj)
-                .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
-                .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
-            degreeOfParallelism: TestProjects.Length,
-            completeOnFailure: true));
+        .Executes(() =>
+        {
+            ReadOnlySpan<(string os, string arch)> rids =
+            [
+                ("win", "x64"),
+                //("win", "arm64"),
+            ];
+
+            foreach (var testProj in TestProjects)
+            {
+                foreach (var (os, arch) in rids)
+                {
+                    var coverageOutput = ArtifactsDirectory / $"{testProj.Name}.{os}-{arch}.xml";
+
+                    DotNetRun(run => run
+                        .SetProjectFile(testProj)
+                        .SetConfiguration("release")
+                        //.SetNoRestore(InvokedTargets.Contains(Restore))
+                        //.SetNoBuild(InvokedTargets.Contains(Compile))
+                        .AddProcessAdditionalArguments(
+                            "--arch", arch,
+                            "--os", os,
+                            "--coverage",
+                            "--coverage-output-format", "cobertura",
+                            "--disable-logo",
+                            "--coverage-output", coverageOutput)
+                        );
+                }
+            }
+
+            //return DotNetTest(_ => _
+            //            .SetNoRestore(InvokedTargets.Contains(Restore))
+            //            .SetNoBuild(InvokedTargets.Contains(Compile))
+            //            .SetConfiguration(Configuration)
+            //            //.SetProperty("Platform", "x64")
+            //            .SetProperty("CollectCoverage", true)
+            //            .SetProperty("CoverletOutputFormat", "opencover")
+            //            //.SetProperty("ExcludeByFile", "*.Generated.cs")
+            //            .SetResultsDirectory(ArtifactsDirectory)
+            //            .CombineWith(TestProjects, (oo, testProj) => oo
+            //                .SetProjectFile(testProj)
+            //                .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
+            //                .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
+            //            /* For now the parallel execution seems to be broken due to new code coverage collection
+            //             * when running dotnet test.
+            //             * dotnet test seems to be trying to restore projects that are currently being tested in parallel,
+            //             * In future consider moving to dotnet test *.sln and let that handle parallelism 
+            //             */
+            //            degreeOfParallelism: 1,//TestProjects.Length,
+            //            completeOnFailure: true);
+        });
 
     public Target Coverage => t => t
         .TriggeredBy(Test)
         .DependsOn(Test)
         .Produces(ArtifactsDirectory / "coverage.zip")
-        .Executes(() =>
+        .Executes(async () =>
         {
             _ = ReportGenerator(_ => _
                 .SetReports(ArtifactsDirectory / "*.xml")
                 .SetReportTypes(ReportTypes.HtmlInline)
                 .SetTargetDirectory(ArtifactsDirectory / "coverage"));
+
+            if (GitHubActions.Instance is not null)
+            {
+                _ = ReportGenerator(_ => _
+                    .SetReports(ArtifactsDirectory / "*.xml")
+                    .SetReportTypes(ReportTypes.MarkdownSummaryGithub)
+                    .SetTargetDirectory(ArtifactsDirectory / "coverageGitHub"))
+                ;
+
+                using var summary = File.OpenRead(
+                    ArtifactsDirectory / "coverageGitHub" / "SummaryGithub.md");
+                var pipeReader = PipeReader.Create(summary);
+
+                using var githubSummary = File.Open(
+                    EnvironmentInfo.GetVariable("GITHUB_STEP_SUMMARY"),
+                    FileMode.Append);
+                var pipeWriter = PipeWriter.Create(githubSummary);
+
+                await pipeReader.CopyToAsync(pipeWriter);
+            }
 
             if (ScheduledTargets.Contains(UploadCoveralls))
             {
@@ -221,7 +277,7 @@ internal partial class Build : NukeBuild
         });
 
     public Target Publish => _ => _
-        .DependsOn(Compile, Test)
+        .DependsOn(Clean, Compile, Test)
         .After(Test)
         .Produces(
             ArtifactsDirectory / "Demo.Engine.zip",
@@ -231,22 +287,20 @@ internal partial class Build : NukeBuild
         {
             //A runtime dependant version is also currently generated by default and exposed to CI artifacts
             PublishApp(
-                projectName: "Demo.Engine",
-                platform: "x64");
+                projectName: "Demo.Engine");
 
             //We generate a self contained, "one file", trimmed version for Windows x64 by default
             //Any other can be generated as well, but aren't currently supported so aren't exposed to CI artifacts
-            (string rid, string platform)[] rids =
+            ReadOnlySpan<string> rids =
             [
-                ("win-x64", "x64"),
-                ("win-arm64", "ARM64"),
+                "win-x64",
+                "win-arm64",
             ];
 
-            foreach (var (rid, platform) in rids)
+            foreach (var rid in rids)
             {
                 PublishApp(
                     projectName: "Demo.Engine",
-                    platform: platform,
                     rid: rid);
             }
         });
@@ -292,7 +346,7 @@ internal partial class Build : NukeBuild
                 );
         });
 
-    private void PublishApp(string projectName, string platform, string? rid = null)
+    private void PublishApp(string projectName, string? rid = null, bool zipProject = true)
     {
         AbsolutePath outputDir;
         if (string.IsNullOrEmpty(rid))
@@ -308,40 +362,49 @@ internal partial class Build : NukeBuild
 
         _ = DotNetPublish(t => t
             .SetProject(
-    /* This doesn't work, because Demo.Engine is in a solution folder
-     * And Solution.GetProject only searches through projects that are directly in the Solution
-     * */
-    //Solution.GetProject(projectName))
-    v: Solution
+                /* This doesn't work, because Demo.Engine is in a solution folder
+                 * And Solution.GetProject only searches through projects that are directly in the Solution
+                 * */
+                //Solution.GetProject(projectName))
+                v: Solution
                     .AllProjects
                     .Single(project
                         => project.Name.Equals(projectName, StringComparison.Ordinal)))
             .SetConfiguration(Configuration)
-            .SetProperty("Platform", platform)
+            //.SetProperty("Platform", platform)
             .SetAssemblyVersion(_gitVersion.AssemblySemVer)
             .SetFileVersion(_gitVersion.AssemblySemFileVer)
             .SetInformationalVersion(_gitVersion.InformationalVersion)
             .SetOutput(outputDir)
             .When(string.IsNullOrEmpty(rid), _ => _
-                .SetNoRestore(InvokedTargets.Contains(Restore))
-                .SetNoBuild(InvokedTargets.Contains(Compile)))
+            //    .SetNoRestore(InvokedTargets.Contains(Restore))
+            //    .SetNoBuild(InvokedTargets.Contains(Compile)))
+                .SetNoRestore(false)
+                .SetNoBuild(false))
             .When(!string.IsNullOrEmpty(rid), _ => _
                 .SetNoRestore(false)
                 .SetNoBuild(false)
                 .SetSelfContained(true)
-                .SetProperty("PublishSingleFile", true)
+                .EnablePublishSingleFile()
+                //.SetProperty("PublishSingleFile", true)
                 /*Trimming is unsupported by windows-forms and has been disabled for .NET 6.0!
-                 * https://github.com/dotnet/runtime/issues/58894
-                 * https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities
-                 * */
-                .SetProperty("PublishTrimmed", false)
+                    * https://github.com/dotnet/runtime/issues/58894
+                    * https://docs.microsoft.com/en-us/dotnet/core/deploying/trimming/incompatibilities
+                    * https://github.com/dotnet/winforms/issues/4649
+                    * */
+                .DisablePublishTrimmed()
+                //.SetProperty("PublishTrimmed", false)
                 .SetRuntime(rid)
-                .SetProperty("PublishReadyToRun", true)));
-
-        outputDir.ZipTo(
-            archiveFile: $"{outputDir}.zip",
-            compressionLevel: CompressionLevel.Optimal,
-            fileMode: FileMode.Create);
+                .SetProperty("PublishReadyToRun", true)
+                ))
+            ;
+        if (zipProject)
+        {
+            outputDir.ZipTo(
+                archiveFile: $"{outputDir}.zip",
+                compressionLevel: CompressionLevel.Optimal,
+                fileMode: FileMode.Create);
+        }
     }
 
     public Target Full => _ => _

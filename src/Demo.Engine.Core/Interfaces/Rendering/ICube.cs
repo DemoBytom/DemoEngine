@@ -7,5 +7,8 @@ namespace Demo.Engine.Core.Interfaces.Rendering;
 
 public interface ICube : IDrawable
 {
-    void Update(Vector3 position, float rotationAngleInRadians);
+    void Update(
+        IRenderingSurface renderingSurface,
+        Vector3 position,
+        float rotationAngleInRadians);
 }

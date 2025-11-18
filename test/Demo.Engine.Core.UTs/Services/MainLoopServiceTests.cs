@@ -1,413 +1,159 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Demo.Engine.Core.Components.Keyboard;
+using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
-using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.Services;
+using Demo.Engine.Core.ValueObjects;
 using MediatR;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Shouldly;
-using Xunit;
 
 namespace Demo.Engine.Core.UTs.Services;
 
-[SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "unit tests don't need those")]
 public class MainLoopServiceTests
 {
-    private readonly IMediator _mockMediator;
-    private readonly IHostApplicationLifetime _mockHostApplicationLifetime;
-    private readonly IOSMessageHandler _mockOSMessageHandler;
-    private readonly IRenderingEngine _mockRenderingEngine;
-    private readonly IDebugLayerLogger _mockDebugLayer;
+    private readonly ILogger<MainLoopService> _subLogger;
+    private readonly IStaThreadWriter _subStaThreadWriter;
+    private readonly IMediator _subMediator;
+    private readonly IShaderAsyncCompiler _subShaderAsyncCompiler;
+    private readonly IFpsTimer _subFpsTimer;
+    private readonly IRenderingEngine _subRenderingEngine;
+    private readonly IMainLoopLifetime _subMainLoopLifetime;
+    private readonly ILoopJob _subLoopJob;
 
     public MainLoopServiceTests()
     {
-        _mockMediator = Substitute.For<IMediator>();
-        _mockHostApplicationLifetime = Substitute.For<IHostApplicationLifetime>();
-        _mockOSMessageHandler = Substitute.For<IOSMessageHandler>();
-        _mockRenderingEngine = Substitute.For<IRenderingEngine>();
-        _mockDebugLayer = Substitute.For<IDebugLayerLogger>();
+        _subLogger = Substitute.For<ILogger<MainLoopService>>();
+        _subStaThreadWriter = Substitute.For<IStaThreadWriter>();
+        _subMediator = Substitute.For<IMediator>();
+        _subShaderAsyncCompiler = Substitute.For<IShaderAsyncCompiler>();
+        //_subFpsTimer = Substitute.For<IFpsTimer>();
+        _subFpsTimer = new FpsTimer(
+            Substitute.For<ILogger<FpsTimer>>());
+        _subRenderingEngine = Substitute.For<IRenderingEngine>();
+        _subMainLoopLifetime = Substitute.For<IMainLoopLifetime>();
+        _subLoopJob = Substitute.For<ILoopJob>();
     }
 
-    private MainLoopService CreateService()
+    private MainLoopService CreateMainLoopService()
         => new(
-            _mockMediator,
-            _mockHostApplicationLifetime,
-            _mockOSMessageHandler,
-            _mockRenderingEngine,
-            _mockDebugLayer);
+            _subLogger,
+            _subStaThreadWriter,
+            _subMediator,
+            _subShaderAsyncCompiler,
+            _subFpsTimer,
+            _subRenderingEngine,
+            _subMainLoopLifetime,
+            _subLoopJob);
 
-    [Fact]
-    public void RunAsync_Throws_On_UpdateCallback_Null()
+    [Test]
+    [SuppressMessage(
+        category: "Reliability",
+        checkId: "CA2012:Use ValueTasks correctly",
+        Justification = "There are several ValueTasks that report as not being awaited, because they are actually only nSubstitute mock setups/verifies")]
+    public async Task MainLoopService_Constructor_Starts_Loop_And_Can_Be_Properly_Finished()
     {
         // Arrange
-        var service = CreateService();
-
-        CancellationToken cancellationToken = default;
-        static Task RenderCallback(IRenderingEngine _) => Task.CompletedTask;
-
-        // Act
-        Func<Task> func = () => service.RunAsync(
-            null!,
-            RenderCallback,
-            cancellationToken);
-
-        // Assert
-        _ = func.ShouldThrowAsync<ArgumentNullException>();
-    }
-
-    [Fact]
-    public void RunAsync_Throws_On_RenderCallback_Null()
-    {
-        // Arrange
-        var service = CreateService();
-
-        CancellationToken cancellationToken = default;
-        static Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __) => Task.CompletedTask;
-
-        // Act
-        Func<Task> func = () => service.RunAsync(
-            UpdateCallback,
-            null!,
-            cancellationToken);
-
-        // Assert
-        _ = func.ShouldThrowAsync<ArgumentNullException>();
-    }
-
-    [Fact]
-    public async Task RunAsync_CancellationToken_Properly_Cancels_After_Time()
-    {
-        // Arrange
-        var service = CreateService();
+        var keyboardCacheSub = Substitute.For<IKeyboardCache>();
+        var keyboardCharCache = new KeyboardCharCache(keyboardCacheSub);
+        var keyboardHandle = new KeyboardHandle(keyboardCacheSub);
 
         var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(5));
+        _ = _subMainLoopLifetime.Token.Returns(cts.Token);
 
-        static Task RenderCallback(IRenderingEngine _) => Task.CompletedTask;
-        static Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __) => Task.CompletedTask;
-
-        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
-        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
-        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
-
-        _ = _mockMediator
+        _ = _subMediator
             .Send(
                 Arg.Any<KeyboardCharCacheRequest>(),
                 Arg.Any<CancellationToken>())
             .Returns(
-                keyboardCache);
+                keyboardCharCache);
 
-        _ = _mockMediator
+        _ = _subMediator
             .Send(
                 Arg.Any<KeyboardHandleRequest>(),
                 Arg.Any<CancellationToken>())
             .Returns(
                 keyboardHandle);
 
-        var renderingControlMock = Substitute.For<IRenderingControl>();
-        _ = _mockRenderingEngine.Control.Returns(renderingControlMock);
+        var renderingSurfaceId = RenderingSurfaceId.NewId();
+        _ = _subStaThreadWriter.CreateSurface(
+            cts.Token)
+            .Returns(
+                Task.FromResult(
+                    renderingSurfaceId));
 
-        _ = _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
+        var renderingSurface = Substitute.For<IRenderingSurface>();
 
-        _ = _mockHostApplicationLifetime.ApplicationStopping.Returns(new CancellationToken());
+        _ = _subRenderingEngine.TryGetRenderingSurface(
+            renderingSurfaceId,
+            out Arg.Any<IRenderingSurface>()!)
+            .Returns(parameters
+            =>
+        {
+            parameters[1] = renderingSurface;
+            return true;
+        });
+
+        _ = renderingSurface.ShouldNotBeNull();
+
+        _ = _subLoopJob
+            .Update(
+                renderingSurface: renderingSurface!,
+                keyboardHandle: keyboardHandle,
+                keyboardCharCache: keyboardCharCache)
+            .Returns(
+                new ValueTask());
+
+        _ = _subStaThreadWriter
+            .DoEventsOk(
+                renderingSurfaceId: renderingSurfaceId,
+                cancellationToken: cts.Token)
+            .Returns(
+                ValueTask.FromResult(true));
+
+        _subLoopJob.Render(
+            _subRenderingEngine,
+            renderingSurfaceId);
 
         // Act
-        var sw = Stopwatch.StartNew();
-        await service.RunAsync(
-            UpdateCallback,
-            RenderCallback,
-            cts.Token);
-        sw.Stop();
-
-        // Assert
-        // We let it have a bit of a leeway
-        sw.Elapsed.TotalSeconds.ShouldBeInRange(
-            TimeSpan.FromSeconds(4.9).TotalSeconds,
-            TimeSpan.FromSeconds(5.9).TotalSeconds);
-    }
-
-    [Fact]
-    public async Task RunAsync_CancellationToken_Properly_Cancels_From_Update()
-    {
-        // Arrange
-        var service = CreateService();
-
-        var cts = new CancellationTokenSource();
-
-        static Task RenderCallback(IRenderingEngine _) => Task.CompletedTask;
-        var iUpdate = 0;
-        Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __)
+        MainLoopService? mainLoopService = null;
+        try
         {
-            if (iUpdate++ >= 5)
+            mainLoopService = CreateMainLoopService();
+
+            // Assert
+            mainLoopService.ExecutingTask.IsCompleted
+                .ShouldBeFalse();
+
+            await Task.Delay(100);
+        }
+        finally
+        {
+            if (mainLoopService is not null)
             {
-                cts.Cancel();
+                await mainLoopService.DisposeAsync();
             }
-
-            return Task.CompletedTask;
-        }
-        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
-        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
-        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
-
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardCharCacheRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardCache);
-
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardHandleRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardHandle);
-
-        var renderingControlMock = Substitute.For<IRenderingControl>();
-        _ = _mockRenderingEngine.Control.Returns(renderingControlMock);
-
-        _ = _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
-
-        _ = _mockHostApplicationLifetime.ApplicationStopping.Returns(new CancellationToken());
-
-        // Act
-        await service.RunAsync(
-            UpdateCallback,
-            RenderCallback,
-            cts.Token);
-
-        // Assert
-        iUpdate.ShouldBe(6);
-    }
-
-    [Fact]
-    public async Task RunAsync_HostApplicationLifetime_Properly_Cancels_From_Update()
-    {
-        // Arrange
-        var service = CreateService();
-
-        var cts = new CancellationTokenSource();
-        var appLifetimeCTS = new CancellationTokenSource();
-
-        static Task RenderCallback(IRenderingEngine _) => Task.CompletedTask;
-        var iUpdate = 0;
-        Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __)
-        {
-            if (iUpdate++ >= 5)
-            {
-                appLifetimeCTS.Cancel();
-            }
-
-            return Task.CompletedTask;
         }
 
-        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
-        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
-        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
+        mainLoopService.ExecutingTask.IsCompleted
+            .ShouldBeTrue();
 
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardCharCacheRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardCache);
+        _ = _subLoopJob.Received().Update(
+            renderingSurface!,
+            keyboardHandle,
+            keyboardCharCache);
 
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardHandleRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardHandle);
-
-        var renderingControlMock = Substitute.For<IRenderingControl>();
-        _ = _mockRenderingEngine.Control.Returns(renderingControlMock);
-
-        _ = _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
-
-        _ = _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
-
-        // Act
-        await service.RunAsync(
-            UpdateCallback,
-            RenderCallback,
-            cts.Token);
-
-        // Assert
-        iUpdate.ShouldBe(6);
-    }
-
-    [Fact]
-    public async Task RunAsync_Verify_Update_And_Render_All_Called()
-    {
-        // Arrange
-        var service = CreateService();
-
-        var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(5));
-        var appLifetimeCTS = new CancellationTokenSource();
-
-        var iUpdate = 0;
-        var iRender = 0;
-        Task RenderCallback(IRenderingEngine _)
-        {
-            ++iRender;
-            return Task.CompletedTask;
-        }
-
-        Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __)
-        {
-            ++iUpdate;
-            return Task.CompletedTask;
-        }
-
-        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
-        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
-        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
-
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardCharCacheRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardCache);
-
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardHandleRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardHandle);
-
-        var renderingControlMock = Substitute.For<IRenderingControl>();
-        _ = _mockRenderingEngine.Control.Returns(renderingControlMock);
-
-        _ = _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
-
-        _ = _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
-
-        // Act
-        await service.RunAsync(
-            UpdateCallback,
-            RenderCallback,
-            cts.Token);
-
-        // Assert
-        iUpdate.ShouldBeGreaterThan(0);
-        iRender.ShouldBeGreaterThan(0);
-    }
-
-    [Fact]
-    public async Task RunAsync_DoEvents_Properly_Cancels_From_Update()
-    {
-        // Arrange
-        var service = CreateService();
-
-        var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(5));
-        var appLifetimeCTS = new CancellationTokenSource();
-
-        static Task RenderCallback(IRenderingEngine _) => Task.CompletedTask;
-        var iUpdate = 0;
-        Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __)
-        {
-            ++iUpdate;
-            return Task.CompletedTask;
-        }
-
-        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
-        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
-        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
-
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardCharCacheRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardCache);
-
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardHandleRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardHandle);
-
-        var renderingControlMock = Substitute.For<IRenderingControl>();
-        _ = _mockRenderingEngine.Control.Returns(renderingControlMock);
-
-        _ = _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(_ => iUpdate <= 5);
-
-        _ = _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
-
-        // Act
-        await service.RunAsync(
-            UpdateCallback,
-            RenderCallback,
-            cts.Token);
-
-        // Assert
-        iUpdate.ShouldBe(6);
-    }
-
-    [Fact]
-    public async Task RunAsync_IsRunning_Is_Properly_Set()
-    {
-        // Arrange
-        var service = CreateService();
-
-        var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromSeconds(5));
-        var appLifetimeCTS = new CancellationTokenSource();
-
-        static Task RenderCallback(IRenderingEngine _) => Task.CompletedTask;
-
-        Task UpdateCallback(KeyboardHandle _, KeyboardCharCache __)
-        {
-            service.IsRunning.ShouldBeTrue();
-            return Task.CompletedTask;
-        }
-
-        var keybaorCacheSub = Substitute.For<IKeyboardCache>();
-        var keyboardCache = new KeyboardCharCache(keybaorCacheSub);
-        var keyboardHandle = new KeyboardHandle(keybaorCacheSub);
-
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardCharCacheRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardCache);
-
-        _ = _mockMediator
-            .Send(
-                Arg.Any<KeyboardHandleRequest>(),
-                Arg.Any<CancellationToken>())
-            .Returns(
-                keyboardHandle);
-
-        var renderingControlMock = Substitute.For<IRenderingControl>();
-        _ = _mockRenderingEngine.Control.Returns(renderingControlMock);
-
-        _ = _mockOSMessageHandler.DoEvents(renderingControlMock).Returns(true);
-
-        _ = _mockHostApplicationLifetime.ApplicationStopping.Returns(appLifetimeCTS.Token);
-
-        // Act
-        service.IsRunning.ShouldBeFalse();
-        await service.RunAsync(
-            UpdateCallback,
-            RenderCallback,
-            cts.Token);
-
-        // Assert
-        service.IsRunning.ShouldBeFalse();
+        _subLoopJob.Received()
+            .Render(
+                _subRenderingEngine,
+                renderingSurfaceId);
     }
 }

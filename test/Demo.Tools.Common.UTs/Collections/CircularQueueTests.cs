@@ -4,13 +4,12 @@
 using System.Diagnostics.CodeAnalysis;
 using Demo.Tools.Common.Collections;
 using Shouldly;
-using Xunit;
 
 namespace Demo.Tools.Common.UTs.Collections;
 
 public class CircularQueueTests
 {
-    [Fact]
+    [Test]
     public void Enqueue_Enqueue_1()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -23,7 +22,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(0);
     }
 
-    [Fact]
+    [Test]
     public void Enqueue_Enqueue_2()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -37,7 +36,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(456);
     }
 
-    [Fact]
+    [Test]
     public void Enqueue_Enqueue_3()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -52,7 +51,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(789);
     }
 
-    [Fact]
+    [Test]
     public void Enqueue_Dequeue_1()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -69,7 +68,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(0);
     }
 
-    [Fact]
+    [Test]
     public void Enqueue_3_Dequeue_1_Then_Enqueue_1()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -87,7 +86,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(159);
     }
 
-    [Fact]
+    [Test]
     public void Dequeue_Empty_Throws_Exception()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -102,7 +101,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(0);
     }
 
-    [Fact]
+    [Test]
     public void Dequeue_TryDequeue_On_Empty_Should_Not_Throw_Error()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -118,7 +117,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(0);
     }
 
-    [Fact]
+    [Test]
     public void Enqueue2_Peek()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -135,7 +134,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(789);
     }
 
-    [Fact]
+    [Test]
     public void Enqueue2_Peek_Peek()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -155,7 +154,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(789);
     }
 
-    [Fact]
+    [Test]
     [SuppressMessage(
         "Performance",
         "CA1806:Do not ignore method results",
@@ -166,7 +165,7 @@ public class CircularQueueTests
         _ = circQueue.ShouldThrow<InvalidOperationException>();
     }
 
-    [Fact]
+    [Test]
     public void Queue_Peek_On_Emplty_Throws_Error()
     {
         var circQueue = new CircularQueue<int>(2);
@@ -181,7 +180,7 @@ public class CircularQueueTests
         buffer[1].ShouldBe(0);
     }
 
-    [Fact]
+    [Test]
     public void Queue_TryPeek_On_Empty_Should_Not_Throw_Error()
     {
         var circQueue = new CircularQueue<int>(2);

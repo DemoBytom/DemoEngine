@@ -6,7 +6,6 @@ using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Platform;
 using NSubstitute;
 using Shouldly;
-using Xunit;
 
 namespace Demo.Engine.Core.UTs.Components.Keyboard;
 
@@ -25,7 +24,7 @@ public class KeyboardHandleTests
     private KeyboardHandle CreateKeyboardHandle()
         => new(_mockKeyboardCache);
 
-    [Fact]
+    [Test]
     public void GetKeyPressed_Only_One_Pressed()
     {
         // Arrange
@@ -45,17 +44,17 @@ public class KeyboardHandleTests
         _ = _mockKeyboardCache.Received().KeysPressed;
     }
 
-    [Fact]
+    [Test]
     public void GetKeyPressed_Multiple_Keys_Pressed()
     {
         // Arrange
         var keyboardHandle = CreateKeyboardHandle();
-        var testKeys = new[]{
-                VirtualKeys.Q,
-                VirtualKeys.W,
-                VirtualKeys.ShiftKey
-            };
-
+        var testKeys = new[]
+        {
+            VirtualKeys.Q,
+            VirtualKeys.W,
+            VirtualKeys.ShiftKey
+        };
         foreach (var key in testKeys)
         {
             _keyboardCache.Span[(char)key] = true;

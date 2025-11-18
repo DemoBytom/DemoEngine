@@ -1,26 +1,29 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System.Numerics;
-using Demo.Engine.Core.Interfaces.Platform;
+using System.Diagnostics.CodeAnalysis;
+using Demo.Engine.Core.ValueObjects;
 using Vortice.Mathematics;
 
 namespace Demo.Engine.Core.Interfaces.Rendering;
 
 public interface IRenderingEngine : IDisposable
 {
-    IRenderingControl Control { get; }
+    //IRenderingControl Control { get; }
+    IReadOnlyCollection<IRenderingSurface> RenderingSurfaces { get; }
 
-    void BeginScene(Color4 color);
+    bool TryGetRenderingSurface(
+        RenderingSurfaceId renderingSurfaceId,
+        [NotNullWhen(true)]
+        out IRenderingSurface? renderingSurface);
 
-    bool EndScene();
+    RenderingSurfaceId CreateSurface();
 
-    void BeginScene();
+    void Draw(RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables);
 
-    void Draw(IEnumerable<IDrawable> drawables);
+    void Draw(Color4 color, RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables);
 
-    /// <summary>
-    /// Temporary untill we have a proper Camera class
-    /// </summary>
-    Matrix4x4 ViewProjectionMatrix { get; }
+    public void LogDebugMessages();
+
+    public void SetFullscreen(bool fullscreen);
 }

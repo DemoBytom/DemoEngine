@@ -1,0 +1,15 @@
+// Copyright © Michał Dembski and contributors.
+// Distributed under MIT license. See LICENSE file in the root for more information.
+namespace Demo.Tools.SourceGenerators.UTs;
+
+[Property(TestTypes.TEST_TYPE, TestTypes.SNAPSHOT_TEST)]
+public class TestValueResultSrouceGenerators
+{
+    [Test]
+    public Task ValueResultSourceGenerator_BindExtensions_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["BindExtensions.g.cs"]);
+
+    [Test]
+    public Task ValueResultSourceGenerator_MapExtensions_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["MapExtensions.g.cs"]);
+}

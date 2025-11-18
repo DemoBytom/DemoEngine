@@ -20,8 +20,11 @@ public static class HostExtensions
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .Enrich.FromLogContext()
-            .WriteTo.Console()
-            .WriteTo.Debug()
+            .WriteTo.Async(writeTo =>
+                writeTo.Console()
+                .WriteTo.Debug())
+            //.WriteTo.Console()
+            //.WriteTo.Debug()
             .CreateLogger();
         return hostBuilder
             .ConfigureLogging((_, configLog) =>

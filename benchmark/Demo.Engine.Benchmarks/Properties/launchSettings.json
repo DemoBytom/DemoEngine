@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "BenchmarkSwitcher": {
+      "commandName": "Project"
+    },
+    "ValueResultBenchmark": {
+      "commandName": "Project",
+      "commandLineArgs": "--filter *ValueResultBenchmark*"
+    },
+    "TypedValueErrorBenchmarks": {
+      "commandName": "Project",
+      "commandLineArgs": "--filter *TypedValueErrorBenchmarks*"
+    }
+  }
+}
