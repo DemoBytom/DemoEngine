@@ -40,7 +40,7 @@
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Nuke.Common" Version="9.0.4" />
     <PackageVersion Include="ReportGenerator" Version="5.5.0" />
-    <PackageVersion Include="GitVersion.Tool" Version="6.4.0" />
+    <PackageVersion Include="GitVersion.Tool" Version="6.5.0" />
     <PackageVersion Include="coveralls.net" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup Label="Transitive packages">
