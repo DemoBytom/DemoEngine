@@ -90,7 +90,7 @@ internal partial class Build : NukeBuild
         _ => null
     };
 
-    [Solution] public readonly Solution Solution = default!;
+    [Solution(GenerateProjects = true)] public readonly Solution Solution = default!;
     [GitRepository] private readonly GitRepository _gitRepository = default!;
 
     private GitVersion _gitVersion = default!;
@@ -98,7 +98,7 @@ internal partial class Build : NukeBuild
     private static AbsolutePath SourceDirectory => RootDirectory / "src";
     private static AbsolutePath TestDirectory => RootDirectory / "test";
     private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
-    private Project[] TestProjects => Solution.GetAllProjects("*.UTs").ToArray();
+    private Project[] TestProjects => [.. Solution.test.Projects];
 
     //private const string MASTER_BRANCH = "master";
     private const string DEVELOP_BRANCH = "develop";
@@ -145,8 +145,8 @@ internal partial class Build : NukeBuild
             _ = ArtifactsDirectory.CreateOrCleanDirectory();
         });
 
-    public Target Restore => _ => _
-        .Executes(() => DotNetRestore(_ => _
+    public Target Restore => t => t
+        .Executes(() => DotNetRestore(t => t
                 .SetProjectFile(Solution)));
 
 #pragma warning disable CA1822 // Mark members as static
@@ -154,7 +154,7 @@ internal partial class Build : NukeBuild
     /* Top level statements in program.cs still cause issues with dotnet format
      * https://github.com/dotnet/format/issues/1567 */
 
-    public Target VerifyCodeFormat => _ => _
+    public Target VerifyCodeFormat => t => t
         .Executes(() => DotNet(
             /* `--exclude **\Program.cs` 
              * to work around the fact that it still doesn't handle top level statements properly */
@@ -162,9 +162,9 @@ internal partial class Build : NukeBuild
 
 #pragma warning restore CA1822 // Mark members as static
 
-    public Target Compile => _ => _
+    public Target Compile => t => t
         .DependsOn(Restore, VerifyCodeFormat)
-        .Executes(() => DotNetBuild(_ => _
+        .Executes(() => DotNetBuild(t => t
             .SetProjectFile(Solution)
             .SetNoRestore(InvokedTargets.Contains(Restore))
             .SetConfiguration(Configuration)
@@ -174,7 +174,7 @@ internal partial class Build : NukeBuild
             .SetInformationalVersion(_gitVersion.InformationalVersion)
             .EnableNoRestore()));
 
-    public Target Test => _ => _
+    public Target Test => t => t
         .DependsOn(Compile)
         .OnlyWhenDynamic(() => TestProjects.Length > 0)
         //.Produces(
@@ -194,7 +194,7 @@ internal partial class Build : NukeBuild
                 {
                     var coverageOutput = ArtifactsDirectory / $"{testProj.Name}.{os}-{arch}.xml";
 
-                    DotNetRun(run => run
+                    _ = DotNetRun(run => run
                         .SetProjectFile(testProj)
                         .SetConfiguration("release")
                         //.SetNoRestore(InvokedTargets.Contains(Restore))
@@ -210,7 +210,7 @@ internal partial class Build : NukeBuild
                 }
             }
 
-            //return DotNetTest(_ => _
+            //return DotNetTest(t => t
             //            .SetNoRestore(InvokedTargets.Contains(Restore))
             //            .SetNoBuild(InvokedTargets.Contains(Compile))
             //            .SetConfiguration(Configuration)
@@ -238,14 +238,14 @@ internal partial class Build : NukeBuild
         .Produces(ArtifactsDirectory / "coverage.zip")
         .Executes(async () =>
         {
-            _ = ReportGenerator(_ => _
+            _ = ReportGenerator(t => t
                 .SetReports(ArtifactsDirectory / "*.xml")
                 .SetReportTypes(ReportTypes.HtmlInline)
                 .SetTargetDirectory(ArtifactsDirectory / "coverage"));
 
             if (GitHubActions.Instance is not null)
             {
-                _ = ReportGenerator(_ => _
+                _ = ReportGenerator(t => t
                     .SetReports(ArtifactsDirectory / "*.xml")
                     .SetReportTypes(ReportTypes.MarkdownSummaryGithub)
                     .SetTargetDirectory(ArtifactsDirectory / "coverageGitHub"))
@@ -265,7 +265,7 @@ internal partial class Build : NukeBuild
 
             if (ScheduledTargets.Contains(UploadCoveralls))
             {
-                _ = ReportGenerator(_ => _
+                _ = ReportGenerator(t => t
                     .SetReports(ArtifactsDirectory / "*.xml")
                     .SetReportTypes(ReportTypes.Xml)
                     .SetTargetDirectory(ArtifactsDirectory / "coveralls"));
@@ -276,7 +276,7 @@ internal partial class Build : NukeBuild
                 fileMode: FileMode.Create);
         });
 
-    public Target Publish => _ => _
+    public Target Publish => t => t
         .DependsOn(Clean, Compile, Test)
         .After(Test)
         .Produces(
@@ -287,7 +287,7 @@ internal partial class Build : NukeBuild
         {
             //A runtime dependant version is also currently generated by default and exposed to CI artifacts
             PublishApp(
-                projectName: "Demo.Engine");
+                Solution.src.Demo_Engine);
 
             //We generate a self contained, "one file", trimmed version for Windows x64 by default
             //Any other can be generated as well, but aren't currently supported so aren't exposed to CI artifacts
@@ -300,7 +300,7 @@ internal partial class Build : NukeBuild
             foreach (var rid in rids)
             {
                 PublishApp(
-                    projectName: "Demo.Engine",
+                    Solution.src.Demo_Engine,
                     rid: rid);
             }
         });
@@ -346,42 +346,35 @@ internal partial class Build : NukeBuild
                 );
         });
 
-    private void PublishApp(string projectName, string? rid = null, bool zipProject = true)
+    private void PublishApp(Project project, string? rid = null, bool zipProject = true)
     {
         AbsolutePath outputDir;
         if (string.IsNullOrEmpty(rid))
         {
-            outputDir = ArtifactsDirectory / projectName;
-            Log.Information($"Publishing {projectName} into {outputDir}");
+            outputDir = ArtifactsDirectory / project.Name;
+            Log.Information($"Publishing {project.Name} into {outputDir}");
         }
         else
         {
-            outputDir = ArtifactsDirectory / $"{projectName}.{rid}";
-            Log.Information($"Publishing {projectName} for {rid} into {outputDir}");
+            outputDir = ArtifactsDirectory / $"{project.Name}.{rid}";
+            Log.Information($"Publishing {project.Name} for {rid} into {outputDir}");
         }
 
         _ = DotNetPublish(t => t
             .SetProject(
-                /* This doesn't work, because Demo.Engine is in a solution folder
-                 * And Solution.GetProject only searches through projects that are directly in the Solution
-                 * */
-                //Solution.GetProject(projectName))
-                v: Solution
-                    .AllProjects
-                    .Single(project
-                        => project.Name.Equals(projectName, StringComparison.Ordinal)))
+                v: project)
             .SetConfiguration(Configuration)
             //.SetProperty("Platform", platform)
             .SetAssemblyVersion(_gitVersion.AssemblySemVer)
             .SetFileVersion(_gitVersion.AssemblySemFileVer)
             .SetInformationalVersion(_gitVersion.InformationalVersion)
             .SetOutput(outputDir)
-            .When(string.IsNullOrEmpty(rid), _ => _
+            .When(string.IsNullOrEmpty(rid), t => t
             //    .SetNoRestore(InvokedTargets.Contains(Restore))
             //    .SetNoBuild(InvokedTargets.Contains(Compile)))
                 .SetNoRestore(false)
                 .SetNoBuild(false))
-            .When(!string.IsNullOrEmpty(rid), _ => _
+            .When(!string.IsNullOrEmpty(rid), t => t
                 .SetNoRestore(false)
                 .SetNoBuild(false)
                 .SetSelfContained(true)
@@ -407,7 +400,7 @@ internal partial class Build : NukeBuild
         }
     }
 
-    public Target Full => _ => _
+    public Target Full => t => t
         .DependsOn(
             Clean,
             Compile,
