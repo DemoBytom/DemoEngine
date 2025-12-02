@@ -23,7 +23,7 @@ jobs:
     name: windows-latest
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: true
           fetch-depth: 0
@@ -40,22 +40,22 @@ jobs:
           CoverallsToken: ${{ secrets.COVERALLS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 'Publish: coverage.zip'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage.zip
           path: artifacts/coverage.zip
       - name: 'Publish: Demo.Engine.zip'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Demo.Engine.zip
           path: artifacts/Demo.Engine.zip
       - name: 'Publish: Demo.Engine.win-x64.zip'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Demo.Engine.win-x64.zip
           path: artifacts/Demo.Engine.win-x64.zip
       - name: 'Publish: Demo.Engine.win-arm64.zip'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Demo.Engine.win-arm64.zip
           path: artifacts/Demo.Engine.win-arm64.zip
