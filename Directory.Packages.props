@@ -38,7 +38,7 @@
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-    <PackageVersion Include="Nuke.Common" Version="10.0.1" />
+    <PackageVersion Include="Nuke.Common" Version="10.1.0" />
     <PackageVersion Include="ReportGenerator" Version="5.5.0" />
     <PackageVersion Include="coveralls.net" Version="4.0.1" />
   </ItemGroup>
