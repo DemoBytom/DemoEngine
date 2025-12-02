@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.IO.Pipelines;
+using System.Text.Json;
 using Nuke.Common;
 using Nuke.Common.CI.GitHubActions;
 using Nuke.Common.Execution;
@@ -16,6 +17,7 @@ using Nuke.Common.Tools.Coverlet;
 using Nuke.Common.Tools.DotCover;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
+using Nuke.Common.Tools.NerdbankGitVersioning;
 using Nuke.Common.Tools.ReportGenerator;
 using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
@@ -76,9 +78,6 @@ internal partial class Build : NukeBuild
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     public readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    //[Parameter("Self contained application rids")]
-    //public readonly string[] RIDs = [];
-
     [Parameter("Coveralls token")]
     public readonly string? CoverallsToken = null;
 
@@ -93,39 +92,13 @@ internal partial class Build : NukeBuild
     [Solution(GenerateProjects = true)] public readonly Solution Solution = default!;
     [GitRepository] private readonly GitRepository _gitRepository = default!;
 
-    private GitVersion _gitVersion = default!;
+    [NerdbankGitVersioning]
+    private NerdbankGitVersioning _gitVersioning = default!;
 
     private static AbsolutePath SourceDirectory => RootDirectory / "src";
     private static AbsolutePath TestDirectory => RootDirectory / "test";
     private static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
     private Project[] TestProjects => [.. Solution.test.Projects];
-
-    //private const string MASTER_BRANCH = "master";
-    private const string DEVELOP_BRANCH = "develop";
-
-    //private const string RELEASE_BRANCH_PREFIX = "release";
-    //private const string HOTFIX_BRANCH_PREFIX = "hotfix";
-
-    protected override void OnBuildInitialized()
-    {
-        base.OnBuildInitialized();
-        var resp = Git("rev-parse --is-shallow-repository");
-        if (bool.TryParse(resp.FirstOrDefault().Text, out var isShallow) && isShallow)
-        {
-            Log.Information("Unshallowing the repository");
-            _ = Git("fetch origin +refs/heads/*:refs/remotes/origin/* --unshallow --quiet");
-        }
-
-        _ = Git("fetch --all --tags --quiet");
-        Environment.SetEnvironmentVariable("IGNORE_NORMALISATION_GIT_HEAD_MOVE", "1");
-        _gitVersion = GitVersionTasks
-            .GitVersion(s => s
-                .SetNoFetch(false)
-                .SetNoCache(true)
-                .DisableProcessOutputLogging()
-                )
-            .Result;
-    }
 
     public Target Clean => t => t
         .Before(Restore, Compile, Test, Publish)
@@ -168,10 +141,6 @@ internal partial class Build : NukeBuild
             .SetProjectFile(Solution)
             .SetNoRestore(InvokedTargets.Contains(Restore))
             .SetConfiguration(Configuration)
-            //.SetProperty("Platform", "x64")
-            .SetAssemblyVersion(_gitVersion.AssemblySemVer)
-            .SetFileVersion(_gitVersion.AssemblySemFileVer)
-            .SetInformationalVersion(_gitVersion.InformationalVersion)
             .EnableNoRestore()));
 
     public Target Test => t => t
@@ -209,27 +178,6 @@ internal partial class Build : NukeBuild
                         );
                 }
             }
-
-            //return DotNetTest(t => t
-            //            .SetNoRestore(InvokedTargets.Contains(Restore))
-            //            .SetNoBuild(InvokedTargets.Contains(Compile))
-            //            .SetConfiguration(Configuration)
-            //            //.SetProperty("Platform", "x64")
-            //            .SetProperty("CollectCoverage", true)
-            //            .SetProperty("CoverletOutputFormat", "opencover")
-            //            //.SetProperty("ExcludeByFile", "*.Generated.cs")
-            //            .SetResultsDirectory(ArtifactsDirectory)
-            //            .CombineWith(TestProjects, (oo, testProj) => oo
-            //                .SetProjectFile(testProj)
-            //                .AddLoggers($"trx;LogFileName={testProj.Name}.trx")
-            //                .SetProperty("CoverletOutput", ArtifactsDirectory / $"{testProj.Name}.xml")),
-            //            /* For now the parallel execution seems to be broken due to new code coverage collection
-            //             * when running dotnet test.
-            //             * dotnet test seems to be trying to restore projects that are currently being tested in parallel,
-            //             * In future consider moving to dotnet test *.sln and let that handle parallelism 
-            //             */
-            //            degreeOfParallelism: 1,//TestProjects.Length,
-            //            completeOnFailure: true);
         });
 
     public Target Coverage => t => t
@@ -364,14 +312,8 @@ internal partial class Build : NukeBuild
             .SetProject(
                 v: project)
             .SetConfiguration(Configuration)
-            //.SetProperty("Platform", platform)
-            .SetAssemblyVersion(_gitVersion.AssemblySemVer)
-            .SetFileVersion(_gitVersion.AssemblySemFileVer)
-            .SetInformationalVersion(_gitVersion.InformationalVersion)
             .SetOutput(outputDir)
             .When(string.IsNullOrEmpty(rid), t => t
-            //    .SetNoRestore(InvokedTargets.Contains(Restore))
-            //    .SetNoBuild(InvokedTargets.Contains(Compile)))
                 .SetNoRestore(false)
                 .SetNoBuild(false))
             .When(!string.IsNullOrEmpty(rid), t => t
@@ -400,6 +342,54 @@ internal partial class Build : NukeBuild
         }
     }
 
+    public Target GitFetch => t => t
+        .Executes(() =>
+        {
+            Log.Information("Current branch {branchName}", GitCurrentBranch());
+
+            _ = Git("fetch --tags --verbose",
+                logOutput: true,
+                logInvocation: true)
+            ;
+        });
+
+    public Target PrintVersion => t => t
+        .TriggeredBy(Publish)
+        .Executes(async () =>
+        {
+            Log.Information("Generated SemVer {semVer}", _gitVersioning.SemVer2);
+            if (GitHubActions.Instance is not null)
+            {
+                await using var githubSummary = File.Open(
+                    EnvironmentInfo.GetVariable("GITHUB_STEP_SUMMARY"),
+                    FileMode.Append);
+                await using var streamWriter = new StreamWriter(githubSummary);
+
+                await streamWriter.WriteLineAsync();
+                await streamWriter.WriteLineAsync(
+                    """
+                    # Version
+
+                    Generated SemVer:
+
+                    ```json
+                    """
+                    );
+
+                await streamWriter.FlushAsync();
+
+                await JsonSerializer.SerializeAsync(utf8Json: streamWriter.BaseStream, _gitVersioning, JsonSerializerOptions.Indented);
+                await streamWriter.BaseStream.FlushAsync();
+
+                await streamWriter.WriteLineAsync();
+                await streamWriter.WriteLineAsync("```");
+            }
+            else
+            {
+                Console.WriteLine(JsonSerializer.Serialize(_gitVersioning, JsonSerializerOptions.Indented));
+            }
+        });
+
     public Target Full => t => t
         .DependsOn(
             Clean,
@@ -407,4 +397,17 @@ internal partial class Build : NukeBuild
             Test,
             Publish)
         .Unlisted();
+}
+
+static file class BuildExtensions
+{
+    private static readonly JsonSerializerOptions _indented = new()
+    {
+        WriteIndented = true,
+    };
+
+    extension(JsonSerializerOptions)
+    {
+        public static JsonSerializerOptions Indented => _indented;
+    }
 }
