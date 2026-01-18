@@ -5,7 +5,7 @@
 
  **DemoEngine** is a simple game engine written in C#, .NET 10.0 and DirectX.
 
-Engine is currently developed for ==Windows== and ==Windows-on-ARM== platforms, with references to `Windows.Forms` and DirectX.
+Engine is currently developed for Windows and Windows-on-ARM platforms, with references to `Windows.Forms` and DirectX.
 
 Project is using [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows) as a DirectX wrapper, with parts of the main form handling based on [SharpDX](https://github.com/sharpdx/SharpDX/blob/master/Source/SharpDX.Desktop/RenderForm.cs).  
 
