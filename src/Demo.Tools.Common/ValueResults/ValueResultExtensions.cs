@@ -19,17 +19,6 @@ public static class ValueResultExtensions
             ? ValueResult<TValue, TNewError>.Success(result.Value)
             : ValueResult<TValue, TNewError>.Failure(map(result.Error));
 
-    public static TResult Match<TValue, TError, TResult>(
-        this scoped in ValueResult<TValue, TError> result,
-        Func<TValue, TResult> onSuccess,
-        Func<TError, TResult> onFailure)
-        where TError : IError, allows ref struct
-        where TValue : allows ref struct
-        where TResult : allows ref struct
-        => result.IsSuccess
-            ? onSuccess(result.Value)
-            : onFailure(result.Error);
-
     public static void Match<TValue, TError>(
         this scoped in ValueResult<TValue, TError> result,
         Action<TValue> onSuccess,
@@ -60,54 +49,6 @@ public static class ValueResultExtensions
 
         onFailure(result.Error);
     }
-
-    public delegate TResult OnSuccessFunc<TValue, TResult>(
-        scoped in TValue value)
-        where TValue : allows ref struct
-        where TResult : allows ref struct;
-
-    public delegate TResult OnFailureFunc<TError, TResult>(
-        scoped in TError error)
-        where TError : IError, allows ref struct
-        where TResult : allows ref struct;
-
-    public delegate TResult OnSuccessFunc<TValue, TParam1, TResult>(
-        scoped in TValue value,
-        scoped in TParam1 param1)
-        where TValue : allows ref struct
-        where TParam1 : allows ref struct
-        where TResult : allows ref struct;
-
-    public delegate TResult OnFailureFunc<TError, TParam1, TResult>(
-        scoped in TError error,
-        scoped in TParam1 param1)
-        where TError : IError, allows ref struct
-        where TParam1 : allows ref struct
-        where TResult : allows ref struct;
-
-    public static TResult MatchWithDelegate<TValue, TError, TResult>(
-        this scoped in ValueResult<TValue, TError> result,
-        OnSuccessFunc<TValue, TResult> onSuccess,
-        OnFailureFunc<TError, TResult> onFailure)
-        where TError : IError, allows ref struct
-        where TValue : allows ref struct
-        where TResult : allows ref struct
-        => result.IsSuccess
-            ? onSuccess(result.Value)
-            : onFailure(result.Error);
-
-    public static TResult MatchWithDelegate<TValue, TError, TParam1, TResult>(
-        this scoped in ValueResult<TValue, TError> result,
-        scoped in TParam1 param1,
-        OnSuccessFunc<TValue, TParam1, TResult> onSuccess,
-        OnFailureFunc<TError, TParam1, TResult> onFailure)
-        where TError : IError, allows ref struct
-        where TValue : allows ref struct
-        where TParam1 : allows ref struct
-        where TResult : allows ref struct
-        => result.IsSuccess
-            ? onSuccess(result.Value, param1)
-            : onFailure(result.Error, param1);
 
     public static ValueResult<TValue, ValueError> ErrorIfZero<TValue>(
         scoped in TValue value,

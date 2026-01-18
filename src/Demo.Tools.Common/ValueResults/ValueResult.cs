@@ -130,19 +130,6 @@ public static class ValueResult
         where TError : IError, allows ref struct
         => ValueResult<TError>.Failure(error);
 
-    public static ValueResult<TValue, ValueError> LogAndReturnFailure<TValue>(
-        this ILogger? logger,
-        Action<ILogger> logAction,
-        string errorMessage)
-        where TValue : allows ref struct
-    {
-        if (logger is not null)
-        {
-            logAction(logger);
-        }
-        return ValueResult<TValue, ValueError>.Failure(new(errorMessage));
-    }
-
     extension<TLogger>(TLogger? logger)
         where TLogger : ILogger
     {
@@ -172,27 +159,14 @@ public static class ValueResult
         }
     }
 
-    public static ValueResult<TValue, ValueError> LogAndReturnFailure<TValue, TLogValue1, TLogValue2>(
-        this ILogger? logger,
-        (Action<ILogger, TLogValue1, TLogValue2> logAction, TLogValue1 logVal1, TLogValue2 logVal2) logAction,
-        string errorMessage)
-        where TValue : allows ref struct
-    {
-        if (logger is not null)
-        {
-            logAction.logAction(logger, logAction.logVal1, logAction.logVal2);
-        }
-        return ValueResult<TValue, ValueError>.Failure(new(errorMessage));
-    }
-
     public static ValueResult<TValue, ValueError> Failure<TValue>(
-        this LogAndReturnResultCallContext _,
+        this scoped in LogAndReturnResultCallContext _,
         string errorMessage)
         where TValue : allows ref struct
         => ValueResult<TValue, ValueError>.Failure(new(errorMessage));
 
     public static ValueResult<TValue, ValueError> Success<TValue>(
-        this LogAndReturnResultCallContext _,
+        this scoped in LogAndReturnResultCallContext _,
         TValue value)
         where TValue : allows ref struct
         => ValueResult<TValue, ValueError>.Success(value);

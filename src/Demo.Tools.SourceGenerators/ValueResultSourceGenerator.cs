@@ -26,5 +26,11 @@ public class ValueResultSourceGenerator : IIncrementalGenerator
                 SourceText.From(
                     MapExtensionGenerator.GenerateMapExtensions(NUMBER_OF_GENERIC_PARAMETERS),
                     Encoding.UTF8));
+
+            ctx.AddSource(
+                "MatchExtensions.g.cs",
+                SourceText.From(
+                    MatchExtensionsGenerator.GenerateMatchExtensions(NUMBER_OF_GENERIC_PARAMETERS),
+                    Encoding.UTF8));
         });
 }

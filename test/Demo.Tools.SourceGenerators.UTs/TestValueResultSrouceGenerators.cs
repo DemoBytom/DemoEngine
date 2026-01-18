@@ -12,4 +12,8 @@ public class TestValueResultSrouceGenerators
     [Test]
     public Task ValueResultSourceGenerator_MapExtensions_Success()
         => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["MapExtensions.g.cs"]);
+
+    [Test]
+    public Task ValueResultSourceGenerator_MatchExtensions_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["MatchExtensions.g.cs"]);
 }

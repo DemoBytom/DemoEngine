@@ -174,9 +174,9 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
             .SetCapacity(capacity
                 => Capacity = capacity)
             .Match(
-                onSuccess: _
+                onSuccess: static (scoped in _)
                     => ValueResult.Success(),
-                onFailure: failure
+                onFailure: static (scoped in failure)
                     => ValueResult.Failure(failure))
             ;
 
