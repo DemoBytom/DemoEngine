@@ -164,9 +164,9 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
 
     private ValueResult<ValueError> SetCapacity(
         uint capacity)
-        => ValueResultExtensions
+        => ValueResult
             .ErrorIfZero(
-                value: capacity,
+                val: capacity,
                 logger: _logger,
                 logOnFailure: LogCapacityCannotBeZero)
             .ErrorIfGreaterThen((uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2, nameof(capacity))
@@ -632,7 +632,7 @@ static file class DescriptorHeapAllocatorValidationExtensions
                 param1: heapType,
                 bind: static (scoped in capacity, scoped in heapType)
                 => heapType is DescriptorHeapType.Sampler
-                    ? ValueResultExtensions.ErrorIfGreaterThen(
+                    ? ValueResult.ErrorIfGreaterThen(
                         capacity,
                         (uint)D3D12.MaxShaderVisibleSamplerHeapSize)
                     : ValueResult.Success(capacity)

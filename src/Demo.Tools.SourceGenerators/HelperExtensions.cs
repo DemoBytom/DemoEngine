@@ -25,52 +25,50 @@ internal static class HelperExtensions
         return ctx;
     }
 
-    internal static void WriteInLoopFor(
-        this IndentedTextWriter itw,
-        (int startValue, int times) range,
-        Action<IndentedTextWriter, int> action)
+    extension(IndentedTextWriter itw)
     {
-        for (var i = range.startValue; i <= range.times; i++)
+        internal void WriteInLoopFor(
+            (int startValue, int times) range,
+            Action<IndentedTextWriter, int> action)
         {
-            action(itw, i);
+            for (var i = range.startValue; i <= range.times; i++)
+            {
+                action(itw, i);
+            }
         }
+
+        internal void WriteTParamsInParams(
+            int currentAmountOfGenericParams)
+            => itw.WriteInLoopFor(
+                (1, currentAmountOfGenericParams),
+                static (itw, currentParam) =>
+                {
+                    itw.WriteLine(",");
+                    itw.Write($"scoped in TParam{currentParam} param{currentParam}");
+                });
+
+        internal void WriteTParamConstraints(
+            int currentAmountOfGenericParams)
+            => itw.WriteInLoopFor(
+                (1, currentAmountOfGenericParams),
+                static (itw, currentParam) =>
+                {
+                    itw.WriteLine();
+                    itw.Write($"where TParam{currentParam} : allows ref struct");
+                });
+
+        internal void WriteTParamGenericParams(
+            int currentAmountOfGenericParams)
+            => itw.WriteInLoopFor(
+                (1, currentAmountOfGenericParams),
+                static (itw, currentParam)
+                => itw.Write($", TParam{currentParam}"));
+
+        internal void WriteInParams(
+            int currentAmountOfGenericParams)
+            => itw.WriteInLoopFor(
+                (1, currentAmountOfGenericParams),
+                static (itw, currentParam)
+                => itw.Write($", in param{currentParam}"));
     }
-
-    internal static void WriteTParamsInParams(
-        this IndentedTextWriter itw,
-        int currentAmountOfGenericParams)
-        => itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine(",");
-                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
-            });
-
-    internal static void WriteTParamConstraints(
-        this IndentedTextWriter itw,
-        int currentAmountOfGenericParams)
-        => itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine();
-                itw.Write($"where TParam{currentParam} : allows ref struct");
-            });
-
-    internal static void WriteTParamGenericParams(
-        this IndentedTextWriter itw,
-        int currentAmountOfGenericParams)
-        => itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam)
-            => itw.Write($", TParam{currentParam}"));
-
-    internal static void WriteInParams(
-        this IndentedTextWriter itw,
-        int currentAmountOfGenericParams)
-        => itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam)
-            => itw.Write($", in param{currentParam}"));
 }

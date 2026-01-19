@@ -332,7 +332,7 @@ public class ValueResultBenchmark
 
     [Benchmark]
     public int TestValueResult_2_int()
-    => ValueResultExtensions
+    => ValueResult
         .ErrorIfZero(TEST_INT, PARAM_NAME)
         .ErrorIfGreaterThen(MAX_VALUE, PARAM_NAME)
         .Map(MapMethod)

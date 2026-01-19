@@ -159,17 +159,20 @@ public static class ValueResult
         }
     }
 
-    public static ValueResult<TValue, ValueError> Failure<TValue>(
-        this scoped in LogAndReturnResultCallContext _,
-        string errorMessage)
-        where TValue : allows ref struct
-        => ValueResult<TValue, ValueError>.Failure(new(errorMessage));
+    extension(scoped in LogAndReturnResultCallContext _)
+    {
+#pragma warning disable CA1822 // Mark members as static
+        public ValueResult<TValue, ValueError> Failure<TValue>(
+            string error)
+            where TValue : allows ref struct
+            => ValueResult<TValue, ValueError>.Failure(new(error));
 
-    public static ValueResult<TValue, ValueError> Success<TValue>(
-        this scoped in LogAndReturnResultCallContext _,
-        TValue value)
-        where TValue : allows ref struct
-        => ValueResult<TValue, ValueError>.Success(value);
+        public ValueResult<TValue, ValueError> Success<TValue>(
+            TValue value)
+            where TValue : allows ref struct
+            => ValueResult<TValue, ValueError>.Success(value);
+#pragma warning restore CA1822 // Mark members as static
+    }
 
     public readonly ref struct LogAndReturnResultCallContext()
     {
