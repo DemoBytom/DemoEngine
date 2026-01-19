@@ -103,19 +103,11 @@ internal static class MatchExtensionsGenerator
         itw.WriteLine($"/// Match {methodName}Func delegate with {currentAmountOfGenericParams} extra parameters");
         itw.WriteLine("/// </summary>");
         itw.Write($"public delegate TResult {methodName}Func<{firstGenericParam}, TResult");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine(">(");
         itw.Indent++;
         itw.Write($"scoped in {firstGenericParam} {firstGenericParamName}");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine(",");
-                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
-            });
+        itw.WriteTParamsInParams(currentAmountOfGenericParams);
         itw.WriteLine(")");
         itw.Write($"where {firstGenericParam} : ");
         if (firstGenericParamConstraint is not null)
@@ -124,13 +116,7 @@ internal static class MatchExtensionsGenerator
         }
         itw.WriteLine("allows ref struct");
         itw.Write($"where TResult : allows ref struct");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine();
-                itw.Write($"where TParam{currentParam} : allows ref struct");
-            });
+        itw.WriteTParamConstraints(currentAmountOfGenericParams);
         itw.WriteLine(";");
         itw.Indent--;
     }
@@ -147,19 +133,11 @@ internal static class MatchExtensionsGenerator
         itw.WriteLine($"/// Match {methodName}Action delegate with {currentAmountOfGenericParams} extra parameters");
         itw.WriteLine("/// </summary>");
         itw.Write($"public delegate void {methodName}Action<{firstGenericParam}");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine(">(");
         itw.Indent++;
         itw.Write($"scoped in {firstGenericParam} {firstGenericParamName}");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine(",");
-                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
-            });
+        itw.WriteTParamsInParams(currentAmountOfGenericParams);
         itw.WriteLine(")");
         itw.Write($"where {firstGenericParam} : ");
         if (firstGenericParamConstraint is not null)
@@ -167,13 +145,7 @@ internal static class MatchExtensionsGenerator
             itw.Write($"{firstGenericParamConstraint}, ");
         }
         itw.Write("allows ref struct");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine();
-                itw.Write($"where TParam{currentParam} : allows ref struct");
-            });
+        itw.WriteTParamConstraints(currentAmountOfGenericParams);
         itw.WriteLine(";");
         itw.Indent--;
     }
@@ -188,50 +160,32 @@ internal static class MatchExtensionsGenerator
         itw.WriteLine($"/// Match extension method with {currentAmountOfGenericParams} extra parameters");
         itw.WriteLine("/// </summary>");
         itw.Write($"public static TResult Match<TValue, TError, TResult");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine(">(");
         itw.Indent++;
         itw.Write($"this scoped in global::{DEFAULT_NAMESPACE}.ValueResult<TValue, TError> result");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine(",");
-                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
-            });
+        itw.WriteTParamsInParams(currentAmountOfGenericParams);
         itw.WriteLine(",");
         itw.Write("OnSuccessFunc<TValue, TResult");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine("> onSuccess,");
         itw.Write("OnFailureFunc<TError, TResult");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine("> onFailure)");
         itw.WriteLine($"where TError : global::{DEFAULT_NAMESPACE}.IError, allows ref struct");
         itw.WriteLine("where TValue : allows ref struct");
-        itw.WriteLine("where TResult : allows ref struct");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.WriteLine($"where TParam{currentParam} : allows ref struct"));
-
+        itw.Write("where TResult : allows ref struct");
+        itw.WriteTParamConstraints(currentAmountOfGenericParams);
+        itw.WriteLine();
         itw.WriteLine("=> result.IsSuccess");
         itw.Indent++;
         itw.Write("? onSuccess(result.Value");
 
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", in param{currentParam}"));
+        itw.WriteInParams(currentAmountOfGenericParams);
         itw.WriteLine(")");
         itw.Write(": onFailure(result.Error");
 
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", in param{currentParam}"));
+        itw.WriteInParams(currentAmountOfGenericParams);
         itw.WriteLine(");");
         itw.Indent--;
         itw.Indent--;
@@ -247,46 +201,30 @@ internal static class MatchExtensionsGenerator
         itw.WriteLine($"/// Match extension method with {currentAmountOfGenericParams} extra parameters");
         itw.WriteLine("/// </summary>");
         itw.Write($"public static void Match<TValue, TError");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine(">(");
         itw.Indent++;
         itw.Write($"this scoped in global::{DEFAULT_NAMESPACE}.ValueResult<TValue, TError> result");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine(",");
-                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
-            });
+        itw.WriteTParamsInParams(currentAmountOfGenericParams);
         itw.WriteLine(",");
         itw.Write("OnSuccessAction<TValue");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine("> onSuccess,");
         itw.Write("OnFailureAction<TError");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine("> onFailure)");
         itw.WriteLine($"where TError : global::{DEFAULT_NAMESPACE}.IError, allows ref struct");
-        itw.WriteLine("where TValue : allows ref struct");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.WriteLine($"where TParam{currentParam} : allows ref struct"));
-
+        itw.Write("where TValue : allows ref struct");
+        itw.WriteTParamConstraints(currentAmountOfGenericParams);
         itw.Indent--;
+        itw.WriteLine();
         itw.WriteLine('{');
         itw.Indent++;
         itw.WriteLine("if(result.IsSuccess)");
         itw.WriteLine('{');
         itw.Indent++;
         itw.Write("onSuccess(result.Value");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", in param{currentParam}"));
+        itw.WriteInParams(currentAmountOfGenericParams);
         itw.WriteLine(");");
         itw.Indent--;
         itw.WriteLine('}');
@@ -294,9 +232,7 @@ internal static class MatchExtensionsGenerator
         itw.WriteLine('{');
         itw.Indent++;
         itw.Write("onFailure(result.Error");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", in param{currentParam}"));
+        itw.WriteInParams(currentAmountOfGenericParams);
         itw.WriteLine(");");
         itw.Indent--;
         itw.WriteLine('}');

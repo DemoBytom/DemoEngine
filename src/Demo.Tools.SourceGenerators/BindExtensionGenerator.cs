@@ -44,30 +44,16 @@ internal static class BindExtensionGenerator
         itw.WriteLine($"/// Bind delegate with {currentAmountOfGenericParams} extra parameters");
         itw.WriteLine("/// </summary>");
         itw.Write($"public delegate global::{DEFAULT_NAMESPACE}.ValueResult<TValue2, TError> BindFunc<TValue1, TValue2, TError");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine(">(");
         itw.Indent++;
         itw.Write("scoped in TValue1 value");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine(",");
-                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
-            });
+        itw.WriteTParamsInParams(currentAmountOfGenericParams);
         itw.WriteLine(")");
         itw.WriteLine($"where TError : global::{DEFAULT_NAMESPACE}.IError, allows ref struct");
         itw.WriteLine("where TValue1 : allows ref struct");
         itw.Write("where TValue2 : allows ref struct");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine();
-                itw.Write($"where TParam{currentParam} : allows ref struct");
-            });
+        itw.WriteTParamConstraints(currentAmountOfGenericParams);
         itw.WriteLine(";");
         itw.Indent--;
     }
@@ -81,37 +67,24 @@ internal static class BindExtensionGenerator
         itw.WriteLine($"/// Bind extension method with {currentAmountOfGenericParams} extra parameters");
         itw.WriteLine("/// </summary>");
         itw.Write($"public static global::{DEFAULT_NAMESPACE}.ValueResult<TValue2, TError> Bind<TValue1, TValue2, TError");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine(">(");
         itw.Indent++;
         itw.Write($"this scoped in global::{DEFAULT_NAMESPACE}.ValueResult<TValue1, TError> result");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) =>
-            {
-                itw.WriteLine(",");
-                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
-            });
+        itw.WriteTParamsInParams(currentAmountOfGenericParams);
         itw.WriteLine(",");
         itw.Write("BindFunc<TValue1, TValue2, TError");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
         itw.WriteLine("> bind)");
         itw.WriteLine($"where TError : global::{DEFAULT_NAMESPACE}.IError, allows ref struct");
         itw.WriteLine("where TValue1 : allows ref struct");
-        itw.WriteLine("where TValue2 : allows ref struct");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.WriteLine($"where TParam{currentParam} : allows ref struct"));
+        itw.Write("where TValue2 : allows ref struct");
+        itw.WriteTParamConstraints(currentAmountOfGenericParams);
+        itw.WriteLine();
         itw.WriteLine("=> result.IsSuccess");
         itw.Indent++;
         itw.Write("? bind(result.Value");
-        itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
-            static (itw, currentParam) => itw.Write($", in param{currentParam}"));
+        itw.WriteInParams(currentAmountOfGenericParams);
         itw.WriteLine(")");
         itw.WriteLine($": global::{DEFAULT_NAMESPACE}.ValueResult<TValue2, TError>.Failure(result.Error);");
         itw.Indent--;
