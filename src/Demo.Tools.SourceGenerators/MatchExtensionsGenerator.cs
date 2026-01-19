@@ -18,15 +18,23 @@ internal static class MatchExtensionsGenerator
         itw.WriteLine("{");
         itw.Indent++;
 
-        //MatchWithDelegate
+        //MatchWithDelegateFunc
         itw.WriteInLoopFor(
             (0, numberOfGenericParams),
-            GenerateMatchMethod);
+            GenerateMatchWithFuncMethod);
 
         itw.WriteLine();
 
-        // Delegates, equivalent to Func<TValue, TResult...> onSuccess and Func<TError, TResult...> onFailure
-        // Still remaining methods and delegates for Action<TValue..> onSuccess and Action<TError...> onFailure
+        //MatchWithDelegateAction
+        itw.WriteInLoopFor(
+            (0, numberOfGenericParams),
+            GenerateMatchWithActionMethod);
+
+        itw.WriteLine();
+
+        // Delegates, equivalent to:
+        // - Func<TValue, TResult...> onSuccess and Func<TError, TResult...> onFailure
+        // - Action<TValue..> onSuccess and Action<TError...> onFailure
         itw.WriteInLoopFor(
             (0, numberOfGenericParams),
             GenerateDelegate);
@@ -45,7 +53,7 @@ internal static class MatchExtensionsGenerator
         }
 
         //OnSuccessFunc
-        itw.GenerateDelegateInner(
+        itw.GenerateFuncDelegateInner(
             methodName: "OnSuccess",
             firstGenericParam: "TValue",
             firstGenericParamName: "value",
@@ -55,7 +63,27 @@ internal static class MatchExtensionsGenerator
         itw.WriteLine();
 
         //OnFailureFunc
-        itw.GenerateDelegateInner(
+        itw.GenerateFuncDelegateInner(
+            methodName: "OnFailure",
+            firstGenericParam: "TError",
+            firstGenericParamName: "error",
+            firstGenericParamConstraint: $"global::{DEFAULT_NAMESPACE}.IError",
+            currentAmountOfGenericParams: currentAmountOfGenericParams);
+
+        itw.WriteLine();
+
+        //OnSuccessAction
+        itw.GenerateActionDelegateInner(
+            methodName: "OnSuccess",
+            firstGenericParam: "TValue",
+            firstGenericParamName: "value",
+            firstGenericParamConstraint: null,
+            currentAmountOfGenericParams: currentAmountOfGenericParams);
+
+        itw.WriteLine();
+
+        //OnFailureAction
+        itw.GenerateActionDelegateInner(
             methodName: "OnFailure",
             firstGenericParam: "TError",
             firstGenericParamName: "error",
@@ -63,7 +91,7 @@ internal static class MatchExtensionsGenerator
             currentAmountOfGenericParams: currentAmountOfGenericParams);
     }
 
-    private static void GenerateDelegateInner(
+    private static void GenerateFuncDelegateInner(
         this IndentedTextWriter itw,
         string methodName,
         string firstGenericParam,
@@ -72,7 +100,7 @@ internal static class MatchExtensionsGenerator
         int currentAmountOfGenericParams)
     {
         itw.WriteLine("/// <summary>");
-        itw.WriteLine($"/// Match {methodName} delegate with {currentAmountOfGenericParams} extra parameters");
+        itw.WriteLine($"/// Match {methodName}Func delegate with {currentAmountOfGenericParams} extra parameters");
         itw.WriteLine("/// </summary>");
         itw.Write($"public delegate TResult {methodName}Func<{firstGenericParam}, TResult");
         itw.WriteInLoopFor(
@@ -107,7 +135,50 @@ internal static class MatchExtensionsGenerator
         itw.Indent--;
     }
 
-    private static void GenerateMatchMethod(
+    private static void GenerateActionDelegateInner(
+        this IndentedTextWriter itw,
+        string methodName,
+        string firstGenericParam,
+        string firstGenericParamName,
+        string? firstGenericParamConstraint,
+        int currentAmountOfGenericParams)
+    {
+        itw.WriteLine("/// <summary>");
+        itw.WriteLine($"/// Match {methodName}Action delegate with {currentAmountOfGenericParams} extra parameters");
+        itw.WriteLine("/// </summary>");
+        itw.Write($"public delegate void {methodName}Action<{firstGenericParam}");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteLine(">(");
+        itw.Indent++;
+        itw.Write($"scoped in {firstGenericParam} {firstGenericParamName}");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) =>
+            {
+                itw.WriteLine(",");
+                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
+            });
+        itw.WriteLine(")");
+        itw.Write($"where {firstGenericParam} : ");
+        if (firstGenericParamConstraint is not null)
+        {
+            itw.Write($"{firstGenericParamConstraint}, ");
+        }
+        itw.Write("allows ref struct");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) =>
+            {
+                itw.WriteLine();
+                itw.Write($"where TParam{currentParam} : allows ref struct");
+            });
+        itw.WriteLine(";");
+        itw.Indent--;
+    }
+
+    private static void GenerateMatchWithFuncMethod(
         this IndentedTextWriter itw,
         int currentAmountOfGenericParams)
     {
@@ -164,5 +235,72 @@ internal static class MatchExtensionsGenerator
         itw.WriteLine(");");
         itw.Indent--;
         itw.Indent--;
+    }
+
+    private static void GenerateMatchWithActionMethod(
+        this IndentedTextWriter itw,
+        int currentAmountOfGenericParams)
+    {
+        itw.WriteLine();
+
+        itw.WriteLine("/// <summary>");
+        itw.WriteLine($"/// Match extension method with {currentAmountOfGenericParams} extra parameters");
+        itw.WriteLine("/// </summary>");
+        itw.Write($"public static void Match<TValue, TError");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteLine(">(");
+        itw.Indent++;
+        itw.Write($"this scoped in global::{DEFAULT_NAMESPACE}.ValueResult<TValue, TError> result");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) =>
+            {
+                itw.WriteLine(",");
+                itw.Write($"scoped in TParam{currentParam} param{currentParam}");
+            });
+        itw.WriteLine(",");
+        itw.Write("OnSuccessAction<TValue");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteLine("> onSuccess,");
+        itw.Write("OnFailureAction<TError");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) => itw.Write($", TParam{currentParam}"));
+        itw.WriteLine("> onFailure)");
+        itw.WriteLine($"where TError : global::{DEFAULT_NAMESPACE}.IError, allows ref struct");
+        itw.WriteLine("where TValue : allows ref struct");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) => itw.WriteLine($"where TParam{currentParam} : allows ref struct"));
+
+        itw.Indent--;
+        itw.WriteLine('{');
+        itw.Indent++;
+        itw.WriteLine("if(result.IsSuccess)");
+        itw.WriteLine('{');
+        itw.Indent++;
+        itw.Write("onSuccess(result.Value");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) => itw.Write($", in param{currentParam}"));
+        itw.WriteLine(");");
+        itw.Indent--;
+        itw.WriteLine('}');
+        itw.WriteLine("else");
+        itw.WriteLine('{');
+        itw.Indent++;
+        itw.Write("onFailure(result.Error");
+        itw.WriteInLoopFor(
+            (1, currentAmountOfGenericParams),
+            static (itw, currentParam) => itw.Write($", in param{currentParam}"));
+        itw.WriteLine(");");
+        itw.Indent--;
+        itw.WriteLine('}');
+        itw.Indent--;
+        itw.WriteLine('}');
     }
 }

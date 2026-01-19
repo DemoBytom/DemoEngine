@@ -19,23 +19,6 @@ public static class ValueResultExtensions
             ? ValueResult<TValue, TNewError>.Success(result.Value)
             : ValueResult<TValue, TNewError>.Failure(map(result.Error));
 
-    public static void Match<TValue, TError>(
-        this scoped in ValueResult<TValue, TError> result,
-        Action<TValue> onSuccess,
-        Action<TError> onFailure)
-        where TError : IError, allows ref struct
-        where TValue : allows ref struct
-    {
-        if (result.IsSuccess)
-        {
-            onSuccess(result.Value);
-        }
-        else
-        {
-            onFailure(result.Error);
-        }
-    }
-
     public static void MatchFailure<TValue, TError>(
         this scoped in ValueResult<TValue, TError> result,
         Action<TError> onFailure)
