@@ -66,9 +66,8 @@ public class TypedValueErrorBenchmarks
 
     [Benchmark]
     public ValueResult<int, ValueError> ValueResult_CallLogAndReturnFailure_WithParams_SourceGeneratedLogger_SplitCall()
-        => ValueResult
+        => _logger
             .LogAndReturn(
-                _logger,
                 LoggingExtensions.LogOutOfRangeError,
                 PARAM_NAME,
                 ERROR_MESSAGE)
@@ -76,9 +75,8 @@ public class TypedValueErrorBenchmarks
 
     [Benchmark]
     public ValueResult<int, TypedValueError> ValueResult_CallLogAndReturnOutOfRangeFailure_WithParams_SourceGeneratedLogger_SplitCall()
-        => ValueResult
+        => _logger
             .LogAndReturn(
-                _logger,
                 LoggingExtensions.LogOutOfRangeError,
                 PARAM_NAME,
                 ERROR_MESSAGE)

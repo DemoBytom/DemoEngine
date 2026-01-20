@@ -20,5 +20,10 @@ public class ValueResultSourceGenerator : IIncrementalGenerator
                     MapExtensionGenerator.GenerateMapExtensions)
                 .AddSource(
                     "MatchExtensions.g.cs",
-                    MatchExtensionsGenerator.GenerateMatchExtensions));
+                    MatchExtensionsGenerator.GenerateMatchExtensions)
+                .AddSource(
+                    "LogAndReturnExtensions.g.cs",
+                    LogAndReturnExtensionsGenerator.GenerateExtensions,
+                    numberOfGenericParameters: NUMBER_OF_GENERIC_PARAMETERS_FOR_LOGGING)
+        );
 }

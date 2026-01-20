@@ -14,7 +14,7 @@ internal static class HelperExtensions
         this IncrementalGeneratorPostInitializationContext ctx,
         string hintName,
         Func<ushort, string> generatorMethod,
-        ushort numberOfGenericParameters = NUMBER_OF_GENERIC_PARAMETERS)
+        ushort numberOfGenericParameters = DEFAULT_NUMBER_OF_GENERIC_PARAMETERS)
     {
         ctx.AddSource(
             hintName,

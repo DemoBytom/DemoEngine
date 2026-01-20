@@ -3,7 +3,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
 
 namespace Demo.Tools.Common.ValueResults;
 
@@ -130,36 +129,7 @@ public static class ValueResult
         where TError : IError, allows ref struct
         => ValueResult<TError>.Failure(error);
 
-    extension<TLogger>(TLogger? logger)
-        where TLogger : ILogger
-    {
-        public LogAndReturnResultCallContext LogAndReturn(
-            Action<TLogger> logAction)
-        {
-            if (logger is not null)
-            {
-                logAction(logger);
-            }
-            return new LogAndReturnResultCallContext();
-        }
-
-        public LogAndReturnResultCallContext LogAndReturn<TLogValue1, TLogValue2>(
-            Action<TLogger, TLogValue1, TLogValue2> logAction,
-            TLogValue1 value1,
-            TLogValue2 value2)
-            where TLogValue1 : allows ref struct
-            where TLogValue2 : allows ref struct
-        {
-            if (logger is not null)
-            {
-                logAction(logger, value1, value2);
-            }
-
-            return new LogAndReturnResultCallContext();
-        }
-    }
-
-    extension(scoped in LogAndReturnResultCallContext _)
+    extension(scoped in LogAndReturnExtensions.LogAndReturnResultCallContext _)
     {
 #pragma warning disable CA1822 // Mark members as static
         public ValueResult<TValue, ValueError> Failure<TValue>(
@@ -171,10 +141,17 @@ public static class ValueResult
             TValue value)
             where TValue : allows ref struct
             => ValueResult<TValue, ValueError>.Success(value);
-#pragma warning restore CA1822 // Mark members as static
-    }
 
-    public readonly ref struct LogAndReturnResultCallContext()
-    {
+        public ValueResult<TValue, TypedValueError> InvalidOperation<TValue>(
+            string errorMessage)
+            where TValue : allows ref struct
+            => TypedValueError.InvalidOperation<TValue>(errorMessage);
+
+        public ValueResult<TValue, TypedValueError> OutOfRange<TValue>(
+            string parameterName,
+            string errorMessage)
+            where TValue : allows ref struct
+            => TypedValueError.OutOfRange<TValue>(parameterName, errorMessage);
+#pragma warning restore CA1822 // Mark members as static
     }
 }

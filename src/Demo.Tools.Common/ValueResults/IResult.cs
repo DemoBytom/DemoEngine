@@ -16,6 +16,7 @@ public interface IResult<out TError>
 
     TError? Error { get; }
 }
+
 public interface IResult<out TValue, out TError>
     : IResult<TError>
     where TError : IError, allows ref struct

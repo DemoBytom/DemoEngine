@@ -16,4 +16,8 @@ public class TestValueResultSrouceGenerators
     [Test]
     public Task ValueResultSourceGenerator_MatchExtensions_Success()
         => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["MatchExtensions.g.cs"]);
+
+    [Test]
+    public Task ValueResultSourceGenerator_LogAndReturnExtensions_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["LogAndReturnExtensions.g.cs"]);
 }
