@@ -1,6 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
@@ -20,8 +21,23 @@ public readonly ref struct ValueResult<TValue, TError>
     [MemberNotNullWhen(true, nameof(Error))]
     public bool IsError => !IsSuccess;
 
-    public TValue? Value { get; }
-    public TError? Error { get; }
+    public TValue? Value
+    {
+        get
+        {
+            Debug.Assert(IsSuccess);
+            return field;
+        }
+    }
+
+    public TError? Error
+    {
+        get
+        {
+            Debug.Assert(IsError);
+            return field;
+        }
+    }
 
     private ValueResult(
         bool isSuccess,

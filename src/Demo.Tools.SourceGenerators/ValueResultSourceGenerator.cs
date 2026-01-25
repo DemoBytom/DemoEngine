@@ -25,5 +25,8 @@ public class ValueResultSourceGenerator : IIncrementalGenerator
                     "LogAndReturnExtensions.g.cs",
                     LogAndReturnExtensionsGenerator.GenerateExtensions,
                     numberOfGenericParameters: NUMBER_OF_GENERIC_PARAMETERS_FOR_LOGGING)
+                .AddSource(
+                    "TapExtensions.g.cs",
+                    TapExtensionsGenerator.GenerateExtensions)
         );
 }

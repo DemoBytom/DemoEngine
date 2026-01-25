@@ -20,4 +20,8 @@ public class TestValueResultSrouceGenerators
     [Test]
     public Task ValueResultSourceGenerator_LogAndReturnExtensions_Success()
         => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["LogAndReturnExtensions.g.cs"]);
+
+    [Test]
+    public Task ValueResultSourceGenerator_Tap_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["TapExtensions.g.cs"]);
 }

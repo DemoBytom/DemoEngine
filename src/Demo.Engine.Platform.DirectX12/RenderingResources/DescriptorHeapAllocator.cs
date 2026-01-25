@@ -7,6 +7,7 @@ using Demo.Tools.Common.ValueResults;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
 using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocatorLoggerExtensions;
+using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocatorValidationExtensions;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
@@ -171,8 +172,10 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
                 logOnFailure: LogCapacityCannotBeZero)
             .ErrorIfGreaterThen((uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2, nameof(capacity))
             .ValidateCapacityForSamplerHeap(HeapType)
-            .SetCapacity(capacity
-                => Capacity = capacity)
+            .Tap(
+                param1: this,
+                tap: static (scoped in capacity, scoped in @this)
+                => @this.Capacity = capacity)
             .Match(
                 onSuccess: static (scoped in _)
                     => ValueResult.Success(),
@@ -222,9 +225,10 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
                 descriptorHandle: descriptorHandle)
             .CalculateIndex()
             .ValidateHeapDescriptorIndex(_logger)
-            .AddIndex(
-                frameIndex: _d3D12RenderingEngine.CurrentFrameIndex(),
-                deferredFreeIndices: _deferredFreeIndices)
+            .Tap(
+                param1: _d3D12RenderingEngine.CurrentFrameIndex(),
+                param2: _deferredFreeIndices,
+                tap: AddIndex)
             .MatchFailure(
                 onFailure: error =>
                 {
@@ -639,20 +643,6 @@ static file class DescriptorHeapAllocatorValidationExtensions
                 )
         ;
 
-    internal static ValueResult<uint, ValueError> SetCapacity(
-        this ValueResult<uint, ValueError> capacityResult,
-        scoped in Action<uint> setCapacity)
-        => capacityResult
-            .Bind(
-                param1: setCapacity,
-                bind: static (scoped in capacity, scoped in setCapacity)
-                =>
-                {
-                    setCapacity(capacity);
-                    return ValueResult.Success<uint, ValueError>(capacity);
-                })
-        ;
-
     internal readonly ref struct IndexDescriptorHandle<TDescriptorHeapAllocator>(
         uint index,
         DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)
@@ -702,25 +692,10 @@ static file class DescriptorHeapAllocatorValidationExtensions
                         errorMessage: "Invalid heap descriptor index!"))
         ;
 
-    public static ValueResult<int, TypedValueError> AddIndex<TDescriptorHeapAllocator>(
-        this ValueResult<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError> indexDescriptorHandleResult,
+    internal static void AddIndex<TDescriptorHeapAllocator>(
+        scoped in IndexDescriptorHandle<TDescriptorHeapAllocator> idh,
         scoped in uint frameIndex,
-        scoped in IList<int>[] deferredFreeIndices)
+        scoped in List<int>[] deferredFreeIndices)
         where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
-        => indexDescriptorHandleResult
-            .Bind(
-                param1: frameIndex,
-                param2: deferredFreeIndices,
-                bind: static (
-                    scoped in idh,
-                    scoped in frameIndex,
-                    scoped in deferredFreeIndices)
-                =>
-                {
-                    var index = (int)idh.Index;
-                    deferredFreeIndices[frameIndex].Add(index);
-
-                    return ValueResult.Success<int, TypedValueError>(index);
-                })
-                ;
+        => deferredFreeIndices[frameIndex].Add((int)idh.Index);
 }
