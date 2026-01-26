@@ -7,7 +7,7 @@ namespace Demo.Tools.SourceGenerators;
 
 internal static class MatchExtensionsGenerator
 {
-    internal static string GenerateMatchExtensions(ushort numberOfGenericParams)
+    internal static string GenerateExtensions(ushort numberOfGenericParams)
     {
         IndentedTextWriter itw = new(new StringWriter(), "    ");
         itw.WriteLine($"#nullable enable");

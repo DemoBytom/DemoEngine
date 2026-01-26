@@ -7,7 +7,7 @@ namespace Demo.Tools.SourceGenerators;
 
 internal static class MapExtensionGenerator
 {
-    internal static string GenerateMapExtensions(ushort numberOfGenericParams)
+    internal static string GenerateExtensions(ushort numberOfGenericParams)
     {
         IndentedTextWriter itw = new(new StringWriter(), "    ");
 

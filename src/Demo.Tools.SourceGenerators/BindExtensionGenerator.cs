@@ -7,7 +7,7 @@ namespace Demo.Tools.SourceGenerators;
 
 internal static class BindExtensionGenerator
 {
-    internal static string GenerateBindExtensions(ushort numberOfGenericParams)
+    internal static string GenerateExtensions(ushort numberOfGenericParams)
     {
 
         IndentedTextWriter itw = new(new StringWriter(), "    ");
