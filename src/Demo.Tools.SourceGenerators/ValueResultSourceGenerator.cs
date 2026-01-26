@@ -14,13 +14,13 @@ public class ValueResultSourceGenerator : IIncrementalGenerator
             => ctx
                 .AddSource(
                     "BindExtensions.g.cs",
-                    BindExtensionGenerator.GenerateBindExtensions)
+                    BindExtensionGenerator.GenerateExtensions)
                 .AddSource(
                     "MapExtensions.g.cs",
-                    MapExtensionGenerator.GenerateMapExtensions)
+                    MapExtensionGenerator.GenerateExtensions)
                 .AddSource(
                     "MatchExtensions.g.cs",
-                    MatchExtensionsGenerator.GenerateMatchExtensions)
+                    MatchExtensionsGenerator.GenerateExtensions)
                 .AddSource(
                     "LogAndReturnExtensions.g.cs",
                     LogAndReturnExtensionsGenerator.GenerateExtensions,
@@ -28,5 +28,8 @@ public class ValueResultSourceGenerator : IIncrementalGenerator
                 .AddSource(
                     "TapExtensions.g.cs",
                     TapExtensionsGenerator.GenerateExtensions)
+                .AddSource(
+                    "EnsureExtensions.g.cs",
+                    EnsureExtensionsGenerator.GenerateExtensions)
         );
 }

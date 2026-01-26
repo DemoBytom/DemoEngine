@@ -679,17 +679,17 @@ static file class DescriptorHeapAllocatorValidationExtensions
         where TLogger : ILogger
         where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
         => indexDescriptorHandleResult
-            .Bind(
+            .Ensure(
+                predicate: static (scoped in idh)
+                    => idh.Index == idh.DescriptorHandle.Index,
+                onError: static (scoped in idh)
+                    => new(
+                        TypedValueError.ErrorTypes.InvalidOperation,
+                        new InvalidOperationError("Invalid heap descriptor index!")))
+            .TapError(
                 param1: logger,
-                bind: static (
-                    scoped in indexDescriptorHandle,
-                    scoped in logger)
-            => indexDescriptorHandle.DescriptorHandle.Index == indexDescriptorHandle.Index
-                ? ValueResult.Success<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError>(indexDescriptorHandle)
-                : logger
-                    .LogAndReturn(logger => LogInvalidHeapDescriptorIndex(logger))
-                    .InvalidOperation<IndexDescriptorHandle<TDescriptorHeapAllocator>>(
-                        errorMessage: "Invalid heap descriptor index!"))
+                tapError: static (scoped in _, scoped in logger)
+                    => LogInvalidHeapDescriptorIndex(logger))
         ;
 
     internal static void AddIndex<TDescriptorHeapAllocator>(
