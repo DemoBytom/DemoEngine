@@ -68,8 +68,8 @@ internal static partial class DescriptorHeapAllocatorLoggerExtensions
 
     [LoggerMessage(
         Level = LogLevel.Error,
-        Message = "Failed to allocate descriptor handle for heap {heapType} with capacity {capacity}")]
-    internal static partial void LogFailedToAllocateDescriptorHandle(
+        Message = "Descriptor heap of type {heapType} capacity reached {capacity}")]
+    internal static partial void LogDescriptorHeapCapacityReached(
         this ILogger logger,
         DescriptorHeapType heapType,
         uint capacity);
