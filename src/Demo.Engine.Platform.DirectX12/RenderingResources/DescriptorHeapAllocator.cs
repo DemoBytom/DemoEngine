@@ -187,28 +187,67 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
     {
         lock (_lock)
         {
-            ValidateHeapIsNotNull();
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(
-                value: Size,
-                other: Capacity);
+            return ValueResult.Success(this)
+                .Ensure(
+                    param1: _logger,
+                    predicate: DescriptorHeapExists,
+                    onError: DescriptorHeapDoesNotExist)
+                .Ensure(
+                    param1: _logger,
+                    predicate: SizeIsBelowCapacity,
+                    onError: CapacityTooLow)
+                .Map(
+                    param1: _freeHandles,
+                    map: static (scoped in dho, scoped in freeHandles) =>
+                {
+                    var index = freeHandles[dho.Size++];
 
-            var index = _freeHandles[Size];
+                    return new DescriptorHandle<TDescriptorHeapAllocator>(
+                        cpu: new CpuDescriptorHandle(
+                            other: dho.CPU_Start,
+                            offsetInDescriptors: index,
+                            descriptorIncrementSize: dho.DescriptorSize),
+                        gpu: dho.IsShaderVisible
+                            ? new GpuDescriptorHandle(
+                                other: dho.GPU_Start.Value,
+                                offsetInDescriptors: index,
+                                descriptorIncrementSize: dho.DescriptorSize)
+                            : null,
+                        heapAlocator: dho,
+                        index: index);
+                })
+                .Match(
+                    onSuccess: static (scoped in handle)
+                        => handle,
+                    onFailure: static (scoped in error)
+                        => throw new InvalidOperationException(error.Message))
+                ;
+        }
 
-            ++Size;
+        static bool DescriptorHeapExists(
+            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho,
+            scoped in ILogger<TDescriptorHeapAllocator> logger)
+            => dho.DescriptorHeap is not null;
 
-            return new DescriptorHandle<TDescriptorHeapAllocator>(
-                cpu: new CpuDescriptorHandle(
-                    other: CPU_Start,
-                    offsetInDescriptors: index,
-                    descriptorIncrementSize: DescriptorSize),
-                gpu: IsShaderVisible
-                    ? new GpuDescriptorHandle(
-                        other: GPU_Start.Value,
-                        offsetInDescriptors: index,
-                        descriptorIncrementSize: DescriptorSize)
-                    : null,
-                heapAlocator: this,
-                index: index);
+        static bool SizeIsBelowCapacity(
+            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho,
+            scoped in ILogger<TDescriptorHeapAllocator> logger)
+            => dho.Size < dho.Capacity;
+
+        static ValueError DescriptorHeapDoesNotExist(
+            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho,
+            scoped in ILogger<TDescriptorHeapAllocator> logger)
+        {
+            logger.LogDescriptorHeapWasntInitializedProperly();
+            return new ValueError("Descriptor heap wasn't initialized properly!");
+        }
+
+        static ValueError CapacityTooLow(
+            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho,
+            scoped in ILogger<TDescriptorHeapAllocator> logger)
+        {
+            logger.LogFailedToAllocateDescriptorHandle(dho.HeapType, dho.Capacity);
+            return new ValueError($"Descriptor heap capacity reached ({dho.Capacity})");
         }
     }
 
@@ -217,8 +256,6 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
     {
         lock (_lock)
         {
-            ArgumentOutOfRangeException.ThrowIfZero(Size);
-
             ValidateDescriptorHandle(
                 _logger,
                 descriptorHeapAllocator: this,
@@ -251,6 +288,13 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
         scoped in DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)
         => descriptorHandle switch
         {
+            { Container.Capacity: 0 }
+                => logger
+                    .LogAndReturn(LogCapacityCannotBeZero)
+                    .OutOfRange<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)>(
+                        parameterName: nameof(Capacity),
+                        errorMessage: "Capacity cannot be 0"),
+
             { Container: var container } when container != descriptorHeapAllocator
                 => logger
                     .LogAndReturn(LogDescriptorHandleWasntAllocatedByThisHeapAllocator)
@@ -290,15 +334,6 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
                         descriptorHeapAllocator,
                         descriptorHandle)),
         };
-
-    private void ValidateHeapIsNotNull()
-    {
-        if (DescriptorHeap is null)
-        {
-            throw new InvalidOperationException(
-                "Descriptor heap wasn't initialized properly!");
-        }
-    }
 
     public void DeferredRelease()
     {
@@ -379,7 +414,7 @@ internal readonly struct DescriptorHandle<TDescriptorHeapAllocator>
     public readonly bool IsValid => CPU is not null;
 
     [MemberNotNullWhen(true, nameof(GPU))]
-    public readonly bool IsSHaderVisible => GPU is not null;
+    public readonly bool IsShaderVisible => GPU is not null;
 
     public DescriptorHandle()
         => throw new InvalidOperationException(

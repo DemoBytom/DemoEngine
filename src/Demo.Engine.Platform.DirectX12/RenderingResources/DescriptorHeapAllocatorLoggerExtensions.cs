@@ -59,4 +59,18 @@ internal static partial class DescriptorHeapAllocatorLoggerExtensions
         this ILogger logger,
         DescriptorHeapType heapType,
         string errorMessage);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Descriptor heap wasn't initialized properly!")]
+    internal static partial void LogDescriptorHeapWasntInitializedProperly(
+        this ILogger logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Failed to allocate descriptor handle for heap {heapType} with capacity {capacity}")]
+    internal static partial void LogFailedToAllocateDescriptorHandle(
+        this ILogger logger,
+        DescriptorHeapType heapType,
+        uint capacity);
 }
