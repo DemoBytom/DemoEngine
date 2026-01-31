@@ -89,7 +89,7 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
         {
 
             if (SetCapacity(capacity)
-                is { IsSuccess: false } capacitySetResult)
+                is { IsError: true } capacitySetResult)
             {
                 _logger.LogFailedToSetCapacityForDescriptorHeapAllocator(
                     heapType: HeapType,
@@ -225,13 +225,11 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
         }
 
         static bool DescriptorHeapExists(
-            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho,
-            scoped in ILogger<TDescriptorHeapAllocator> logger)
+            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho)
             => dho.DescriptorHeap is not null;
 
         static bool SizeIsBelowCapacity(
-            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho,
-            scoped in ILogger<TDescriptorHeapAllocator> logger)
+            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho)
             => dho.Size < dho.Capacity;
 
         static ValueError DescriptorHeapDoesNotExist(

@@ -25,7 +25,7 @@ internal static class EnsureExtensionsGenerator
         itw.WriteLine('{');
         itw.Indent++;
         itw.WriteInLoopFor(
-            (0, numberOfGenericParams),
+            (0, numberOfGenericParams, numberOfGenericParams),
             GenerateEnsureMethod);
         itw.Indent--;
         itw.WriteLine('}');
@@ -47,22 +47,24 @@ internal static class EnsureExtensionsGenerator
 
     private static void GenerateEnsureMethod(
         this IndentedTextWriter itw,
-        int currentAmountOfGenericParams)
+        int currentAmountOfGenericParams1,
+        int currentAmountOfGenericParams2)
     {
+        var maxGenericParams = Math.Max(currentAmountOfGenericParams1, currentAmountOfGenericParams2);
         itw.WriteLine();
         itw.WriteLine("/// <summary>");
-        itw.WriteLine($"/// <para>Ensure extension method with {currentAmountOfGenericParams} extra parameters</para>");
+        itw.WriteLine($"/// <para>Ensure extension method with {maxGenericParams} extra parameters</para>");
         itw.WriteLine("/// <para>Validate a successful value.</para>");
         itw.WriteLine("/// </summary>");
         itw.WriteLine("/// <remarks>");
         itw.WriteLine($"/// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;");
         itw.WriteLine("/// </remarks>");
         itw.Write($"public global::{DEFAULT_NAMESPACE}.ValueResult<TValue, TError> Ensure");
-        if (currentAmountOfGenericParams > 0)
+        if (currentAmountOfGenericParams1 > 0 || currentAmountOfGenericParams2 > 0)
         {
             itw.Write("<");
             itw.WriteInLoopFor(
-                (1, currentAmountOfGenericParams),
+                (1, maxGenericParams),
                 static (itw, currentParam)
                 =>
                 {
@@ -77,22 +79,22 @@ internal static class EnsureExtensionsGenerator
         itw.WriteLine('(');
         itw.Indent++;
         itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
+            (1, maxGenericParams),
             static (itw, currentParam) =>
             {
                 itw.Write($"scoped in TParam{currentParam} param{currentParam}");
                 itw.WriteLine(",");
             });
         itw.Write("EnsurePredicate<TValue");
-        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams1);
         itw.WriteLine("> predicate,");
         itw.Write("EnsureOnErrorFunc<TValue, TError");
-        itw.WriteTParamGenericParams(currentAmountOfGenericParams);
+        itw.WriteTParamGenericParams(currentAmountOfGenericParams2);
         itw.WriteLine("> onError)");
         itw.WriteLine("=> result.IsError");
         itw.Write("|| predicate(result.Value");
         itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
+            (1, currentAmountOfGenericParams1),
             static (itw, currentParam)
             => itw.Write($", param{currentParam}"));
         itw.WriteLine(")");
@@ -102,7 +104,7 @@ internal static class EnsureExtensionsGenerator
         itw.Indent++;
         itw.Write("onError(result.Value");
         itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams),
+            (1, currentAmountOfGenericParams2),
             static (itw, currentParam)
             => itw.Write($", param{currentParam}"));
         itw.WriteLine("));");

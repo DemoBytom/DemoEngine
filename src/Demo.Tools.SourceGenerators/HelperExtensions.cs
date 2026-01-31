@@ -37,6 +37,19 @@ internal static class HelperExtensions
             }
         }
 
+        internal void WriteInLoopFor(
+            (int startValue, int times1, int times2) range,
+            Action<IndentedTextWriter, int, int> action)
+        {
+            for (var i = range.startValue; i <= range.times1; i++)
+            {
+                for (var j = range.startValue; j <= range.times2; j++)
+                {
+                    action(itw, i, j);
+                }
+            }
+        }
+
         internal void WriteTParamsInParams(
             int currentAmountOfGenericParams)
             => itw.WriteInLoopFor(
