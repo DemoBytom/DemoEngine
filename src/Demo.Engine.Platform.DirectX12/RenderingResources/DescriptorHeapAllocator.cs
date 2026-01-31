@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using Demo.Tools.Common.ValueResults;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
+using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocatorExtensions;
 using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocatorLoggerExtensions;
 using static Demo.Engine.Platform.DirectX12.RenderingResources.DescriptorHeapAllocatorValidationExtensions;
 
@@ -198,24 +199,10 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
                     onError: CapacityTooLow)
                 .Map(
                     param1: _freeHandles,
-                    map: static (scoped in dho, scoped in freeHandles) =>
-                {
-                    var index = freeHandles[dho.Size++];
-
-                    return new DescriptorHandle<TDescriptorHeapAllocator>(
-                        cpu: new CpuDescriptorHandle(
-                            other: dho.CPU_Start,
-                            offsetInDescriptors: index,
-                            descriptorIncrementSize: dho.DescriptorSize),
-                        gpu: dho.IsShaderVisible
-                            ? new GpuDescriptorHandle(
-                                other: dho.GPU_Start.Value,
-                                offsetInDescriptors: index,
-                                descriptorIncrementSize: dho.DescriptorSize)
-                            : null,
-                        heapAlocator: dho,
-                        index: index);
-                })
+                    map: static (scoped in dho, scoped in freeHandles)
+                        => new DescriptorHandle<TDescriptorHeapAllocator>(
+                            heapAllocator: dho,
+                            index: freeHandles[dho.Size++]))
                 .Match(
                     onSuccess: static (scoped in handle)
                         => handle,
@@ -233,7 +220,6 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
             => dho.Size < dho.Capacity;
 
         static ValueError DescriptorHeapDoesNotExist(
-            scoped in DescriptorHeapAllocator<TDescriptorHeapAllocator> dho,
             scoped in ILogger<TDescriptorHeapAllocator> logger)
         {
             logger.LogDescriptorHeapWasntInitializedProperly();
@@ -431,6 +417,25 @@ internal readonly struct DescriptorHandle<TDescriptorHeapAllocator>
         Index = index;
     }
 
+    internal DescriptorHandle(
+        TDescriptorHeapAllocator heapAllocator,
+        int index)
+        : this(
+            cpu: new CpuDescriptorHandle(
+                other: heapAllocator.CPU_Start,
+                offsetInDescriptors: index,
+                descriptorIncrementSize: heapAllocator.DescriptorSize),
+            gpu: heapAllocator.IsShaderVisible
+                ? new GpuDescriptorHandle(
+                    other: heapAllocator.GPU_Start.Value,
+                    offsetInDescriptors: index,
+                    descriptorIncrementSize: heapAllocator.DescriptorSize)
+                : null,
+            heapAlocator: heapAllocator,
+            index: index)
+    {
+    }
+
     public void Dispose()
         => Container.Free(this);
 }
@@ -548,7 +553,7 @@ internal static class DescriptorHeapAllocatorExtensions
         where TAllocators : allows ref struct
     {
 
-        public static ValueResult<TResult, ValueError> BindResult(
+        public static ValueResult<TResult, ValueError> MapResult(
             scoped in TAllocators allocators,
             scoped in ID3D12RenderingEngine re,
             scoped in Func<DescHeapAllocatorBuilder, ValueResult<TParam, ValueError>> action)
@@ -579,17 +584,17 @@ internal static class DescriptorHeapAllocatorExtensions
                 param1: renderingEngine,
                 param2: action2,
                 bind: static (scoped in allocators, scoped in renderingEngine, scoped in action2)
-                    => DescriptorHeapAllocatorsBuilderResult<T1, T2>.BindResult(allocators, renderingEngine, action2))
+                    => DescriptorHeapAllocatorsBuilderResult<T1, T2>.MapResult(allocators, renderingEngine, action2))
             .Bind(
                 param1: renderingEngine,
                 param2: action3,
                 bind: static (scoped in allocators, scoped in renderingEngine, scoped in action3)
-                    => DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>.BindResult(allocators, renderingEngine, action3))
+                    => DescriptorHeapAllocatorsBuilderResult<T1, T2, T3>.MapResult(allocators, renderingEngine, action3))
             .Bind(
                 param1: renderingEngine,
                 param2: action4,
                 bind: static (scoped in allocators, scoped in renderingEngine, scoped in action4)
-                    => DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>.BindResult(allocators, renderingEngine, action4))
+                    => DescriptorHeapAllocatorsBuilderResult<T1, T2, T3, T4>.MapResult(allocators, renderingEngine, action4))
             ;
 
     internal interface IDescriptorHeapAllocatorsBuilderResult<TResult, TAllocators, TParam>

@@ -37,6 +37,17 @@ internal static class HelperExtensions
             }
         }
 
+        internal void WriteInLoopFor<TParam1>(
+            TParam1 param1,
+            (int startValue, int times) range,
+            Action<IndentedTextWriter, int, TParam1> action)
+        {
+            for (var i = range.startValue; i <= range.times; i++)
+            {
+                action(itw, i, param1);
+            }
+        }
+
         internal void WriteInLoopFor(
             (int startValue, int times1, int times2) range,
             Action<IndentedTextWriter, int, int> action)
@@ -51,31 +62,50 @@ internal static class HelperExtensions
         }
 
         internal void WriteTParamsInParams(
-            int currentAmountOfGenericParams)
+            int currentAmountOfGenericParams,
+            bool includeStartingComma = true)
             => itw.WriteInLoopFor(
+                param1: includeStartingComma,
                 (1, currentAmountOfGenericParams),
-                static (itw, currentParam) =>
+                static (itw, currentParam, includeStartingComma) =>
                 {
-                    itw.WriteLine(",");
+                    if (includeStartingComma || currentParam > 1)
+                    {
+                        itw.WriteLine(",");
+                    }
                     itw.Write($"scoped in TParam{currentParam} param{currentParam}");
                 });
 
         internal void WriteTParamConstraints(
-            int currentAmountOfGenericParams)
+            int currentAmountOfGenericParams,
+            bool includeStartingWriteLine = true)
             => itw.WriteInLoopFor(
+                includeStartingWriteLine,
                 (1, currentAmountOfGenericParams),
-                static (itw, currentParam) =>
+                static (itw, currentParam, includeStartingWriteLine) =>
                 {
-                    itw.WriteLine();
+                    if (includeStartingWriteLine || currentParam > 1)
+                    {
+                        itw.WriteLine();
+                    }
                     itw.Write($"where TParam{currentParam} : allows ref struct");
                 });
 
         internal void WriteTParamGenericParams(
-            int currentAmountOfGenericParams)
+            int currentAmountOfGenericParams,
+            bool includeStartingComma = true)
             => itw.WriteInLoopFor(
+                includeStartingComma,
                 (1, currentAmountOfGenericParams),
-                static (itw, currentParam)
-                => itw.Write($", TParam{currentParam}"));
+                static (itw, currentParam, includeStartingComma)
+                =>
+                {
+                    if (includeStartingComma || currentParam > 1)
+                    {
+                        itw.Write(", ");
+                    }
+                    itw.Write($"TParam{currentParam}");
+                });
 
         internal void WriteInParams(
             int currentAmountOfGenericParams)
