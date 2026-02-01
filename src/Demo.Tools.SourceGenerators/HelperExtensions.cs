@@ -113,5 +113,32 @@ internal static class HelperExtensions
                 (1, currentAmountOfGenericParams),
                 static (itw, currentParam)
                 => itw.Write($", in param{currentParam}"));
+
+        internal void WriteFunctionalParamList(
+            string? firstParameter,
+            int amountOfParams)
+        {
+            switch (amountOfParams)
+            {
+                case <= 0:
+                    itw.Write($"{(firstParameter is null ? "()" : firstParameter)}");
+                    break;
+                case 1 when firstParameter is null:
+                    itw.Write("P1");
+                    break;
+                case 1:
+                    itw.Write($"({(firstParameter is null ? "" : firstParameter + ", ")}P1)");
+                    break;
+                case 2:
+                    itw.Write($"({(firstParameter is null ? "" : firstParameter + ", ")}P1, P2)");
+                    break;
+                case 3:
+                    itw.Write($"({(firstParameter is null ? "" : firstParameter + ", ")}P1, P2, P3)");
+                    break;
+                default:
+                    itw.Write($"({(firstParameter is null ? "" : firstParameter + ", ")}P1, ..., P{amountOfParams})");
+                    break;
+            }
+        }
     }
 }

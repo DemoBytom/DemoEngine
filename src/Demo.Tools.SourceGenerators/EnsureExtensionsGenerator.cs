@@ -79,28 +79,24 @@ internal static class EnsureExtensionsGenerator
 
     private static void GenerateEnsureMethod(
         this IndentedTextWriter itw,
-        int currentAmountOfGenericParams1,
-        int currentAmountOfGenericParams2,
+        int currentAmountOfGenericParamsForPredicate,
+        int currentAmountOfGenericParamsForOnError,
         bool valueInOnError)
     {
-        var maxGenericParams = Math.Max(currentAmountOfGenericParams1, currentAmountOfGenericParams2);
+        var maxGenericParams = Math.Max(currentAmountOfGenericParamsForPredicate, currentAmountOfGenericParamsForOnError);
         itw.WriteLine();
         itw.WriteLine("/// <summary>");
         itw.WriteLine($"/// <para>Ensure extension method with {maxGenericParams} extra parameters</para>");
         itw.WriteLine("/// <para>Validate a successful value.</para>");
         itw.WriteLine("/// </summary>");
         itw.WriteLine("/// <remarks>");
-        if (valueInOnError)
-        {
-            itw.WriteLine($"/// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;");
-        }
-        else
-        {
-            itw.WriteLine($"/// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;");
-        }
+        itw.GenerateFunctionalRemarks(
+            currentAmountOfGenericParamsForPredicate,
+            currentAmountOfGenericParamsForOnError,
+            valueInOnError);
         itw.WriteLine("/// </remarks>");
         itw.Write($"public global::{DEFAULT_NAMESPACE}.ValueResult<TValue, TError> Ensure");
-        if (currentAmountOfGenericParams1 > 0 || currentAmountOfGenericParams2 > 0)
+        if (currentAmountOfGenericParamsForPredicate > 0 || currentAmountOfGenericParamsForOnError > 0)
         {
             itw.Write("<");
             itw.WriteInLoopFor(
@@ -126,7 +122,7 @@ internal static class EnsureExtensionsGenerator
                 itw.WriteLine(",");
             });
         itw.Write("EnsurePredicate<TValue");
-        itw.WriteTParamGenericParams(currentAmountOfGenericParams1);
+        itw.WriteTParamGenericParams(currentAmountOfGenericParamsForPredicate);
         itw.WriteLine("> predicate,");
         if (valueInOnError)
         {
@@ -137,12 +133,12 @@ internal static class EnsureExtensionsGenerator
         {
             itw.Write("EnsureOnErrorNoValueFunc<TError");
         }
-        itw.WriteTParamGenericParams(currentAmountOfGenericParams2);
+        itw.WriteTParamGenericParams(currentAmountOfGenericParamsForOnError);
         itw.WriteLine("> onError)");
         itw.WriteLine("=> result.IsError");
         itw.Write("|| predicate(result.Value");
         itw.WriteInLoopFor(
-            (1, currentAmountOfGenericParams1),
+            (1, currentAmountOfGenericParamsForPredicate),
             static (itw, currentParam)
             => itw.Write($", param{currentParam}"));
         itw.WriteLine(")");
@@ -162,7 +158,7 @@ internal static class EnsureExtensionsGenerator
 
         itw.WriteInLoopFor(
             valueInOnError,
-            (1, currentAmountOfGenericParams2),
+            (1, currentAmountOfGenericParamsForOnError),
             static (itw, currentParam, includeStartingComma)
             =>
             {
@@ -177,6 +173,30 @@ internal static class EnsureExtensionsGenerator
         itw.Indent--;
         itw.Indent--;
         itw.Indent--;
+    }
+
+    private static void GenerateFunctionalRemarks(
+        this IndentedTextWriter itw,
+        int currentAmountOfGenericParamsForPredicate,
+        int currentAmountOfGenericParamsForOnError,
+        bool valueInOnError)
+    {
+        var maxGenericParams = Math.Max(currentAmountOfGenericParamsForPredicate, currentAmountOfGenericParamsForOnError);
+
+        itw.WriteLine("/// Result&lt;T, E&gt;");
+        itw.Write("/// → (");
+
+        //itw.Write("(T, P1, …, P8)");
+        itw.WriteFunctionalParamList("T", currentAmountOfGenericParamsForPredicate);
+        itw.WriteLine(" → bool,");
+
+        //    (T, P1, …, P8) → E)
+        itw.Write("///    ");
+        itw.WriteFunctionalParamList(
+            valueInOnError ? "T" : null,
+            currentAmountOfGenericParamsForOnError);
+        itw.WriteLine(" → E)");
+        itw.WriteLine("/// → Result&lt;T, E&gt;");
     }
 
     private static void GenerateEnsurePredicateDelegate(

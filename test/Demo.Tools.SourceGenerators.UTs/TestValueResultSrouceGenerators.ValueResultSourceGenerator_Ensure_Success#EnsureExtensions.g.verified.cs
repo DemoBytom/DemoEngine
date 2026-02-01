@@ -15,7 +15,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure(
             EnsurePredicate<TValue> predicate,
@@ -31,7 +34,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1>(
             scoped in TParam1 param1,
@@ -48,7 +54,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -66,7 +75,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -85,7 +97,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -105,7 +120,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -126,7 +144,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -148,7 +169,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -171,7 +195,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -195,7 +222,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1>(
             scoped in TParam1 param1,
@@ -212,7 +242,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1>(
             scoped in TParam1 param1,
@@ -229,7 +262,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -247,7 +283,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -266,7 +305,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -286,7 +328,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -307,7 +352,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -329,7 +377,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -352,7 +403,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -376,7 +430,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -394,7 +451,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -412,7 +472,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -430,7 +493,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -449,7 +515,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -469,7 +538,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -490,7 +562,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -512,7 +587,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -535,7 +613,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -559,7 +640,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -578,7 +662,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -597,7 +684,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -616,7 +706,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -635,7 +728,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -655,7 +751,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -676,7 +775,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -698,7 +800,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -721,7 +826,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -745,7 +853,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -765,7 +876,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -785,7 +899,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -805,7 +922,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -825,7 +945,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -845,7 +968,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -866,7 +992,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -888,7 +1017,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -911,7 +1043,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -935,7 +1070,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -956,7 +1094,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -977,7 +1118,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -998,7 +1142,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -1019,7 +1166,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -1040,7 +1190,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -1061,7 +1214,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1083,7 +1239,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1106,7 +1265,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1130,7 +1292,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1152,7 +1317,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1174,7 +1342,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1196,7 +1367,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1218,7 +1392,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1240,7 +1417,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1262,7 +1442,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1284,7 +1467,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1307,7 +1493,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1331,7 +1520,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1354,7 +1546,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1377,7 +1572,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1400,7 +1598,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1423,7 +1624,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1446,7 +1650,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1469,7 +1676,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1492,7 +1702,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1515,7 +1728,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1539,7 +1755,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    T → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1563,7 +1782,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (T, P1) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1587,7 +1809,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (T, P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1611,7 +1836,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (T, P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1635,7 +1863,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (T, P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1659,7 +1890,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (T, P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1683,7 +1917,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (T, P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1707,7 +1944,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (T, P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1731,7 +1971,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, T → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (T, P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1756,7 +1999,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure(
             EnsurePredicate<TValue> predicate,
@@ -1772,7 +2018,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1>(
             scoped in TParam1 param1,
@@ -1789,7 +2038,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -1807,7 +2059,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -1826,7 +2081,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -1846,7 +2104,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -1867,7 +2128,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -1889,7 +2153,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -1912,7 +2179,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → (T → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -1936,7 +2206,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1>(
             scoped in TParam1 param1,
@@ -1953,7 +2226,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1>(
             scoped in TParam1 param1,
@@ -1970,7 +2246,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -1988,7 +2267,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -2007,7 +2289,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -2027,7 +2312,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2048,7 +2336,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2070,7 +2361,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -2093,7 +2387,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1) → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -2117,7 +2414,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -2135,7 +2435,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -2153,7 +2456,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2>(
             scoped in TParam1 param1,
@@ -2171,7 +2477,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -2190,7 +2499,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -2210,7 +2522,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2231,7 +2546,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2253,7 +2571,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -2276,7 +2597,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2) → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -2300,7 +2624,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -2319,7 +2646,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -2338,7 +2668,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -2357,7 +2690,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3>(
             scoped in TParam1 param1,
@@ -2376,7 +2712,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -2396,7 +2735,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2417,7 +2759,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2439,7 +2784,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -2462,7 +2810,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, P2, P3) → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -2486,7 +2837,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -2506,7 +2860,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -2526,7 +2883,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -2546,7 +2906,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -2566,7 +2929,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4>(
             scoped in TParam1 param1,
@@ -2586,7 +2952,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2607,7 +2976,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2629,7 +3001,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -2652,7 +3027,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P4) → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -2676,7 +3054,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2697,7 +3078,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2718,7 +3102,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2739,7 +3126,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2760,7 +3150,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2781,7 +3174,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5>(
             scoped in TParam1 param1,
@@ -2802,7 +3198,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2824,7 +3223,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -2847,7 +3249,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P5) → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -2871,7 +3276,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2893,7 +3301,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2915,7 +3326,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2937,7 +3351,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2959,7 +3376,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -2981,7 +3401,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -3003,7 +3426,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             scoped in TParam1 param1,
@@ -3025,7 +3451,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3048,7 +3477,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P6) → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3072,7 +3504,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3095,7 +3530,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3118,7 +3556,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3141,7 +3582,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3164,7 +3608,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3187,7 +3634,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3210,7 +3660,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3233,7 +3686,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7>(
             scoped in TParam1 param1,
@@ -3256,7 +3712,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P7) → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3280,7 +3739,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    () → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3304,7 +3766,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    P1 → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3328,7 +3793,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (P1, P2) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3352,7 +3820,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (P1, P2, P3) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3376,7 +3847,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (P1, ..., P4) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3400,7 +3874,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (P1, ..., P5) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3424,7 +3901,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (P1, ..., P6) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3448,7 +3928,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (P1, ..., P7) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
@@ -3472,7 +3955,10 @@ public static class EnsureExtensions
         /// <para>Validate a successful value.</para>
         /// </summary>
         /// <remarks>
-        /// Result&lt;T, E&gt; → (T → bool, void → E) → Result&lt;T, E&gt;
+        /// Result&lt;T, E&gt;
+        /// → ((T, P1, ..., P8) → bool,
+        ///    (P1, ..., P8) → E)
+        /// → Result&lt;T, E&gt;
         /// </remarks>
         public global::Demo.Tools.Common.ValueResults.ValueResult<TValue, TError> Ensure<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6, TParam7, TParam8>(
             scoped in TParam1 param1,
