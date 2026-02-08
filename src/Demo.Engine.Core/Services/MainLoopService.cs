@@ -51,6 +51,10 @@ internal sealed class MainLoopService
             {
                 await DoAsync(renderingEngine);
             }
+            catch (TaskCanceledException)
+            {
+                _mainLoopLifetime.Cancel();
+            }
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, "Main loop failed with error! {errorMessage}", ex.Message);

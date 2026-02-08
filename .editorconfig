@@ -295,6 +295,8 @@ dotnet_analyzer_diagnostic.category-<category>.severity = unset
 dotnet_remove_unnecessary_suppression_exclusions = all
 dotnet_code_quality_unused_parameters = all
 
+dotnet_diagnostic.CA2012.severity = warning
+
 # Verify
 [*.{received,verified}.{cs}]
 charset = utf-8-bom
