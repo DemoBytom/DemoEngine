@@ -45,10 +45,23 @@ internal sealed class MainLoopService
         _fpsTimer = fpsTimer;
         _mainLoopLifetime = mainLoopLifetime;
         _loopJob = loopJob;
-        ExecutingTask = Task.Factory.StartNew(()
-            => DoAsync(
-                renderingEngine),
-            creationOptions: TaskCreationOptions.LongRunning);
+        ExecutingTask = Task.Run(async () =>
+        {
+            try
+            {
+                await DoAsync(renderingEngine);
+            }
+            catch (TaskCanceledException)
+            {
+                _mainLoopLifetime.Cancel();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Main loop failed with error! {errorMessage}", ex.Message);
+                _mainLoopLifetime.Cancel();
+                throw;
+            }
+        });
     }
 
     private async Task DoAsync(

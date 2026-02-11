@@ -1,7 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading.Channels;
 using Demo.Engine.Core.Interfaces;
@@ -53,29 +52,34 @@ internal sealed class StaThreadService
                     _hostApplicationLifetime.ApplicationStopping,
                     _mainLoopLifetime.Token);
 
-                SingleThreadedSynchronizationContext.Await(async ()
+                SingleThreadedSynchronizationContextChannel.Await(async ()
                     => await STAThread(
                         renderingEngine: renderingEngine,
                         osMessageHandler: osMessageHandler,
                         cancellationToken: cts.Token));
 
-                IsRunning = false;
                 tcs.SetResult();
             }
             catch (OperationCanceledException)
             {
-                IsRunning = false;
                 tcs.SetResult();
             }
             catch (Exception ex)
             {
                 tcs.SetException(ex);
             }
+            IsRunning = false;
+            _mainLoopLifetime.Cancel();
         });
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             //Can only by set on the Windows machine. Doesn't work on Linux/MacOS
             thread.SetApartmentState(ApartmentState.STA);
+            thread.Name = "Main STA thread";
+        }
+        else
+        {
+            thread.Name = "Main thread";
         }
 
         thread.Start();
@@ -89,28 +93,27 @@ internal sealed class StaThreadService
         CancellationToken cancellationToken)
     {
         var doEventsOk = true;
-        while (
-            await _channelReader.WaitToReadAsync(cancellationToken)
-                && IsRunning
-                && doEventsOk
-                && !cancellationToken.IsCancellationRequested)
+
+        await foreach (var staAction in _channelReader
+            .ReadAllAsync(cancellationToken)
+            .WithCancellation(cancellationToken))
         {
-            while (
-            doEventsOk
-                && _channelReader.TryRead(out var staAction))
+            switch (staAction)
             {
-                if (staAction is StaThreadRequests.DoEventsOkRequest doEventsOkRequest)
-                {
+                case StaThreadRequests.DoEventsOkRequest doEventsOkRequest:
                     doEventsOk &= doEventsOkRequest.Invoke(renderingEngine, osMessageHandler);
-                }
-                else
-                {
+                    break;
+
+                default:
                     _ = staAction.Invoke(renderingEngine, osMessageHandler);
-                }
+                    break;
+            }
+
+            if (!doEventsOk || !IsRunning || cancellationToken.IsCancellationRequested)
+            {
+                break;
             }
         }
-
-        _mainLoopLifetime.Cancel();
     }
 
     private void Dispose(bool disposing)
@@ -132,33 +135,50 @@ internal sealed class StaThreadService
         GC.SuppressFinalize(this);
     }
 
-    private sealed class SingleThreadedSynchronizationContext
-            : SynchronizationContext
+    private sealed class SingleThreadedSynchronizationContextChannel
+        : SynchronizationContext
     {
-        private readonly BlockingCollection<(SendOrPostCallback d, object? state)> _queue = [];
+        private readonly Channel<(SendOrPostCallback d, object? state)> _channel =
+            Channel.CreateUnbounded<(SendOrPostCallback d, object? state)>(
+                new UnboundedChannelOptions { SingleReader = true, SingleWriter = false });
 
         public override void Post(SendOrPostCallback d, object? state)
-            => _queue.Add((d, state));
+            => _channel.Writer.TryWrite((d, state));
 
         public override void Send(SendOrPostCallback d, object? state)
-            => throw new InvalidOperationException(
-                "Synchronous operations are not supported!");
+            => throw new InvalidOperationException("Synchronous operations are not supported!");
 
-        public static void Await(
-            Func<Task> taskInvoker)
+        public static void Await(Func<Task> taskInvoker)
         {
             var originalContext = Current;
             try
             {
-                var context = new SingleThreadedSynchronizationContext();
+                var context = new SingleThreadedSynchronizationContextChannel();
                 SetSynchronizationContext(context);
 
-                var task = taskInvoker.Invoke();
-                _ = task.ContinueWith(_ => context._queue.CompleteAdding());
-
-                while (context._queue.TryTake(out var work, Timeout.Infinite))
+                Task task;
+                try
                 {
-                    work.d.Invoke(work.state);
+                    task = taskInvoker.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    // If the invoker throws synchronously, complete the channel so the pump can exit.
+                    context._channel.Writer.Complete(ex);
+                    throw;
+                }
+
+                _ = task.ContinueWith(t
+                    => context._channel.Writer.Complete(t.Exception),
+                    TaskScheduler.Default);
+
+                // Pump loop: block synchronously until items are available or the writer completes.
+                while (context._channel.Reader.WaitToReadAsync().Preserve().GetAwaiter().GetResult())
+                {
+                    while (context._channel.Reader.TryRead(out var work))
+                    {
+                        work.d.Invoke(work.state);
+                    }
                 }
 
                 task.GetAwaiter().GetResult();
