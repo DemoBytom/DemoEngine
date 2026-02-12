@@ -7,7 +7,7 @@ using Demo.Tools.Common.Sys;
 
 namespace Demo.Engine.Core.Components.Keyboard.Internal;
 
-internal class KeyboardCache : IKeyboardCache
+internal sealed class KeyboardCache : IKeyboardCache
 {
     private static readonly bool[] _keysPressed = new bool[256];
 

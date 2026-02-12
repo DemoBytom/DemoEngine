@@ -5,7 +5,7 @@ using Vortice.Direct3D12;
 
 namespace Demo.Engine.Platform.DirectX12.Buffers;
 
-internal class VertexBuffer<TVertices>
+internal sealed class VertexBuffer<TVertices>
     : IDisposable
     where TVertices : unmanaged, ISizeInBytes<TVertices>
 {
@@ -74,7 +74,7 @@ internal class VertexBuffer<TVertices>
             slot: 0,
             _vertexBufferView);
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {

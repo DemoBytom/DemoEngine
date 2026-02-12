@@ -6,7 +6,7 @@ using Vortice.DXGI;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
-internal class DepthBufferTexture
+internal sealed class DepthBufferTexture
     : IDisposable
 {
     private bool _disposedValue;
@@ -121,7 +121,7 @@ internal class DepthBufferTexture
         return (srvDescription, dsvDescription);
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {

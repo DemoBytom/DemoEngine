@@ -297,6 +297,11 @@ dotnet_code_quality_unused_parameters = all
 
 dotnet_diagnostic.CA2012.severity = warning
 
+# Requires setting options/C#/Advanced -> Run background code analysis for: Entire solution
+dotnet_diagnostic.CA1852.severity = warning
+dotnet_code_quality.CA1852.ignore_internalsvisibleto = true
+
+
 # Verify
 [*.{received,verified}.{cs}]
 charset = utf-8-bom

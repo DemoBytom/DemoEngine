@@ -19,7 +19,7 @@ using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX12;
 
-internal class D3D12RenderingEngine : ID3D12RenderingEngine
+internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 {
     private bool _disposedValue;
     private readonly ILogger<D3D12RenderingEngine> _logger;
@@ -399,7 +399,7 @@ internal class D3D12RenderingEngine : ID3D12RenderingEngine
         where T : notnull
         => _serviceProvider.GetRequiredService<T>();
 
-    protected void Disposing(bool disposing)
+    private void Disposing(bool disposing)
     {
         if (!_disposedValue)
         {
