@@ -12,7 +12,7 @@ internal sealed class FpsTimer(
     ILogger<FpsTimer> logger)
     : IFpsTimer
 {
-    internal class SurfaceFpsCounter(
+    internal sealed class SurfaceFpsCounter(
         ILogger logger,
         RenderingSurfaceId surfaceId)
         : IFpsTimer.IFpsInternalTimer

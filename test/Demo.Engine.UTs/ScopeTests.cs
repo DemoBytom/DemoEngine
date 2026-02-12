@@ -27,7 +27,7 @@ public class ScopeTests
         innerSingleton2.ID.ShouldBe(innerSingleton2.ID);
     }
 
-    private class SingletonService
+    private sealed class SingletonService
     {
         public Guid ID { get; } = Guid.NewGuid();
     }

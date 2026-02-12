@@ -52,7 +52,7 @@ namespace BuildScript;
     ],
     FetchDepth = 0,
     Lfs = true)]
-internal partial class Build : NukeBuild
+internal sealed partial class Build : NukeBuild
 {
     /* Install Global Tool
      * - $ dotnet tool install Nuke.GlobalTool --global

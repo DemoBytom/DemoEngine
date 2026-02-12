@@ -7,7 +7,7 @@ using Vortice.Direct3D12;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
-internal class Texture
+internal sealed class Texture
     : IDisposable
 {
     private bool _disposedValue;
@@ -172,7 +172,7 @@ internal class Texture
     private static ID3D12Resource ThrowFailureCreatingResource()
         => throw new InvalidOperationException("Failure creating a resource!");
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {
