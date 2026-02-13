@@ -78,7 +78,13 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
 
     private readonly Lock _lock = new();
     private readonly ILogger<TDescriptorHeapAllocator> _logger = logger;
+
+#pragma warning disable CA2213 // Disposable fields should be disposed
+    /* This line reports a false positive CA2213 warning if the primary constructor with fields is used
+     * A bug report here: https://github.com/dotnet/roslyn-analyzers/issues/7803
+     * */
     private readonly ID3D12RenderingEngine _d3D12RenderingEngine = d3D12RenderingEngine;
+#pragma warning restore CA2213 // Disposable fields should be disposed
 
     public ValueResult<TDescriptorHeapAllocator, ValueError> Initialize(
         uint capacity,
