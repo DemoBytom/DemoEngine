@@ -55,6 +55,7 @@ public class KeyboardCharCache : IDisposable
             if (disposing)
             {
                 _keboardCache.OnChar -= KeyboardCache_OnCharEvent;
+                _buffer.Dispose();
             }
 
             _disposedValue = true;
