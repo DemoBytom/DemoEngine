@@ -93,23 +93,13 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
     {
         lock (_lock)
         {
-
-            if (SetCapacity(capacity)
-                is { IsError: true } capacitySetResult)
-            {
-                return capacitySetResult
-                    .TapError(
-                        param1: _logger,
-                        param2: HeapType,
-                        static (scoped in error, scoped in logger, scoped in heapType) =>
-                            logger.LogFailedToSetCapacityForDescriptorHeapAllocator(
-                                heapType,
-                                error.Message))
-                    .Match(
-                        static (scoped in _) => throw new UnreachableException(), //this won't ever happen, since we're in IsError context already
-                        static (scoped in error) => ValueResult.Failure<TDescriptorHeapAllocator>(error))
-                    ;
-            }
+            var thisResult = ValueResult
+                .Success<TDescriptorHeapAllocator>(this)
+                .SetCapacity(
+                    _logger,
+                    capacity,
+                    SetCapacityInnner)
+                ;
 
             if (HeapType
                 is DescriptorHeapType.DepthStencilView
@@ -175,21 +165,6 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
             return ValueResult.Success<TDescriptorHeapAllocator>(this);
         }
     }
-
-    private ValueResult<uint, ValueError> SetCapacity(
-        uint capacity)
-        => ValueResult
-            .ErrorIfZero(
-                val: capacity,
-                logger: _logger,
-                logOnFailure: LogCapacityCannotBeZero)
-            .ErrorIfGreaterThen((uint)D3D12.MaxShaderVisibleDescriptorHeapSizeTier2, nameof(capacity))
-            .ValidateCapacityForSamplerHeap(HeapType)
-            .Tap(
-                param1: this,
-                tap: static (scoped in capacity, scoped in @this)
-                => @this.Capacity = capacity)
-            ;
 
     public DescriptorHandle<TDescriptorHeapAllocator> Allocate()
     {
@@ -272,6 +247,12 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
             ;
         }
     }
+
+    private static void SetCapacityInnner<TDescriptorHeapAllcoator>(
+        scoped in TDescriptorHeapAllcoator @this,
+        scoped in uint capacity)
+        where TDescriptorHeapAllcoator : DescriptorHeapAllocator<TDescriptorHeapAllcoator>
+        => @this.Capacity = capacity;
 
     private static ValueResult<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle), TypedValueError> ValidateDescriptorHandle(
         in ILogger logger,
@@ -394,21 +375,6 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
 
 static file class DescriptorHeapAllocatorValidationExtensions
 {
-    internal static ValueResult<uint, ValueError> ValidateCapacityForSamplerHeap(
-        this ValueResult<uint, ValueError> capacityResult,
-        DescriptorHeapType heapType)
-        => capacityResult
-            .Bind(
-                param1: heapType,
-                bind: static (scoped in capacity, scoped in heapType)
-                => heapType is DescriptorHeapType.Sampler
-                    ? ValueResult.ErrorIfGreaterThen(
-                        capacity,
-                        (uint)D3D12.MaxShaderVisibleSamplerHeapSize)
-                    : ValueResult.Success(capacity)
-                )
-        ;
-
     internal readonly ref struct IndexDescriptorHandle<TDescriptorHeapAllocator>(
         uint index,
         DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle)
@@ -464,4 +430,80 @@ static file class DescriptorHeapAllocatorValidationExtensions
         scoped in List<int>[] deferredFreeIndices)
         where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
         => deferredFreeIndices[frameIndex].Add((int)idh.Index);
+
+    extension<TDescriptorHeapAllocator>(scoped in ValueResult<TDescriptorHeapAllocator, ValueError> allocatorResult)
+        where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
+    {
+        internal ValueResult<TDescriptorHeapAllocator, ValueError> SetCapacity(
+            scoped in ILogger logger,
+            scoped in uint capacity,
+            scoped in SetCapacityDelegate<TDescriptorHeapAllocator> setCapacityDelegate) => allocatorResult
+                .ErrorIfCapacityZero(logger, capacity)
+                .ErrorIfCapacityGreaterThanHeapSize(logger, capacity)
+                .ErrorIfCapacityGreaterThanVisibleSamplerHeapSize(logger, capacity)
+                .Tap(
+                    param1: setCapacityDelegate,
+                    param2: capacity,
+                    tap: static (scoped in allocator, scoped in setCapacityDelegate, scoped in capacity)
+                        => setCapacityDelegate(allocator, capacity))
+                ;
+
+        private ValueResult<TDescriptorHeapAllocator, ValueError> ErrorIfCapacityZero(
+            scoped in ILogger logger,
+            scoped in uint capacity)
+            => allocatorResult
+                .Ensure(
+                    param1: logger,
+                    param2: capacity,
+                    predicate: static (scoped in _, scoped in _, scoped in capacity) => capacity is not 0,
+                    onError: static (scoped in _, scoped in logger) =>
+                    {
+                        LogCapacityCannotBeZero(logger);
+                        return new ValueError("Capacity cannot be 0!");
+                    });
+
+        private ValueResult<TDescriptorHeapAllocator, ValueError> ErrorIfCapacityGreaterThanHeapSize(
+            scoped in ILogger logger,
+            scoped in uint capacity)
+            => allocatorResult
+                .Ensure(
+                    param1: logger,
+                    param2: capacity,
+                    predicate: static (scoped in _, scoped in _, scoped in capacity) => capacity <= D3D12.MaxShaderVisibleDescriptorHeapSizeTier2,
+                    onError: static (scoped in _, scoped in logger, scoped in capacity) =>
+                    {
+                        logger.LogCapacityCannotBeGreaterThanMaxShaderVisibleDescriptorHeapSizeTier2(capacity, D3D12.MaxShaderVisibleDescriptorHeapSizeTier2);
+                        return new ValueError($"Capacity cannot be greater than {D3D12.MaxShaderVisibleDescriptorHeapSizeTier2}!");
+                    });
+
+        private ValueResult<TDescriptorHeapAllocator, ValueError> ErrorIfCapacityGreaterThanVisibleSamplerHeapSize(
+            scoped in ILogger logger,
+            scoped in uint capacity)
+            => allocatorResult
+                .Ensure(
+                    param1: logger,
+                    param2: capacity,
+                    predicate: static (scoped in allocator, scoped in logger, scoped in capacity)
+                        => allocator.HeapType switch
+                        {
+                            DescriptorHeapType.Sampler
+                            when capacity > D3D12.MaxShaderVisibleSamplerHeapSize
+                                => false,
+                            _
+                                => true
+                        },
+                    onError: static (scoped in allocator, scoped in logger, scoped in capacity)
+                        =>
+                        {
+                            logger.LogCapacityCannotBeGreaterThanMaxShaderVisibleSamplerHeapSize(capacity, D3D12.MaxShaderVisibleSamplerHeapSize, allocator.HeapType);
+                            return new ValueError($"Capacity {capacity} cannot be greater than {D3D12.MaxShaderVisibleSamplerHeapSize} for {allocator.HeapType} heap!");
+                        })
+                 ;
+    }
+
+    internal delegate void SetCapacityDelegate<TDescriptorHeapAllocator>(
+        scoped in TDescriptorHeapAllocator allocator,
+        scoped in uint capacity)
+        where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>;
+
 }
