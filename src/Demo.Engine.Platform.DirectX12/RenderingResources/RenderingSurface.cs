@@ -177,7 +177,7 @@ internal sealed class RenderingSurface
             device.CreateRenderTargetView(
                 resource,
                 rtvDescription,
-                _renderTargetDatas[i].RTV.CPU!.Value);
+                _renderTargetDatas[i].RTV.CPU);
         }
 
         var swapChainDesc = _swapChain.Description;

@@ -428,18 +428,18 @@ static file class DescriptorHeapAllocatorValidationExtensions
             .Bind(
                 bind: static (
                     scoped in descriptorHandleValidationContext)
-            => descriptorHandleValidationContext is
+            => descriptorHandleValidationContext switch
             {
-                allocator: var allocator,
-                descriptorHandle: var descriptorHandle
-                and { CPU.Ptr: var descriptorHandlePointer },
-            }
-                ? ValueResult
+                {
+                    allocator: var allocator,
+                    descriptorHandle: { CPU.Ptr: var descriptorHandlePointer } descriptorHandle,
+                }
+                => ValueResult
                     .Success<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError>(
                         new(
                             index: (uint)(descriptorHandlePointer - allocator.CPU_Start.Ptr) / allocator.DescriptorSize,
                             descriptorHandle: descriptorHandle))
-                : TypedValueError.Unreachable<IndexDescriptorHandle<TDescriptorHeapAllocator>>("Unreachable state!"))
+            })
         ;
 
     internal static ValueResult<IndexDescriptorHandle<TDescriptorHeapAllocator>, TypedValueError> ValidateHeapDescriptorIndex<TLogger, TDescriptorHeapAllocator>(

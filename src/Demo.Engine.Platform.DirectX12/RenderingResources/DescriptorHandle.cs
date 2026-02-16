@@ -10,13 +10,13 @@ internal readonly struct DescriptorHandle<TDescriptorHeapAllocator>
     : IDisposable
     where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
 {
-    public CpuDescriptorHandle? CPU { get; }
+    public CpuDescriptorHandle CPU { get; }
     public GpuDescriptorHandle? GPU { get; }
     public TDescriptorHeapAllocator Container { get; }
     public int Index { get; }
 
     [MemberNotNullWhen(true, nameof(CPU))]
-    public readonly bool IsValid => CPU is not null;
+    public readonly bool IsValid => CPU != CpuDescriptorHandle.Default;
 
     [MemberNotNullWhen(true, nameof(GPU))]
     public readonly bool IsShaderVisible => GPU is not null;

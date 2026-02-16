@@ -15,7 +15,7 @@ internal sealed class DepthBufferTexture
 
     public CpuDescriptorHandle DSV
         => _dsv is { IsValid: true } dsv
-        ? dsv.CPU.Value
+        ? dsv.CPU
         : throw new InvalidOperationException("Invalid descriptor handle");
 
     public DescriptorHandle<SRVDescriptorHeapAllocator> SRV => _texture.SRV;

@@ -42,7 +42,7 @@ internal sealed class Texture
         _renderingEngine.Device.CreateShaderResourceView(
             resource: Resource,
             desc: shaderResourceViewDescription,
-            destDescriptor: SRV.CPU.Value);
+            destDescriptor: SRV.CPU);
     }
 
     /// <summary>

@@ -2,7 +2,6 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Demo.Tools.Common.ValueResults;
-using static Demo.Engine.Platform.DirectX12.RenderingResources.DescHeapAllocatorBuilderExtensions;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
