@@ -46,11 +46,12 @@ internal sealed class StaThreadService
         var thread = new Thread(()
             =>
         {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(
+                _hostApplicationLifetime.ApplicationStopping,
+                _mainLoopLifetime.Token);
+
             try
             {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(
-                    _hostApplicationLifetime.ApplicationStopping,
-                    _mainLoopLifetime.Token);
 
                 SingleThreadedSynchronizationContextChannel.Await(async ()
                     => await STAThread(

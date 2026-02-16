@@ -93,35 +93,54 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
     {
         lock (_lock)
         {
-            var thisResult = ValueResult
+
+            return ValueResult
                 .Success<TDescriptorHeapAllocator>(this)
                 .SetCapacity(
                     _logger,
                     capacity,
                     SetCapacityInnner)
+                .Tap(
+                    tap: ClearDescriptorHeap)
+                .Bind(
+                    param1: _d3D12RenderingEngine,
+                    param2: isShaderVisible,
+                    param3: _logger,
+                    bind: InitializeDescriptorHeap)
+                .Bind(
+                    param1: _logger,
+                    bind: InitializeFreeHandles)
+                .Tap(
+                    param1: _d3D12RenderingEngine,
+                    param2: isShaderVisible,
+                    tap: SetupAllocator)
                 ;
+        }
 
-            if (HeapType
-                is DescriptorHeapType.DepthStencilView
-                or DescriptorHeapType.RenderTargetView)
-            {
-                isShaderVisible = false;
-            }
+        // local methods
+        static void ClearDescriptorHeap(
+            scoped in TDescriptorHeapAllocator allocator)
+        {
+            allocator.Size = 0;
+            allocator.DescriptorHeap?.Dispose();
+            allocator.DescriptorHeap = null;
+        }
 
-            Size = 0;
-
-            DescriptorHeap?.Dispose();
-            DescriptorHeap = null;
-
+        static ValueResult<TDescriptorHeapAllocator, ValueError> InitializeDescriptorHeap(
+            scoped in TDescriptorHeapAllocator allocator,
+            scoped in ID3D12RenderingEngine renderingEnggine,
+            scoped in bool isShaderVisible,
+            scoped in ILogger<TDescriptorHeapAllocator> logger)
+        {
             var descriptorHeapDescription = new DescriptorHeapDescription(
-                type: HeapType,
-                descriptorCount: Capacity,
-                flags: isShaderVisible
+                type: allocator.HeapType,
+                descriptorCount: allocator.Capacity,
+                flags: allocator.GetIsShaderVisible(isShaderVisible)
                     ? DescriptorHeapFlags.ShaderVisible
                     : DescriptorHeapFlags.None,
                 nodeMask: 0);
 
-            var result = _d3D12RenderingEngine.Device.CreateDescriptorHeap(
+            var result = renderingEnggine.Device.CreateDescriptorHeap(
                 descriptorHeapDescription,
                 out var descriptorHeap);
 
@@ -129,40 +148,54 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
                 is { Failure: true }
                 || descriptorHeap is null)
             {
-                //todo: log
+                logger.LogError("Error creating descriptor heap!");
                 return ValueResult.Failure<TDescriptorHeapAllocator>("Error creating descriptor heap!");
             }
             descriptorHeap.NameObject(
-                $"DescriptorHeap {HeapType}",
-                _logger);
+                $"DescriptorHeap {allocator.HeapType}",
+                logger);
 
-            DescriptorHeap = descriptorHeap;
+            allocator.DescriptorHeap = descriptorHeap;
 
-            _freeHandles = new int[Capacity];
-            for (var i = 0; i < Capacity; ++i)
+            return ValueResult.Success(allocator);
+        }
+
+        static ValueResult<TDescriptorHeapAllocator, ValueError> InitializeFreeHandles(
+            scoped in TDescriptorHeapAllocator allocator,
+            scoped in ILogger<TDescriptorHeapAllocator> logger)
+        {
+            allocator._freeHandles = new int[allocator.Capacity];
+            for (var i = 0; i < allocator.Capacity; ++i)
             {
-                _freeHandles[i] = i;
+                allocator._freeHandles[i] = i;
             }
 
-            for (var i = 0; i < _deferredFreeIndices.Length; ++i)
+            for (var i = 0; i < allocator._deferredFreeIndices.Length; ++i)
             {
-                if (_deferredFreeIndices[i].Count > 0)
+                if (allocator._deferredFreeIndices[i].Count > 0)
                 {
+                    logger.LogError("Not all resources were freed before reinitializing descriptor heap!");
                     return ValueResult.Failure<TDescriptorHeapAllocator>(
                         "Not all resources were freed before reinitializing descriptor heap!");
                 }
             }
 
-            DescriptorSize = _d3D12RenderingEngine.Device.GetDescriptorHandleIncrementSize(
-                HeapType);
-            CPU_Start = DescriptorHeap.GetCPUDescriptorHandleForHeapStart();
-            GPU_Start = isShaderVisible
-                ? DescriptorHeap.GetGPUDescriptorHandleForHeapStart()
+            return ValueResult.Success(allocator);
+        }
+
+        static void SetupAllocator(
+            scoped in TDescriptorHeapAllocator allocator,
+            scoped in ID3D12RenderingEngine renderingEngine,
+            scoped in bool isShaderVisible)
+        {
+            allocator.DescriptorSize = renderingEngine.Device.GetDescriptorHandleIncrementSize(
+                            allocator.HeapType);
+            allocator.CPU_Start = allocator.DescriptorHeap!.GetCPUDescriptorHandleForHeapStart();
+            allocator.GPU_Start = allocator.GetIsShaderVisible(isShaderVisible)
+                ? allocator.DescriptorHeap.GetGPUDescriptorHandleForHeapStart()
                 : null;
 
-            IsShaderVisible = isShaderVisible;
-
-            return ValueResult.Success<TDescriptorHeapAllocator>(this);
+            allocator.IsShaderVisible = allocator.GetIsShaderVisible(isShaderVisible);
         }
     }
 
@@ -229,7 +262,7 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
             .CalculateIndex()
             .ValidateHeapDescriptorIndex(_logger)
             .Tap(
-                param1: _d3D12RenderingEngine.CurrentFrameIndex(),
+                param1: _d3D12RenderingEngine,
                 param2: _deferredFreeIndices,
                 tap: AddIndex)
             .MatchFailure(
@@ -253,6 +286,10 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
         scoped in uint capacity)
         where TDescriptorHeapAllcoator : DescriptorHeapAllocator<TDescriptorHeapAllcoator>
         => @this.Capacity = capacity;
+
+    private bool GetIsShaderVisible(bool isShaderVisible)
+        => isShaderVisible
+        && HeapType is not (DescriptorHeapType.DepthStencilView or DescriptorHeapType.RenderTargetView);
 
     private static ValueResult<(TDescriptorHeapAllocator allocator, DescriptorHandle<TDescriptorHeapAllocator> descriptorHandle), TypedValueError> ValidateDescriptorHandle(
         in ILogger logger,
@@ -426,10 +463,10 @@ static file class DescriptorHeapAllocatorValidationExtensions
 
     internal static void AddIndex<TDescriptorHeapAllocator>(
         scoped in IndexDescriptorHandle<TDescriptorHeapAllocator> idh,
-        scoped in uint frameIndex,
+        scoped in ID3D12RenderingEngine renderingEngine,
         scoped in List<int>[] deferredFreeIndices)
         where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
-        => deferredFreeIndices[frameIndex].Add((int)idh.Index);
+        => deferredFreeIndices[renderingEngine.CurrentFrameIndex()].Add((int)idh.Index);
 
     extension<TDescriptorHeapAllocator>(scoped in ValueResult<TDescriptorHeapAllocator, ValueError> allocatorResult)
         where TDescriptorHeapAllocator : DescriptorHeapAllocator<TDescriptorHeapAllocator>
