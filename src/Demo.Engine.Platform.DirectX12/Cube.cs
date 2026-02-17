@@ -16,7 +16,7 @@ using Vortice.Mathematics;
 
 namespace Demo.Engine.Platform.DirectX12;
 
-internal class Cube
+internal sealed class Cube
     : ICube,
       IDisposable
 {
@@ -370,7 +370,7 @@ internal class Cube
         return vertexLayout;
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {

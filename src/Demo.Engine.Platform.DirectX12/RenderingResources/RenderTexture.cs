@@ -5,7 +5,7 @@ using Vortice.Direct3D12;
 
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
-internal class RenderTexture
+internal sealed class RenderTexture
     : IDisposable
 {
     private bool _disposedValue;
@@ -118,7 +118,7 @@ internal class RenderTexture
         ? rtv.CPU.Value
         : throw new InvalidOperationException($"Invalid descriptor handle[{mipIndex}]");
 
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (!_disposedValue)
         {

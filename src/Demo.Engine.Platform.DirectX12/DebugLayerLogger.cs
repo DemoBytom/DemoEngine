@@ -190,6 +190,8 @@ internal sealed class DebugLayerLogger
                     LogMessages();
                 }
 
+                _dxgiInfoQueue?.Dispose();
+
                 _d3d12Debug?.Dispose();
                 _dxgiDebug?.Dispose();
 

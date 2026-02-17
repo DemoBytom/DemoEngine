@@ -7,12 +7,16 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Demo.Tools.Common.Collections;
 
-public class CircularQueue<T> : IReadOnlyCollection<T>, ICollection
+public sealed class CircularQueue<T>
+    : IReadOnlyCollection<T>,
+      ICollection,
+      IDisposable
 {
     private readonly int _capacity;
     private readonly ConcurrentQueue<T> _buffer;
 
     private readonly ReaderWriterLockSlim _lock = new();
+    private bool _disposedValue;
 
     public CircularQueue(int capacity)
     {
@@ -193,4 +197,24 @@ public class CircularQueue<T> : IReadOnlyCollection<T>, ICollection
     void ICollection.CopyTo(Array array, int index) => CopyTo((T[])array, index);
 
     ~CircularQueue() => _lock?.Dispose();
+
+    private void Dispose(bool disposing)
+    {
+        if (!_disposedValue)
+        {
+            if (disposing)
+            {
+                _lock.Dispose();
+            }
+
+            _disposedValue = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }

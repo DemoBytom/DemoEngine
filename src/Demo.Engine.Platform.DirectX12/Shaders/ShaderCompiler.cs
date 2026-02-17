@@ -163,7 +163,7 @@ internal sealed class ShaderCompiler(
         }
     }
 
-    private class ShaderIncludeHandler
+    private sealed class ShaderIncludeHandler
         : CallbackBase,
           IDxcIncludeHandler
     {
