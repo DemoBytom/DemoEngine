@@ -10,7 +10,8 @@ internal sealed class MainLoopLifetime
       IDisposable
 {
     private readonly CancellationTokenSource _loopCancellationTokenSource = new();
-    private bool _disposedValue;
+    //private bool _disposedValue;
+    private int _disposedValue; //0 == false, anything else == true
 
     /// <inheritdoc cref="CancellationTokenSource.Cancel()"/>
     public void Cancel()
@@ -22,14 +23,14 @@ internal sealed class MainLoopLifetime
 
     private void Dispose(bool disposing)
     {
-        if (!_disposedValue)
+        if (Interlocked.Exchange(ref _disposedValue, 1) != 0)
         {
-            if (disposing)
-            {
-                _loopCancellationTokenSource.Dispose();
-            }
+            return;
+        }
 
-            _disposedValue = true;
+        if (disposing)
+        {
+            _loopCancellationTokenSource.Dispose();
         }
     }
 
