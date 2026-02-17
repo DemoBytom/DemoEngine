@@ -15,15 +15,13 @@ namespace Demo.Engine.Core.Services;
 internal sealed class EngineService(
     ILogger<EngineService> logger,
     IHostApplicationLifetime hostApplicationLifetime,
-    IServiceScopeFactory scopeFactory,
-    IMainLoopLifetime mainLoopLifetime)
+    IServiceScopeFactory scopeFactory)
     : IHostedService,
       IDisposable
 {
     private readonly ILogger<EngineService> _logger = logger;
     private readonly IHostApplicationLifetime _hostApplicationLifetime = hostApplicationLifetime;
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
-    private readonly IMainLoopLifetime _mainLoopLifetime = mainLoopLifetime;
     private readonly string _serviceName = "Engine";
     private Task? _executingTask;
     private bool _stopRequested;
@@ -61,10 +59,12 @@ internal sealed class EngineService(
 
     private async Task DoWorkAsync()
     {
+        using var scope = _scopeFactory.CreateScope();
+        var serviceProvider = scope.ServiceProvider;
+        var mainLoopLifetime = serviceProvider.GetService<IMainLoopLifetime>();
+
         try
         {
-            using var scope = _scopeFactory.CreateScope();
-            var serviceProvider = scope.ServiceProvider;
             var osMessageHandler = serviceProvider.GetRequiredService<IOSMessageHandler>();
             var renderingEngine = serviceProvider.GetRequiredService<IRenderingEngine>();
 
@@ -82,7 +82,7 @@ internal sealed class EngineService(
         }
         catch (OperationCanceledException)
         {
-            _mainLoopLifetime.Cancel();
+            mainLoopLifetime?.Cancel();
         }
         catch (Exception ex)
         {
