@@ -59,18 +59,16 @@ internal sealed class StaThreadService
                         osMessageHandler: osMessageHandler,
                         cancellationToken: cts.Token));
 
-                tcs.SetResult();
+                FinishRunning(tcs);
             }
             catch (OperationCanceledException)
             {
-                tcs.SetResult();
+                FinishRunning(tcs);
             }
             catch (Exception ex)
             {
-                tcs.SetException(ex);
+                FinishRunning(tcs, ex);
             }
-            IsRunning = false;
-            _mainLoopLifetime.Cancel();
         });
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -86,6 +84,26 @@ internal sealed class StaThreadService
         thread.Start();
 
         return tcs.Task;
+
+        void FinishRunning(
+            TaskCompletionSource tcs,
+            Exception? exception = null)
+        {
+            /* This should be called BEFORE tcs.SetResult/tcs.SetException!
+             * Otherwise _mainLoopLifetime.Cancel() gets called after the returned tcs.Task completes,
+             * leading to dispoes exception on mainLoopLifetime, that's already disposed upstream! */
+            IsRunning = false;
+            _mainLoopLifetime.Cancel();
+
+            if (exception is null)
+            {
+                tcs.SetResult();
+            }
+            else
+            {
+                tcs.SetException(exception);
+            }
+        }
     }
 
     private async Task STAThread(
