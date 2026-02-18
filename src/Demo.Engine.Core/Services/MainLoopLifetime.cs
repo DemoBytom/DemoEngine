@@ -23,7 +23,7 @@ internal sealed class MainLoopLifetime
 
     private void Dispose(bool disposing)
     {
-        if (Interlocked.Exchange(ref _disposedValue, 1) != 0)
+        if (Interlocked.CompareExchange(ref _disposedValue, 1, 0) > 0)
         {
             return;
         }
