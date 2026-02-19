@@ -257,26 +257,26 @@ internal sealed class RenderingSurface
         {
             if (disposing)
             {
-                _logger.LogTrace("Disposing Rendering Surface {id}", ID);
-                for (var i = 0; i < _renderTargetDatas.Length; ++i)
+                _logger.LogDisposingRenderingSurface(ID);
+                for (var rtvId = 0; rtvId < _renderTargetDatas.Length; ++rtvId)
                 {
-                    _logger.LogTrace("Disposing RTV {id}", i);
+                    _logger.LogDisposingRTV(rtvId);
 
-                    _ = _renderTargetDatas[i].Resource?.Name;
+                    _ = _renderTargetDatas[rtvId].Resource?.Name;
 
-                    if (_renderTargetDatas[i].RTV.IsValid)
+                    if (_renderTargetDatas[rtvId].RTV.IsValid)
                     {
-                        _renderTargetDatas[i].RTV.Dispose();
+                        _renderTargetDatas[rtvId].RTV.Dispose();
                     }
 
-                    _renderTargetDatas[i].Resource?.Dispose();
-                    _renderTargetDatas[i] = _renderTargetDatas[i] with { Resource = null };
-                    _logger.LogTrace("Disposed RTV {id}", i);
+                    _renderTargetDatas[rtvId].Resource?.Dispose();
+                    _renderTargetDatas[rtvId] = _renderTargetDatas[rtvId] with { Resource = null };
+                    _logger.LogDisposedRTV(rtvId);
                 }
 
                 _swapChain?.Dispose();
                 _swapChain = null;
-                _logger.LogTrace("Disposed Rendering Surface {id}", ID);
+                _logger.LogDisposedRenderingSurface(ID);
 
                 /* TODO: Dispose is also called when CreateSwapChain is called 2nd time
                  * this will dispose this scope and cause problems

@@ -37,8 +37,7 @@ internal sealed class FpsTimer(
 
             if (Stopwatch.GetElapsedTime(_seconds).TotalSeconds >= 1)
             {
-                _logger.LogTrace(
-                    "{surfaceId}: Avg. frame (ms): {millisecond}, fps: {fps}",
+                _logger.LogAverageSurfaceFps(
                     _surfaceId,
                     _averageMs,
                     _fpsCounter);
@@ -120,8 +119,7 @@ internal sealed class FpsTimer(
 
         if (Stopwatch.GetElapsedTime(_seconds).TotalSeconds >= 1)
         {
-            _logger.LogTrace(
-                "Avg. update (ms): {millisecond}, ups: {ups}",
+            _logger.LogAverageUps(
                 _averageMs,
                 _upsCounter);
 

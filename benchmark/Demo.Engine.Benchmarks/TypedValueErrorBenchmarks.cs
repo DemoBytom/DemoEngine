@@ -1,6 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics.CodeAnalysis;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using BenchmarkDotNet.Jobs;
@@ -77,6 +78,7 @@ public class TypedValueErrorBenchmarks
             ERROR_MESSAGE);
 
     [Benchmark]
+    [SuppressMessage("Performance", "CA1873:Avoid potentially expensive logging", Justification = "This is not an issue in this benchmark")]
     public ValueResult<int, ValueError> ValueResult_CallLogAndReturnFailure_WithParams()
         => ValueResult.LogAndReturnFailure<int, string, string>(
             _logger,
