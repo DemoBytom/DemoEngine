@@ -215,7 +215,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
                 .Success(in device))
             {
                 device.NameObject("Main device", _logger);
-                _logger.LogDebug("Created device supporting {featureLevel}", maxSupportedFeatureLevel);
+                _logger.LogCreatedDeviceSupportingFeatureLevel(maxSupportedFeatureLevel);
                 return device;
             }
         }

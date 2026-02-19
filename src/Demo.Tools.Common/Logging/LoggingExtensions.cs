@@ -5,10 +5,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Demo.Tools.Common.Logging;
 
-public static class LoggingExtensions
+public static partial class LoggingExtensions
 {
     /// <summary>
-    /// Logs information {class} initialization {state} with state: "started" when context is
+    /// Logs information {ClassName} initialization {state} with state: "started" when context is
     /// created and "completed" when context is disposed.
     /// <para/>
     /// Can be used with using statement to log start and completion of class initialization
@@ -20,6 +20,14 @@ public static class LoggingExtensions
     public static LoggingContext<T> LogScopeInitialization<T>(
         this ILogger<T> logger)
         => new(logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Trace,
+        Message = "{ClassName} initialization {State}")]
+    internal static partial void LogClassInitializationState(
+        this ILogger logger,
+        string className,
+        string state);
 }
 
 public readonly ref struct LoggingContext<T>
@@ -32,9 +40,9 @@ public readonly ref struct LoggingContext<T>
     {
         _logger = logger;
         _className = typeof(T).Name;
-        _logger.LogDebug("{class} initialization {state}", _className, "started");
+        _logger.LogClassInitializationState(_className, state: "started");
     }
 
     public void Dispose()
-        => _logger.LogDebug("{class} initialization {state}", _className, "completed");
+        => _logger.LogClassInitializationState(_className, state: "completed");
 }

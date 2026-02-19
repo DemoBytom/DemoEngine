@@ -22,7 +22,7 @@ public class ShaderCompilerOld(
         var shaderProfile = $"{GetShaderProfile(shaderStage)}_5_0";
         var filename = Path.GetFileName(path);
 
-        _logger.LogInformation("Compiling {shader} {name} with {profile}", shaderStage, filename, shaderProfile);
+        _logger.LogCompilingShaderFile(shaderStage, filename, shaderProfile);
         Blob? blob = null;
         Blob? errorBlob = null;
         try
