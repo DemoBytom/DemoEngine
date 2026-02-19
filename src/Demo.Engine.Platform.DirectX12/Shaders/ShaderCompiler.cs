@@ -58,11 +58,9 @@ internal sealed class ShaderCompiler(
             for (var i = 0; i < _shaderFiles.Length; ++i)
             {
                 var shaderFile = _shaderFiles[i];
-                _logger.LogInformation("Compiling {shaderFile}",
+                _logger.LogCompilingShaderFile(
                     shaderFile.File);
 
-                _logger.LogInformation("Attempting {shaderFilePath} shader compliation",
-                    shaderFile.File);
                 var compilationTask = CompileAShader(shaderFile, cancellationToken);
                 compilationTasks[i] = compilationTask;
             }
@@ -134,9 +132,8 @@ internal sealed class ShaderCompiler(
         if (result.GetStatus().Failure)
         {
             var exception = new Exception(result.GetErrors());
-            _logger.LogCritical(
+            _logger.LogErrorCompilingShader(
                 exception,
-                "Fatal error when compiling {shader}!",
                 shaderFileInfo.File);
             throw exception;
         }

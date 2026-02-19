@@ -100,9 +100,8 @@ internal sealed class DebugLayerLogger
             var messages = ReadMessages(pinned);
             foreach (var message in messages)
             {
-                _logger.Log(
+                _logger.LogDebugLayerMessage(
                     message.LogLevel,
-                    "[{@category}:{@id}] {@description}",
                         message.Category,
                         message.Id,
                         message.Message);
@@ -124,9 +123,8 @@ internal sealed class DebugLayerLogger
             var messages = ReadMessages(pinned);
             foreach (var message in messages)
             {
-                _logger.Log(
+                _logger.LogDebugLayerMessage(
                     message.LogLevel,
-                    "[{@category}:{@id}] {@description}",
                         message.Category,
                         message.Id,
                         message.Message);
@@ -146,12 +144,15 @@ internal sealed class DebugLayerLogger
         {
             var message = _dxgiInfoQueue!.GetMessage(_dxgiGuid, i);
 
-            _logger.Log(
-                message.Severity.ToLogLevel(),
-                "[{@category}:{@id}] {@description}",
-                    message.Category.ToString(),
-                    ((MessageId)message.Id).ToString(),
-                    message.Description.UnterminateString());
+            if (message.Severity.ToLogLevel() is < LogLevel.None and var logLevel
+                && _logger.IsEnabled(logLevel))
+            {
+                _logger.LogDebugLayerMessage(
+                    level: logLevel,
+                    category: message.Category.ToString(),
+                    id: ((MessageId)message.Id).ToString(),
+                    description: message.Description.UnterminateString());
+            }
         }
 
         _dxgiInfoQueue?.ClearStoredMessages(_dxgiGuid);

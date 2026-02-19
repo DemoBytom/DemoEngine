@@ -35,7 +35,7 @@ public abstract class ServiceBase : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("{serviceName} starting! v{version}", _serviceName, _version);
+        _logger.LogServiceIsStarting(_serviceName, _version);
         _executingTask = DoWorkAsync();
 
         //If task is completed return it,
@@ -47,7 +47,7 @@ public abstract class ServiceBase : IHostedService, IDisposable
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("{serviceName} stopping!", _serviceName);
+        _logger.LogServiceStopping(_serviceName);
 
         _stopRequested = true;
         if (_executingTask is null)
@@ -73,7 +73,7 @@ public abstract class ServiceBase : IHostedService, IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogCritical(ex, "{serviceName} failed with error! {errorMessage}", _serviceName, ex.Message);
+                _logger.LogServiceFailedWithError(ex, _serviceName);
                 tcs.SetException(ex);
             }
         });
@@ -89,7 +89,7 @@ public abstract class ServiceBase : IHostedService, IDisposable
 
     private async Task DoWork()
     {
-        _logger.LogInformation("{serviceName} working! v{version}", _serviceName, _version);
+        _logger.LogServiceIsWorking(_serviceName, _version);
         try
         {
             await ExecuteAsync();

@@ -57,7 +57,7 @@ internal sealed class MainLoopService
             }
             catch (Exception ex)
             {
-                _logger.LogCritical(ex, "Main loop failed with error! {errorMessage}", ex.Message);
+                _logger.LogMainLoopFailedWithError(ex);
                 _mainLoopLifetime.Cancel();
                 throw;
             }
@@ -112,8 +112,7 @@ internal sealed class MainLoopService
                         renderingSurfaceId,
                         out var renderingSurface))
                     {
-                        _logger.LogCritical(
-                            "Rendering surface {id} not found!",
+                        _logger.LogRenderingSurfaceNotFound(
                             renderingSurfaceId);
                         break;
                     }
