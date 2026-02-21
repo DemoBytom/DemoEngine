@@ -170,7 +170,7 @@ internal sealed class EngineShaderManager(
 
         if (buffer.Length < sizeof(int))
         {
-            _logger.LogError("Not enough data to read 32-bit integer!");
+            _logger.LogNotEnoughDataToRead32BitInteger();
             throw new InvalidOperationException(
                 "Not enough data to read 32-bit integer!");
         }
@@ -199,7 +199,7 @@ internal sealed class EngineShaderManager(
             if (buffer.IsEmpty
                 && result.IsCompleted)
             {
-                _logger.LogError("Unexpected end of stream!");
+                _logger.LogUnexpectedEndOfStream();
                 throw new InvalidOperationException("Unexpected end of stream!");
             }
 

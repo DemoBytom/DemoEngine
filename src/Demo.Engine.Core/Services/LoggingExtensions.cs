@@ -10,7 +10,7 @@ namespace Demo.Engine.Core.Services;
 internal static partial class LoggingExtensions
 {
     private const string SERVICE_IS_STARTING = "{ServiceName} starting! v{Version}";
-    private const string SERVICE_IS_WORKING = "{serviceName} working! v{Version}";
+    private const string SERVICE_IS_WORKING = "{ServiceName} working! v{Version}";
     private const string SERVICE_IS_STOPPING = "{ServiceName} stopping!";
     private const string SERVICE_FAILED_WITH_ERROR = "{ServiceName} failed with error! {ErrorMessage}";
 

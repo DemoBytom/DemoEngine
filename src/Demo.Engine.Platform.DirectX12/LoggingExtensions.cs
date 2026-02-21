@@ -14,13 +14,23 @@ internal static partial class LoggingExtensions
 {
     private const string CREATED_DEVICE_SUPPORTING_FEATURE_LEVEL = "Created device supporting {FeatureLevel}";
     private const string DEBUG_LAYER_MESSAGE = "[{@category}:{@id}] {@description}";
+
     private const string DISPOSING_RENDERING_SURFACE = "Disposing Rendering Surface {SurfaceId}";
     private const string DISPOSED_RENDERING_SURFACE = "Disposed Rendering Surface {SurfaceId}";
     private const string DISPOSING_RTV = "Disposing RTV {RtvId}";
     private const string DISPOSED_RTV = "Disposed RTV {RtvId}";
+
+    private const string FAILED_TO_CREATE_DESCRIPTOR_HEAPS = "Failed to create descriptor heaps: {ErrorMessage}";
+    private const string ERROR_DISPOSING_RENDERING_ENGINE = "Error disposing Rendering Engine!";
+    private const string DESTROYED_ENGINE = "Destroyed engine!";
+
     private const string ATTEMPTING_SHADER_COMPILATION = "Attempting {ShaderFilePath} shader compliation";
-    private const string COMPILING_SHADER = "Compiling {sthaderStage} {shaderFilePath} with {shaderProfile}";
+    private const string COMPILING_SHADER = "Compiling {ShaderStage} {ShaderFilePath} with {ShaderProfile}";
     private const string FATAL_ERROR_WHEN_COMPILING = "Fatal error when compiling {ShaderFilePath}!";
+
+    private const string LOG_INVALID_SRV_DESCRIPTOR = "Invalid SRV descriptor!";
+    private const string NOT_ENOUGH_DATA_TO_READ_32BIT_INT = "Not enough data to read 32-bit integer!";
+    private const string UNEXPECTED_END_OF_STREAM = "Unexpected end of stream!";
 
     [LoggerMessage(
         Level = LogLevel.Debug,
@@ -78,6 +88,26 @@ internal static partial class LoggingExtensions
         int rtvId);
 
     [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = FAILED_TO_CREATE_DESCRIPTOR_HEAPS)]
+    internal static partial void LogFailedToCreateDescriptorHeaps(
+        this ILogger<D3D12RenderingEngine> logger,
+        string errorMessage);
+
+    [LoggerMessage(
+        Level = LogLevel.Critical,
+        Message = ERROR_DISPOSING_RENDERING_ENGINE)]
+    internal static partial void LogErrorDisposingRenderingEngine(
+        this ILogger<D3D12RenderingEngine> logger,
+        Exception ex);
+
+    [LoggerMessage(
+        Level = LogLevel.Trace,
+        Message = DESTROYED_ENGINE)]
+    internal static partial void LogDestroyedEngine(
+        this ILogger<D3D12RenderingEngine> logger);
+
+    [LoggerMessage(
         Level = LogLevel.Information,
         Message = ATTEMPTING_SHADER_COMPILATION)]
     internal static partial void LogCompilingShaderFile(
@@ -89,7 +119,7 @@ internal static partial class LoggingExtensions
         Message = COMPILING_SHADER)]
     internal static partial void LogCompilingShaderFile(
         this ILogger<ShaderCompilerOld> logger,
-        ShaderStage sthaderStage,
+        ShaderStage shaderStage,
         string shaderFilePath,
         string shaderProfile);
 
@@ -100,4 +130,22 @@ internal static partial class LoggingExtensions
         this ILogger<ShaderCompiler> logger,
         Exception exception,
         string shaderFilePath);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = LOG_INVALID_SRV_DESCRIPTOR)]
+    internal static partial void LogInvalidSrvDescriptor(
+        this ILogger<Texture> logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = NOT_ENOUGH_DATA_TO_READ_32BIT_INT)]
+    internal static partial void LogNotEnoughDataToRead32BitInteger(
+        this ILogger<EngineShaderManager> logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = UNEXPECTED_END_OF_STREAM)]
+    internal static partial void LogUnexpectedEndOfStream(
+        this ILogger<EngineShaderManager> logger);
 }
