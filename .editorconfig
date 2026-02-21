@@ -307,6 +307,9 @@ dotnet_diagnostic.CA2216.severity = warning
 dotnet_diagnostic.CA2215.severity = warning
 dotnet_diagnostic.CA1816.severity = warning
 dotnet_diagnostic.CA1873.severity = warning
+dotnet_code_quality.CA1873.max_log_level = Critical
+dotnet_diagnostic.CA2254.severity = warning
+dotnet_diagnostic.CA1727.severity = warning
 
 
 # Verify

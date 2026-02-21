@@ -111,7 +111,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 
         if (descriptorHeaps.IsError)
         {
-            _logger.LogError("Failed to create descriptor heaps: {errorMessage}",
+            _logger.LogFailedToCreateDescriptorHeaps(
                 descriptorHeaps.Error.Message);
 
             throw new InvalidOperationException(
@@ -453,7 +453,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogCritical(ex, "Error disposing Rendering Engine!");
+                    _logger.LogErrorDisposingRenderingEngine(ex);
                 }
                 finally
                 {
@@ -464,7 +464,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 
             _disposedValue = true;
 
-            _logger.LogInformation("Destroyed engine!");
+            _logger.LogDestroyedEngine();
         }
     }
 

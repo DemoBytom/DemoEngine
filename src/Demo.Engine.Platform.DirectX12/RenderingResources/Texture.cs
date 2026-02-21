@@ -35,7 +35,7 @@ internal sealed class Texture
         SRV = _renderingEngine.SRVHeapAllocator.Allocate();
         if (!SRV.IsValid)
         {
-            _logger.LogError("Invalid SRV descriptor!");
+            _logger.LogInvalidSrvDescriptor();
             throw new InvalidOperationException("Invalid SRV descriptor!");
         }
 

@@ -7,6 +7,7 @@ using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Platform.DirectX12.Buffers;
 using Demo.Engine.Platform.DirectX12.Shaders;
+using Demo.Tools.Common.Logging;
 using Microsoft.Extensions.Logging;
 using SharpGen.Runtime;
 using Vortice.Direct3D;
@@ -374,7 +375,7 @@ internal sealed class Cube
     {
         if (!_disposedValue)
         {
-            _logger.LogTrace("Disposing Cube!");
+            using var _ = _logger.LogScopeDisposal();
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects)
@@ -389,8 +390,6 @@ internal sealed class Cube
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
             // TODO: set large fields to null
             _disposedValue = true;
-
-            _logger.LogTrace("Disposed Cube!");
         }
     }
 

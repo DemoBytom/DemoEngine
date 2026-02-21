@@ -31,9 +31,8 @@ public class WindowsMessagesHandler : IOSMessageHandler
 
                     if ((int)getMessageW == -1)
                     {
-                        _logger.LogError(
-                            "An error occured in main loop while processing windows messages. Error: {errorCode}",
-                            Marshal.GetLastWin32Error());
+                        _logger.LogErroInMainLoopProcessingWindowsMessages(
+                            Marshal.GetLastWin32Error);
 
                         return false;
                     }
