@@ -12,7 +12,7 @@ updates:
   - DemoBytom
   labels:
   - "\U0001F527dependencies"
-  target-branch: "develop"
+  target-branch: "main"
   groups:
     nuget-packages:
       applies-to: version-updates
@@ -34,7 +34,7 @@ updates:
   - DemoBytom
   labels:
   - "\U0001F527dependencies"
-  target-branch: "develop"
+  target-branch: "main"
 # Maintain updates for .NET SDK
 - package-ecosystem: "dotnet-sdk"
   directory: "/"
@@ -46,4 +46,4 @@ updates:
   - DemoBytom
   labels:
   - "\U0001F527dependencies"
-  target-branch: "develop"
+  target-branch: "main"
