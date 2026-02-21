@@ -83,7 +83,7 @@ public class TypedValueErrorBenchmarks
         => ValueResult.LogAndReturnFailure<int, string, string>(
             _logger,
             (
-                (logger, s1, s2) => logger.LogInformation("Logging out of range error for {paramName}, {errorMessage}", s1, s2),
+                (logger, s1, s2) => logger.LogInformation("Logging out of range error for {ParamName}, {ErrorMessage}", s1, s2),
                 PARAM_NAME,
                 ERROR_MESSAGE
             ),

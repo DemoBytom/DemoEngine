@@ -60,7 +60,10 @@ internal sealed class LoopJob
             var str = keyboardCharCache?.ReadCache();
             if (!string.IsNullOrEmpty(str))
             {
+#pragma warning disable CA2254 // Template should be a static expression
+                // this is to print for debug reasons, not a genuine log fie
                 _logger.LogInformation(str);
+#pragma warning restore CA2254 // Template should be a static expression
             }
         }
         if (keyboardHandle.GetKeyPressed(VirtualKeys.Escape))

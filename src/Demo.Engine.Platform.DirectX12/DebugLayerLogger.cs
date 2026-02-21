@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Demo.Engine.Core.Interfaces;
+using Demo.Tools.Common.Logging;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
 using Vortice.Direct3D12.Debug;
@@ -164,7 +165,7 @@ internal sealed class DebugLayerLogger
         {
             if (disposing)
             {
-                _logger.LogTrace("Disposing Debug Layer");
+                using var _ = _logger.LogScopeDisposal();
                 _dxgiInfoQueue?.SetBreakOnSeverity(
                     _dxgiGuid,
                     InfoQueueMessageSeverity.Corruption,
@@ -195,8 +196,6 @@ internal sealed class DebugLayerLogger
 
                 _d3d12Debug?.Dispose();
                 _dxgiDebug?.Dispose();
-
-                _logger.LogTrace("Disposed Debug Layer");
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
