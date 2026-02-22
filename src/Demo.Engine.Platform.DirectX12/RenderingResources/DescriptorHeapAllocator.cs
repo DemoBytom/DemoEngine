@@ -72,7 +72,12 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
 
     private int[] _freeHandles = [];
 
-    private readonly List<int>[] _deferredFreeIndices = InitializeDeferredFreeIndices(Common.FRAME_BUFFER_COUNT);
+    private readonly List<int>[] _deferredFreeIndices =
+        [..
+            Enumerable
+                .Range(start: 0, count: Common.FRAME_BUFFER_COUNT)
+                .Select(_ => new List<int>())
+        ];
 
     [MemberNotNullWhen(true, nameof(GPU_Start))]
     public bool IsShaderVisible { get; private set; }
@@ -371,17 +376,6 @@ internal abstract class DescriptorHeapAllocator<TDescriptorHeapAllocator>(
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
-    }
-
-    private static List<int>[] InitializeDeferredFreeIndices(
-        ushort frameBufferCount)
-    {
-        var deferredFreeIndices = new List<int>[frameBufferCount];
-        for (var i = 0; i < deferredFreeIndices.Length; ++i)
-        {
-            deferredFreeIndices[i] = [];
-        }
-        return deferredFreeIndices;
     }
 
     internal void ProcessDeferredFree(uint frameIndex)
