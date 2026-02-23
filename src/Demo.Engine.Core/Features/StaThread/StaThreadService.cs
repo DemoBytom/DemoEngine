@@ -1,6 +1,8 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Threading.Channels;
 using Demo.Engine.Core.Interfaces;
@@ -18,6 +20,7 @@ internal sealed class StaThreadService
     private readonly ChannelReader<StaThreadRequests> _channelReader;
     private readonly IMainLoopLifetime _mainLoopLifetime;
     private bool _disposedValue;
+    private Thread? _thread;
 
     public Task ExecutingTask { get; }
     public bool IsRunning { get; private set; }
@@ -33,7 +36,7 @@ internal sealed class StaThreadService
         _channelReader = channelReader;
         _mainLoopLifetime = mainLoopLifetime;
         IsRunning = true;
-        ExecutingTask = RunSTAThread(
+        ExecutingTask = RunSTAThread2(
             renderingEngine,
             osMessageHandler);
     }
@@ -43,7 +46,7 @@ internal sealed class StaThreadService
         IOSMessageHandler osMessageHandler)
     {
         var tcs = new TaskCompletionSource();
-        var thread = new Thread(()
+        _thread = new Thread(()
             =>
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(
@@ -53,8 +56,8 @@ internal sealed class StaThreadService
             try
             {
 
-                SingleThreadedSynchronizationContextChannel.Await(async ()
-                    => await STAThread(
+                SingleThreadedSynchronizationContextChannel.Await(()
+                    => STAThread(
                         renderingEngine: renderingEngine,
                         osMessageHandler: osMessageHandler,
                         cancellationToken: cts.Token));
@@ -73,15 +76,15 @@ internal sealed class StaThreadService
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             //Can only by set on the Windows machine. Doesn't work on Linux/MacOS
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Name = "Main STA thread";
+            _thread.SetApartmentState(ApartmentState.STA);
+            _thread.Name = "Main STA thread";
         }
         else
         {
-            thread.Name = "Main thread";
+            _thread.Name = "Main thread";
         }
 
-        thread.Start();
+        _thread.Start();
 
         return tcs.Task;
 
@@ -103,6 +106,54 @@ internal sealed class StaThreadService
             {
                 tcs.SetException(exception);
             }
+        }
+    }
+
+    private async Task RunSTAThread2(
+        IRenderingEngine renderingEngine,
+        IOSMessageHandler osMessageHandler)
+    {
+        var originalSynContext = SynchronizationContext.Current;
+        StaSingleThreadedSynchronizationContext? syncContext = null;
+        try
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(
+                _hostApplicationLifetime.ApplicationStopping,
+                _mainLoopLifetime.Token);
+
+            syncContext = new StaSingleThreadedSynchronizationContext();
+            SynchronizationContext.SetSynchronizationContext(syncContext);
+            // Task.Yield is used here to force a context switch to STA thread
+            // Awaiting here allows the STA thread to start and pump messages, which is necessary for the STAThread method to function correctly.
+            await Task.Yield();
+            try
+            {
+                await STAThread(
+                    renderingEngine,
+                    osMessageHandler,
+                    cts.Token);
+
+                IsRunning = false;
+                _mainLoopLifetime.Cancel();
+            }
+            catch (OperationCanceledException)
+            {
+                IsRunning = false;
+                _mainLoopLifetime.Cancel();
+            }
+            catch (Exception)
+            {
+                IsRunning = false;
+                _mainLoopLifetime.Cancel();
+                throw;
+            }
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(originalSynContext);
+            // Force context switch back to original context to ensure all STA thread work is completed before disposing the syncContext
+            await Task.Yield();
+            syncContext?.Dispose();
         }
     }
 
@@ -141,6 +192,7 @@ internal sealed class StaThreadService
         {
             if (disposing)
             {
+                _thread?.Join();
             }
 
             _disposedValue = true;
@@ -152,6 +204,190 @@ internal sealed class StaThreadService
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    private sealed class StaSingleThreadedSynchronizationContext
+        : SynchronizationContext,
+          IDisposable
+    {
+        private readonly BlockingCollection<WorkItem> _workQueue = [];
+
+        private readonly Thread _thread;
+        private readonly CancellationTokenSource _cancellationTokenSource = new();
+        private bool _isDisposed;
+
+        /// <inheritdoc/>
+        public override void Post(SendOrPostCallback d, object? state)
+            => _workQueue.Add(WorkItem.Asynchronous(d, state));
+
+        /// <inheritdoc/>
+        public override void Send(SendOrPostCallback d, object? state)
+        {
+            // If we're already on the STA thread, execute the callback directly to avoid deadlock.
+            if (Environment.CurrentManagedThreadId == _thread.ManagedThreadId)
+            {
+                d.Invoke(state);
+                return;
+            }
+
+            var workItem = WorkItem.Synchronous(d, state);
+
+            try
+            {
+
+                _workQueue.Add(workItem);
+                workItem.SyncEvent!.Wait();
+
+                if (workItem.Exception is { } exception)
+                {
+                    throw exception;
+                }
+            }
+            finally
+            {
+                workItem.Dispose();
+            }
+        }
+
+        public StaSingleThreadedSynchronizationContext()
+        {
+            _thread = new Thread(ThreadInner)
+            {
+                IsBackground = false,
+            };
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                //Can only by set on the Windows machine. Doesn't work on Linux/MacOS
+                _thread.SetApartmentState(ApartmentState.STA);
+                _thread.Name = "Main STA thread";
+            }
+            else
+            {
+                _thread.Name = "Main thread";
+            }
+
+            _thread.Start();
+        }
+
+        private void ThreadInner()
+        {
+            SetSynchronizationContext(this);
+            try
+            {
+                foreach (var workItem in _workQueue.GetConsumingEnumerable(_cancellationTokenSource.Token))
+                {
+                    try
+                    {
+
+                        workItem.Callback.Invoke(workItem.State);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (workItem.IsSynchronous)
+                        {
+                            workItem.Exception = ex;
+                        }
+                        else
+                        {
+                            // Handle/log exception for asynchronous work items as needed.
+                            // An exception cannot be thrown to the caller from here since the caller has already continued execution after posting the work item.
+                        }
+                    }
+                    finally
+                    {
+                        if (workItem.IsSynchronous)
+                        {
+                            workItem.SyncEvent.Set();
+                        }
+                        else
+                        {
+                            workItem.Dispose();
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Gracefully exit the thread when cancellation is requested.
+            }
+            catch (InvalidOperationException)
+            {
+                // The BlockingCollection has been marked as complete for adding, which means we're shutting down.
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+            _isDisposed = true;
+
+            // Gracefully shutdown the message pump
+            _cancellationTokenSource.Cancel();
+            _workQueue.CompleteAdding();
+
+            _thread.Join();
+            _workQueue.Dispose();
+            _cancellationTokenSource.Dispose();
+        }
+
+        private sealed class WorkItem
+            : IDisposable
+        {
+            private bool _isDisposed;
+
+            public SendOrPostCallback Callback { get; }
+
+            public object? State { get; }
+
+            [MemberNotNullWhen(true, nameof(SyncEvent))]
+            public bool IsSynchronous { get; }
+
+            public ManualResetEventSlim? SyncEvent { get; }
+
+            public Exception? Exception { get; set; }
+
+            private WorkItem(
+                SendOrPostCallback callback,
+                object? state,
+                bool isSynchronous)
+            {
+                Callback = callback;
+                State = state;
+                IsSynchronous = isSynchronous;
+                if (isSynchronous)
+                {
+                    SyncEvent = new ManualResetEventSlim();
+                }
+            }
+
+            public static WorkItem Synchronous(SendOrPostCallback callback, object? state)
+                => new(
+                    callback: callback,
+                    state: state,
+                    isSynchronous: true);
+
+            public static WorkItem Asynchronous(SendOrPostCallback callback, object? state)
+                => new(
+                    callback: callback,
+                    state: state,
+                    isSynchronous: false);
+
+            public void Dispose()
+            {
+                if (_isDisposed)
+                {
+                    return;
+                }
+
+                _isDisposed = true;
+
+                SyncEvent?.Dispose();
+            }
+        }
     }
 
     private sealed class SingleThreadedSynchronizationContextChannel

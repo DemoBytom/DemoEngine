@@ -7,7 +7,6 @@ using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Tools.Common.ValueResults;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using Shouldly;
@@ -64,7 +63,6 @@ public class StaThreadServiceTests
     /// to signal that <see cref="StaThreadService"/> should stop.
     /// </remarks>
     /// <param name="channelWriter">The channel writer used to enqueue test STA thread requests. Must not be null.</param>
-    /// <param name="expectedThreadName">The expected name of the STA thread to be validated for each request. Cannot be null or empty.</param>
     /// <param name="cancellationTokenSource">The cancellation token source that will be cancelled when all test requests have been sent. Must not be null.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation. Optional.</param>
     /// <returns>A task that represents the asynchronous operation of sending test requests.</returns>
