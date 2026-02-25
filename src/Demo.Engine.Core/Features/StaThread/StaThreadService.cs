@@ -8,7 +8,9 @@ using System.Threading.Channels;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Services;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Core.Features.StaThread;
 
@@ -16,6 +18,7 @@ internal sealed class StaThreadService
     : IStaThreadService,
       IDisposable
 {
+    private readonly ILogger<StaThreadService> _logger;
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private readonly ChannelReader<StaThreadRequests> _channelReader;
     private readonly IMainLoopLifetime _mainLoopLifetime;
@@ -26,12 +29,14 @@ internal sealed class StaThreadService
     public bool IsRunning { get; private set; }
 
     public StaThreadService(
+        ILogger<StaThreadService> logger,
         IHostApplicationLifetime hostApplicationLifetime,
         IRenderingEngine renderingEngine,
         IOSMessageHandler osMessageHandler,
         ChannelReader<StaThreadRequests> channelReader,
         IMainLoopLifetime mainLoopLifetime)
     {
+        _logger = logger;
         _hostApplicationLifetime = hostApplicationLifetime;
         _channelReader = channelReader;
         _mainLoopLifetime = mainLoopLifetime;
@@ -126,20 +131,19 @@ internal sealed class StaThreadService
             // Task.Yield is used here to force a context switch to STA thread
             // Awaiting here allows the STA thread to start and pump messages, which is necessary for the STAThread method to function correctly.
             await Task.Yield();
+            System.Diagnostics.Debug.Assert(SynchronizationContext.Current == syncContext, "SynchronizationContext should be set to the STA context.");
+
             try
             {
                 await STAThread(
-                    renderingEngine,
-                    osMessageHandler,
-                    cts.Token);
-
-                IsRunning = false;
-                _mainLoopLifetime.Cancel();
+                        renderingEngine,
+                        osMessageHandler,
+                        cts.Token)
+                    .ConfigureAwait(continueOnCapturedContext: true);
             }
             catch (OperationCanceledException)
             {
-                IsRunning = false;
-                _mainLoopLifetime.Cancel();
+                _logger.LogStaThreadServiceWasCancelled();
             }
             catch (Exception)
             {
@@ -147,6 +151,8 @@ internal sealed class StaThreadService
                 _mainLoopLifetime.Cancel();
                 throw;
             }
+            IsRunning = false;
+            _mainLoopLifetime.Cancel();
         }
         finally
         {
@@ -171,11 +177,15 @@ internal sealed class StaThreadService
             switch (staAction)
             {
                 case StaThreadRequests.DoEventsOkRequest doEventsOkRequest:
-                    doEventsOk &= doEventsOkRequest.Invoke(renderingEngine, osMessageHandler);
+                    doEventsOk &= await doEventsOkRequest
+                        .InvokeAsync(renderingEngine, osMessageHandler, cancellationToken)
+                        .ConfigureAwait(continueOnCapturedContext: true);
                     break;
 
                 default:
-                    _ = staAction.Invoke(renderingEngine, osMessageHandler);
+                    _ = await staAction
+                        .InvokeAsync(renderingEngine, osMessageHandler, cancellationToken)
+                        .ConfigureAwait(continueOnCapturedContext: true);
                     break;
             }
 

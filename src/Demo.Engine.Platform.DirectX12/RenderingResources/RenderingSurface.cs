@@ -16,13 +16,13 @@ using Vortice.Mathematics;
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
 internal sealed class RenderingSurface
-    : IDisposable,
+    : IAsyncDisposable,
       IRenderingSurface
 {
     public RenderingSurface(
         IServiceProvider serviceProvider)
     {
-        _scope = serviceProvider.CreateScope();
+        _scope = serviceProvider.CreateAsyncScope();
         _logger = _scope.ServiceProvider.GetRequiredService<ILogger<RenderingSurface>>();
         RenderingControl = _scope.ServiceProvider.GetRequiredService<IRenderingControl>();
     }
@@ -38,7 +38,7 @@ internal sealed class RenderingSurface
     private readonly RenderTargetData[] _renderTargetDatas = new RenderTargetData[Common.BACK_BUFFER_COUNT];
     private readonly ILogger<RenderingSurface> _logger;
     private bool _createdSwapChain = false;
-    private readonly IServiceScope _scope;
+    private readonly AsyncServiceScope _scope;
 
     public Viewport Viewport { get; private set; }
     public RawRect ScissorRect { get; private set; }
@@ -69,7 +69,7 @@ internal sealed class RenderingSurface
                 0.1f,
                 10f));
 
-    public void CreateSwapChain(
+    public async ValueTask CreateSwapChainAsync(
         IDXGIFactory7 factory,
         ID3D12Device14 device,
         ID3D12CommandQueue commandQueue,
@@ -79,7 +79,7 @@ internal sealed class RenderingSurface
         //Release old resources if the method is called 2nd time
         if (_createdSwapChain)
         {
-            Dispose();
+            await DisposeAsync();
             _disposedValue = false;
             _createdSwapChain = false;
         }
@@ -251,7 +251,7 @@ internal sealed class RenderingSurface
             => RTV = rtv;
     }
 
-    private void Dispose(bool disposing)
+    private async ValueTask DisposeAsync(bool disposing)
     {
         if (!_disposedValue)
         {
@@ -281,7 +281,7 @@ internal sealed class RenderingSurface
                 /* TODO: Dispose is also called when CreateSwapChain is called 2nd time
                  * this will dispose this scope and cause problems
                  * when accessing the rendering form!! */
-                _scope.Dispose();
+                await _scope.DisposeAsync();
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -297,10 +297,8 @@ internal sealed class RenderingSurface
     //     Dispose(disposing: false);
     // }
 
-    public void Dispose()
-    {
+    public async ValueTask DisposeAsync()
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
+        => await DisposeAsync(disposing: true);
+    //GC.SuppressFinalize(this);
 }
