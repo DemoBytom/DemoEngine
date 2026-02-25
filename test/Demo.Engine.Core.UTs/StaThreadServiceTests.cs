@@ -7,8 +7,8 @@ using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Tools.Common.ValueResults;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Shouldly;
 using static Demo.Engine.Core.Features.StaThread.StaThreadRequests;
@@ -113,9 +113,10 @@ public class StaThreadServiceTests
         bool ShouldBeSTA)
         : StaThreadWorkInner<bool>
     {
-        protected override bool InvokeFuncInternal(
+        protected override ValueTask<bool> InvokeFuncInternalAsync(
             IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler)
+            IOSMessageHandler osMessageHandler,
+            CancellationToken cancellationToken = default)
         {
             Thread.CurrentThread.Name.ShouldBe(ExpectedThreadName);
             if (ShouldBeSTA)
@@ -127,7 +128,7 @@ public class StaThreadServiceTests
                 Thread.CurrentThread.GetApartmentState().ShouldNotBe(ApartmentState.STA);
             }
 
-            return true;
+            return ValueTask.FromResult(true);
         }
 
         public new void Reset(CancellationToken cancellationToken)
@@ -138,6 +139,7 @@ public class StaThreadServiceTests
         in CancellationTokenSource cancellationTokenSource,
         out Channel<StaThreadRequests> channel)
     {
+        var loggerMock = Substitute.For<ILogger<StaThreadService>>();
         var hostApplicationLifetimeMock = Substitute.For<IHostApplicationLifetime>();
         var renderingEngineMock = Substitute.For<IRenderingEngine>();
         var osMessageHandlerMock = Substitute.For<IOSMessageHandler>();
@@ -157,6 +159,7 @@ public class StaThreadServiceTests
             });
 
         return new StaThreadService(
+                loggerMock,
                 hostApplicationLifetimeMock,
                 renderingEngineMock,
                 osMessageHandlerMock,

@@ -7,6 +7,7 @@ using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Core.Features.StaThread;
 
@@ -14,6 +15,7 @@ internal sealed class StaThreadService
     : IStaThreadService,
       IDisposable
 {
+    private readonly ILogger<StaThreadService> _logger;
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private readonly ChannelReader<StaThreadRequests> _channelReader;
     private readonly IMainLoopLifetime _mainLoopLifetime;
@@ -23,12 +25,14 @@ internal sealed class StaThreadService
     public bool IsRunning { get; private set; }
 
     public StaThreadService(
+        ILogger<StaThreadService> logger,
         IHostApplicationLifetime hostApplicationLifetime,
         IRenderingEngine renderingEngine,
         IOSMessageHandler osMessageHandler,
         ChannelReader<StaThreadRequests> channelReader,
         IMainLoopLifetime mainLoopLifetime)
     {
+        _logger = logger;
         _hostApplicationLifetime = hostApplicationLifetime;
         _channelReader = channelReader;
         _mainLoopLifetime = mainLoopLifetime;
@@ -119,11 +123,15 @@ internal sealed class StaThreadService
             switch (staAction)
             {
                 case StaThreadRequests.DoEventsOkRequest doEventsOkRequest:
-                    doEventsOk &= doEventsOkRequest.Invoke(renderingEngine, osMessageHandler);
+                    doEventsOk &= await doEventsOkRequest
+                        .InvokeAsync(renderingEngine, osMessageHandler, cancellationToken)
+                        .ConfigureAwait(continueOnCapturedContext: true);
                     break;
 
                 default:
-                    _ = staAction.Invoke(renderingEngine, osMessageHandler);
+                    _ = await staAction
+                        .InvokeAsync(renderingEngine, osMessageHandler, cancellationToken)
+                        .ConfigureAwait(continueOnCapturedContext: true);
                     break;
             }
 

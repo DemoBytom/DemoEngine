@@ -9,7 +9,7 @@ namespace Demo.Engine.UTs;
 public class ScopeTests
 {
     [Test]
-    public void TestScopes()
+    public async Task TestScopes()
     {
         var services = new ServiceCollection();
         _ = services.AddScoped<SingletonService>();
@@ -18,7 +18,7 @@ public class ScopeTests
 
         var outerSingleton = sp.GetRequiredService<SingletonService>();
 
-        using var scope = sp.CreateScope();
+        await using var scope = sp.CreateAsyncScope();
         var innerSingleton = scope.ServiceProvider.GetRequiredService<SingletonService>();
         var innerSingleton2 = scope.ServiceProvider.GetRequiredService<SingletonService>();
 

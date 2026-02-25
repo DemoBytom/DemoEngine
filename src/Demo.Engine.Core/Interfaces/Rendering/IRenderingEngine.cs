@@ -7,7 +7,7 @@ using Vortice.Mathematics;
 
 namespace Demo.Engine.Core.Interfaces.Rendering;
 
-public interface IRenderingEngine : IDisposable
+public interface IRenderingEngine : IAsyncDisposable
 {
     //IRenderingControl Control { get; }
     IReadOnlyCollection<IRenderingSurface> RenderingSurfaces { get; }
@@ -17,7 +17,7 @@ public interface IRenderingEngine : IDisposable
         [NotNullWhen(true)]
         out IRenderingSurface? renderingSurface);
 
-    RenderingSurfaceId CreateSurface();
+    ValueTask<RenderingSurfaceId> CreateSurfaceAsync(CancellationToken cancellationToken = default);
 
     void Draw(RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables);
 

@@ -17,9 +17,10 @@ internal abstract record StaThreadRequests
     public static CreateSurfaceRequest CreateSurface()
         => new();
 
-    public abstract bool Invoke(
+    public abstract ValueTask<bool> InvokeAsync(
             IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler);
+            IOSMessageHandler osMessageHandler,
+            CancellationToken cancellationToken = default);
 
     internal abstract record StaThreadWorkInner<TResult>
         : StaThreadRequests
@@ -43,13 +44,15 @@ internal abstract record StaThreadRequests
         public Task<TResult> Invoked
             => _tcs.Task;
 
-        protected abstract TResult InvokeFuncInternal(
+        protected abstract ValueTask<TResult> InvokeFuncInternalAsync(
             IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler);
+            IOSMessageHandler osMessageHandler,
+            CancellationToken cancellationToken = default);
 
-        public override bool Invoke(
+        public override async ValueTask<bool> InvokeAsync(
             IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler)
+            IOSMessageHandler osMessageHandler,
+            CancellationToken cancellationToken = default)
         {
             if (Invoked.IsCompleted)
             {
@@ -58,7 +61,7 @@ internal abstract record StaThreadRequests
 
             try
             {
-                var returnValue = InvokeFuncInternal(renderingEngine, osMessageHandler);
+                var returnValue = await InvokeFuncInternalAsync(renderingEngine, osMessageHandler, cancellationToken);
                 _tcs.SetResult(returnValue);
                 _ = _tcsRegistration?.Unregister();
                 return true;
@@ -102,10 +105,11 @@ internal abstract record StaThreadRequests
     internal sealed record CreateSurfaceRequest
         : StaThreadWorkInner<RenderingSurfaceId>
     {
-        protected override RenderingSurfaceId InvokeFuncInternal(
+        protected override async ValueTask<RenderingSurfaceId> InvokeFuncInternalAsync(
             IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler)
-            => renderingEngine.CreateSurface();
+            IOSMessageHandler osMessageHandler,
+            CancellationToken cancellationToken = default)
+            => await renderingEngine.CreateSurfaceAsync(cancellationToken);
     }
 
     internal sealed record DoEventsOkRequest
@@ -125,14 +129,15 @@ internal abstract record StaThreadRequests
             : base(false)
             => _renderingSurfaceId = renderingSurfaceId;
 
-        protected override bool InvokeFuncInternal(
+        protected override ValueTask<bool> InvokeFuncInternalAsync(
             IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler)
+            IOSMessageHandler osMessageHandler,
+            CancellationToken cancellationToken = default)
             => renderingEngine.TryGetRenderingSurface(
                 _renderingSurfaceId,
                 out var renderingSurface)
-            ? osMessageHandler.DoEvents(
-                renderingSurface.RenderingControl)
+            ? ValueTask.FromResult(osMessageHandler.DoEvents(
+                renderingSurface.RenderingControl))
             : throw new InvalidOperationException("No RenderingSurface provided!");
 
         public void Reset(
