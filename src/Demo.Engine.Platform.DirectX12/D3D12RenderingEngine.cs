@@ -137,16 +137,17 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         //}
     }
 
-    public RenderingSurfaceId CreateSurface()
+    public async ValueTask<RenderingSurfaceId> CreateSurfaceAsync(
+        CancellationToken cancellationToken = default)
     {
         var renderingSurface = new RenderingSurface(
             _serviceProvider);
 
-        renderingSurface.CreateSwapChain(
+        await renderingSurface.CreateSwapChainAsync(
                 factory: _dxgiFactory,
                 device: Device,
                 commandQueue: _d3d12Command.CommandQueue,
-                rtvDescriptorHeapAllocator: RTVHeapAllocator);
+                rtvDescriptorHeapAllocator: RTVHeapAllocator).ConfigureAwait(false);
         renderingSurface.RenderingControl.Show();
 
         _ = _surfaces.TryAdd(renderingSurface.ID, renderingSurface);
@@ -399,7 +400,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         where T : notnull
         => _serviceProvider.GetRequiredService<T>();
 
-    private void Disposing(bool disposing)
+    private async ValueTask DisposingAsync(bool disposing)
     {
         if (!_disposedValue)
         {
@@ -431,7 +432,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 
                     foreach (var renderingSurface in _surfaces.Values)
                     {
-                        renderingSurface.Dispose();
+                        await renderingSurface.DisposeAsync();
                     }
 
                     // make sure everything is actually released
@@ -468,11 +469,8 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         }
     }
 
-    public void Dispose()
-    {
-        Disposing(true);
-        GC.SuppressFinalize(this);
-    }
+    public async ValueTask DisposeAsync()
+        => await DisposingAsync(true);
 
     public void LogDebugMessages()
         => _debugLayerLogger.LogMessages();

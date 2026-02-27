@@ -59,7 +59,7 @@ internal sealed class EngineService(
 
     private async Task DoWorkAsync()
     {
-        using var scope = _scopeFactory.CreateScope();
+        await using var scope = _scopeFactory.CreateAsyncScope();
         var serviceProvider = scope.ServiceProvider;
         var mainLoopLifetime = serviceProvider.GetService<IMainLoopLifetime>();
 
