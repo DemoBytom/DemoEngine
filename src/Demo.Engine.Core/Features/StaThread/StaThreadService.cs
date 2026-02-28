@@ -216,7 +216,7 @@ internal sealed class StaThreadService
         GC.SuppressFinalize(this);
     }
 
-    private sealed class StaSingleThreadedSynchronizationContext
+    internal sealed class StaSingleThreadedSynchronizationContext
         : SynchronizationContext,
           IDisposable
     {
@@ -302,6 +302,9 @@ internal sealed class StaThreadService
                         {
                             // Handle/log exception for asynchronous work items as needed.
                             // An exception cannot be thrown to the caller from here since the caller has already continued execution after posting the work item.
+                            _cancellationTokenSource.Cancel();
+                            //Environment.FailFast("Unhandled exception in STA Thread", ex);
+                            throw;
                         }
                     }
                     finally

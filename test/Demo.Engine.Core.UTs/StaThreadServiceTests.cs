@@ -54,6 +54,34 @@ public class StaThreadServiceTests
             sendTestRequestTask);
     }
 
+    [Test]
+    [Timeout(timeoutInMilliseconds: 20_000)]
+    public async Task TestExceptionHandling(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var syncContext = new StaThreadService.StaSingleThreadedSynchronizationContext();
+            SynchronizationContext.SetSynchronizationContext(syncContext);
+            await Task.Yield();
+
+            TestException();
+
+            await Task.Delay(5_000, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // If the exception is not handled by the synchronization context, it will be observed here.
+            // We want to ensure that exceptions thrown in the STA thread are properly handled and do not crash the application.
+            ex.Message.ShouldBe("TEST EXCEPTION");
+        }
+    }
+
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable TUnit0031 // Async void methods and lambdas are not allowed
+    private async void TestException() => throw new Exception("TEST EXCEPTION");
+#pragma warning restore TUnit0031 // Async void methods and lambdas are not allowed
+#pragma warning restore CA1822 // Mark members as static
+
     /// <summary>
     /// Sends a series of test requests to the specified channel for STA thread validation and signals cancellation upon
     /// completion.
