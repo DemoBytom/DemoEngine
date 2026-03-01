@@ -226,6 +226,14 @@ internal sealed class StaThreadService
         private readonly CancellationTokenSource _cancellationTokenSource = new();
         private bool _isDisposed;
 
+        private readonly TaskCompletionSource _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        /// <summary>
+        /// <see cref="Task"/> that can be observed to know when the <see cref="StaSingleThreadedSynchronizationContext"/> finishes work
+        /// and whether or not it resulted in an exception.
+        /// </summary>
+        public Task Completion => _tcs.Task;
+
         /// <inheritdoc/>
         public override void Post(SendOrPostCallback d, object? state)
             => _workQueue.Add(WorkItem.Asynchronous(d, state));
@@ -304,7 +312,8 @@ internal sealed class StaThreadService
                             // An exception cannot be thrown to the caller from here since the caller has already continued execution after posting the work item.
                             _cancellationTokenSource.Cancel();
                             //Environment.FailFast("Unhandled exception in STA Thread", ex);
-                            throw;
+                            //throw;
+                            _tcs.SetException(ex);
                         }
                     }
                     finally
@@ -327,6 +336,14 @@ internal sealed class StaThreadService
             catch (InvalidOperationException)
             {
                 // The BlockingCollection has been marked as complete for adding, which means we're shutting down.
+            }
+            catch (Exception ex)
+            {
+                _tcs.SetException(ex);
+            }
+            finally
+            {
+                _ = _tcs.TrySetResult();
             }
         }
 

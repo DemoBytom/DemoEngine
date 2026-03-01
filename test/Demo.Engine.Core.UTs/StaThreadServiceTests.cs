@@ -54,30 +54,65 @@ public class StaThreadServiceTests
             sendTestRequestTask);
     }
 
+    /// <summary>
+    /// This test verifies that an exception thrown within the STA thread,
+    /// that is cought in the context's <see cref="StaThreadService.StaSingleThreadedSynchronizationContext.Post(SendOrPostCallback, object?)"/> method,
+    /// is property cought and gracefully shuts the STA thread down, without crashing the process.
+    /// The exception is thrown from an async void method, to simulate a fire-and-forget scenario, where the exception would be unobserved if not properly handled.
+    /// <para/>
+    /// Completion <b>must</b> be awaited with <see cref="Task.ConfigureAwait(bool)"/> set to <see langword="false"/>, so that it doesn't deadlock on the STA thread, that is no longer alive if the exception is thrown.
+    /// <code>
+    /// await syncContext.Completion.ConfigureAwait(continueOnCapturedContext: false);
+    /// </code>
+    /// </summary>
+    /// <param name="timeoutToken">If the test doesn't end in time, it will be cancelled by the test framework</param>
+    /// <remarks>
+    /// <see cref="StaThreadService"/> is designed to run indefinitely, so we set a timeout to prevent the test from hanging indefinitely.
+    /// </remarks>
     [Test]
     [Timeout(timeoutInMilliseconds: 20_000)]
-    public async Task TestExceptionHandling(CancellationToken cancellationToken)
+    public async Task TestExceptionHandling(CancellationToken timeoutToken)
     {
+        // Arrange
+        StaThreadService.StaSingleThreadedSynchronizationContext? syncContext = null;
+
         try
         {
-            var syncContext = new StaThreadService.StaSingleThreadedSynchronizationContext();
+            syncContext = new StaThreadService.StaSingleThreadedSynchronizationContext();
             SynchronizationContext.SetSynchronizationContext(syncContext);
             await Task.Yield();
 
+            // Act
             TestException();
 
-            await Task.Delay(5_000, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            // If the exception is not handled by the synchronization context, it will be observed here.
-            // We want to ensure that exceptions thrown in the STA thread are properly handled and do not crash the application.
+            // Assert
+            var func = async () => await syncContext.Completion
+                .WaitAsync(timeoutToken)
+                .ConfigureAwait(continueOnCapturedContext: false)
+                ;
+
+            var ex = await func.ShouldThrowAsync<Exception>()
+                .WaitAsync(timeoutToken)
+                .ConfigureAwait(continueOnCapturedContext: false);
+
             ex.Message.ShouldBe("TEST EXCEPTION");
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(null);
+            await Task.Yield();
+            syncContext?.Dispose();
         }
     }
 
 #pragma warning disable CA1822 // Mark members as static
 #pragma warning disable TUnit0031 // Async void methods and lambdas are not allowed
+    /// <summary>
+    /// async void methods are not allowed in the codebase,
+    /// but here it's used to simulate an exception happening in the <see cref="StaThreadService.StaSingleThreadedSynchronizationContext.Post(SendOrPostCallback, object?)"/>,
+    /// from the Task continuation
+    /// </summary>
+    /// <exception cref="Exception"></exception>
     private async void TestException() => throw new Exception("TEST EXCEPTION");
 #pragma warning restore TUnit0031 // Async void methods and lambdas are not allowed
 #pragma warning restore CA1822 // Mark members as static
