@@ -29,7 +29,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.9.50" />
     <PackageVersion Include="System.Text.Json" Version="9.0.9" />
-    <PackageVersion Include="TUnit" Version="1.17.54" />
+    <PackageVersion Include="TUnit" Version="1.18.0" />
     <PackageVersion Include="Verify.SourceGenerators" Version="2.5.0" />
     <PackageVersion Include="Verify.TUnit" Version="31.13.2" />
     <PackageVersion Include="Vortice.Dxc" Version="3.8.2" />
@@ -43,7 +43,7 @@
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Nuke.Common" Version="10.1.0" />
-    <PackageVersion Include="ReportGenerator" Version="5.5.1" />
+    <PackageVersion Include="ReportGenerator" Version="5.5.2" />
     <PackageVersion Include="coveralls.net" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup Label="Transitive packages">
