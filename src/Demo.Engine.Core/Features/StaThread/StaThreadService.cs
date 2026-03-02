@@ -135,11 +135,36 @@ internal sealed class StaThreadService
 
             try
             {
+                _ = SignalContextEnded(_logger, syncContext, cts);
+
                 await STAThread(
                         renderingEngine,
                         osMessageHandler,
                         cts.Token)
                     .ConfigureAwait(continueOnCapturedContext: true);
+
+                static async Task SignalContextEnded(
+                    ILogger logger,
+                    StaSingleThreadedSynchronizationContext staSyncContext,
+                    CancellationTokenSource cancellationTokenSource)
+                {
+                    try
+                    {
+                        /* This should NOT complete on original context,
+                         * Because in case of an error, the context will be stopped already */
+                        await staSyncContext.Completion
+                            .ConfigureAwait(continueOnCapturedContext: false);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogCritical(ex, "An error occured within the STA thread synchronization context.");
+                    }
+                    finally
+                    {
+                        cancellationTokenSource.Cancel();
+                    }
+                }
             }
             catch (OperationCanceledException)
             {
@@ -308,12 +333,11 @@ internal sealed class StaThreadService
                         }
                         else
                         {
-                            // Handle/log exception for asynchronous work items as needed.
-                            // An exception cannot be thrown to the caller from here since the caller has already continued execution after posting the work item.
+                            /* An exception cannot be thrown to the caller from here
+                             * since the caller has already continued execution after posting the work item. 
+                             * Instead we stop the context and signal via Completion that an error occured */
                             _cancellationTokenSource.Cancel();
-                            //Environment.FailFast("Unhandled exception in STA Thread", ex);
-                            //throw;
-                            _tcs.SetException(ex);
+                            _ = _tcs.TrySetException(ex);
                         }
                     }
                     finally
@@ -339,7 +363,7 @@ internal sealed class StaThreadService
             }
             catch (Exception ex)
             {
-                _tcs.SetException(ex);
+                _ = _tcs.TrySetException(ex);
             }
             finally
             {
