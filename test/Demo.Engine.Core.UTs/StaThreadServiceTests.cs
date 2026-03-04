@@ -46,7 +46,7 @@ public class StaThreadServiceTests
         var sendTestRequestTask = SendTestRequests(
             channel.Writer,
             cancellationTokenSource: cts,
-            cancellationToken: timeoutToken);
+            cancellationToken: cts.Token);
 
         // Act & Assert
         await Task.WhenAll(
@@ -113,7 +113,7 @@ public class StaThreadServiceTests
     /// from the Task continuation
     /// </summary>
     /// <exception cref="Exception"></exception>
-    private async void TestException() => throw new Exception("TEST EXCEPTION");
+    private static async void TestException() => throw new Exception("TEST EXCEPTION");
 #pragma warning restore TUnit0031 // Async void methods and lambdas are not allowed
 #pragma warning restore CA1822 // Mark members as static
 
@@ -135,6 +135,8 @@ public class StaThreadServiceTests
         CancellationTokenSource cancellationTokenSource,
         CancellationToken cancellationToken = default)
     {
+
+        var requestNumber = 0;
         try
         {
             var (expectedThreadName, shouldBeSTA) = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -142,7 +144,7 @@ public class StaThreadServiceTests
                 : ("Main thread", false);
 
             var request = new TestStaThreadRequest(expectedThreadName, shouldBeSTA);
-            for (var i = 0; i < 5; i++)
+            for (; requestNumber < 5; requestNumber++)
             {
                 await Task.Yield();
                 Thread.CurrentThread.Name.ShouldNotBe(expectedThreadName);
@@ -153,7 +155,11 @@ public class StaThreadServiceTests
                     request,
                     cancellationToken);
 
-                var invokedResult = await request.Invoked;
+                // Delay added to ensure that if any exception was thrown that would crash the sync context
+                // that it would be processed before all requests are sent
+                await Task.Delay(1_000, cancellationToken);
+
+                var invokedResult = await request.Invoked.WaitAsync(cancellationToken);
                 invokedResult.ShouldBeTrue();
 
                 request.Reset(cancellationToken);
@@ -161,6 +167,8 @@ public class StaThreadServiceTests
         }
         finally
         {
+            // Used to ensure all the requests were sent
+            requestNumber.ShouldBe(5);
             cancellationTokenSource.Cancel();
         }
     }
@@ -181,6 +189,7 @@ public class StaThreadServiceTests
             CancellationToken cancellationToken = default)
         {
             Thread.CurrentThread.Name.ShouldBe(ExpectedThreadName);
+            //TestException();
             if (ShouldBeSTA)
             {
                 Thread.CurrentThread.GetApartmentState().ShouldBe(ApartmentState.STA);
@@ -198,7 +207,7 @@ public class StaThreadServiceTests
     }
 
     private static StaThreadService CreateService(
-        in CancellationTokenSource cancellationTokenSource,
+        CancellationTokenSource cancellationTokenSource,
         out Channel<StaThreadRequests> channel)
     {
         var loggerMock = Substitute.For<ILogger<StaThreadService>>();
@@ -207,7 +216,15 @@ public class StaThreadServiceTests
         var osMessageHandlerMock = Substitute.For<IOSMessageHandler>();
         var mainLoopLifetimeMock = Substitute.For<IMainLoopLifetime>();
 
-        mainLoopLifetimeMock.Token.Returns(cancellationTokenSource.Token);
+        mainLoopLifetimeMock.Token
+            .Returns(cancellationTokenSource.Token);
+
+        mainLoopLifetimeMock
+            .When(
+                mock => mock.Cancel())
+            .Do(
+                call => cancellationTokenSource.Cancel());
+
         hostApplicationLifetimeMock.ApplicationStopping.Returns(cancellationTokenSource.Token);
 
         channel = Channel.CreateBounded<StaThreadRequests>(

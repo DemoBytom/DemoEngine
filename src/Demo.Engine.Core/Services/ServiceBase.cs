@@ -63,7 +63,8 @@ public abstract class ServiceBase : IHostedService, IDisposable
     private Task DoWorkAsync()
     {
         //Starts the work one a new STA thread so that Windows.Forms work correctly
-        var tcs = new TaskCompletionSource<object?>();
+        var tcs = new TaskCompletionSource<object?>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(async () =>
         {
             try

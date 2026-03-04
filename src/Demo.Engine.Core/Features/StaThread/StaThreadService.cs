@@ -322,7 +322,6 @@ internal sealed class StaThreadService
                 {
                     try
                     {
-
                         workItem.Callback.Invoke(workItem.State);
                     }
                     catch (Exception ex)
@@ -336,7 +335,10 @@ internal sealed class StaThreadService
                             /* An exception cannot be thrown to the caller from here
                              * since the caller has already continued execution after posting the work item. 
                              * Instead we stop the context and signal via Completion that an error occured */
-                            _cancellationTokenSource.Cancel();
+                            // context cannot be stopped immediately,
+                            // because the exception needs to be observed by the caller via the Completion task,
+                            // so we just signal that an error occurred and let the caller decide when to stop using the context
+                            //_cancellationTokenSource.Cancel();
                             _ = _tcs.TrySetException(ex);
                         }
                     }
