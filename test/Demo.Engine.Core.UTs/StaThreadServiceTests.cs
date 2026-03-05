@@ -38,7 +38,7 @@ public class StaThreadServiceTests
         // Arrrange
         var cts = CancellationTokenSource.CreateLinkedTokenSource(timeoutToken);
 
-        using var serviceUnderTest = CreateService(
+        var serviceUnderTest = CreateService(
             cts,
             out var channel);
 
@@ -76,9 +76,15 @@ public class StaThreadServiceTests
         // Arrange
         StaThreadService.StaSingleThreadedSynchronizationContext? syncContext = null;
 
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(timeoutToken);
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        cts.Token.Register(() => tcs.TrySetResult(), useSynchronizationContext: false);
+
         try
         {
             syncContext = new StaThreadService.StaSingleThreadedSynchronizationContext();
+            syncContext.OnError += SyncContextOnError;
+
             SynchronizationContext.SetSynchronizationContext(syncContext);
             await Task.Yield();
 
@@ -86,22 +92,23 @@ public class StaThreadServiceTests
             TestException();
 
             // Assert
-            var func = async () => await syncContext.Completion
-                .WaitAsync(timeoutToken)
-                .ConfigureAwait(continueOnCapturedContext: false)
-                ;
-
-            var ex = await func.ShouldThrowAsync<Exception>()
-                .WaitAsync(timeoutToken)
-                .ConfigureAwait(continueOnCapturedContext: false);
-
-            ex.Message.ShouldBe("TEST EXCEPTION");
+            await tcs.Task;
         }
         finally
         {
             SynchronizationContext.SetSynchronizationContext(null);
             await Task.Yield();
+
+            syncContext?.OnError -= SyncContextOnError;
             syncContext?.Dispose();
+        }
+
+        await Task.Delay(15_000, timeoutToken);
+
+        void SyncContextOnError(object? sender, Exception ex)
+        {
+            ex.Message.ShouldBe("TEST EXCEPTION");
+            cts.Cancel();
         }
     }
 
@@ -157,7 +164,7 @@ public class StaThreadServiceTests
 
                 // Delay added to ensure that if any exception was thrown that would crash the sync context
                 // that it would be processed before all requests are sent
-                await Task.Delay(1_000, cancellationToken);
+                await Task.Delay(100, cancellationToken);
 
                 var invokedResult = await request.Invoked.WaitAsync(cancellationToken);
                 invokedResult.ShouldBeTrue();

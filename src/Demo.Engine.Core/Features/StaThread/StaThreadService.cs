@@ -15,15 +15,12 @@ using Microsoft.Extensions.Logging;
 namespace Demo.Engine.Core.Features.StaThread;
 
 internal sealed class StaThreadService
-    : IStaThreadService,
-      IDisposable
+    : IStaThreadService
 {
     private readonly ILogger<StaThreadService> _logger;
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private readonly ChannelReader<StaThreadRequests> _channelReader;
     private readonly IMainLoopLifetime _mainLoopLifetime;
-    private bool _disposedValue;
-    private Thread? _thread;
 
     public Task ExecutingTask { get; }
     public bool IsRunning { get; private set; }
@@ -41,130 +38,42 @@ internal sealed class StaThreadService
         _channelReader = channelReader;
         _mainLoopLifetime = mainLoopLifetime;
         IsRunning = true;
-        ExecutingTask = RunSTAThread2(
+        ExecutingTask = RunSTAThread(
             renderingEngine,
             osMessageHandler);
     }
 
-    private Task RunSTAThread(
-        IRenderingEngine renderingEngine,
-        IOSMessageHandler osMessageHandler)
-    {
-        var tcs = new TaskCompletionSource();
-        _thread = new Thread(()
-            =>
-        {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(
-                _hostApplicationLifetime.ApplicationStopping,
-                _mainLoopLifetime.Token);
-
-            try
-            {
-
-                SingleThreadedSynchronizationContextChannel.Await(()
-                    => STAThread(
-                        renderingEngine: renderingEngine,
-                        osMessageHandler: osMessageHandler,
-                        cancellationToken: cts.Token));
-
-                FinishRunning(tcs);
-            }
-            catch (OperationCanceledException)
-            {
-                FinishRunning(tcs);
-            }
-            catch (Exception ex)
-            {
-                FinishRunning(tcs, ex);
-            }
-        });
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            //Can only by set on the Windows machine. Doesn't work on Linux/MacOS
-            _thread.SetApartmentState(ApartmentState.STA);
-            _thread.Name = "Main STA thread";
-        }
-        else
-        {
-            _thread.Name = "Main thread";
-        }
-
-        _thread.Start();
-
-        return tcs.Task;
-
-        void FinishRunning(
-            TaskCompletionSource tcs,
-            Exception? exception = null)
-        {
-            /* This should be called BEFORE tcs.SetResult/tcs.SetException!
-             * Otherwise _mainLoopLifetime.Cancel() gets called after the returned tcs.Task completes,
-             * leading to dispoes exception on mainLoopLifetime, that's already disposed upstream! */
-            IsRunning = false;
-            _mainLoopLifetime.Cancel();
-
-            if (exception is null)
-            {
-                tcs.SetResult();
-            }
-            else
-            {
-                tcs.SetException(exception);
-            }
-        }
-    }
-
-    private async Task RunSTAThread2(
+    private async Task RunSTAThread(
         IRenderingEngine renderingEngine,
         IOSMessageHandler osMessageHandler)
     {
         var originalSynContext = SynchronizationContext.Current;
         StaSingleThreadedSynchronizationContext? syncContext = null;
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(
+            _hostApplicationLifetime.ApplicationStopping,
+            _mainLoopLifetime.Token);
+
         try
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(
-                _hostApplicationLifetime.ApplicationStopping,
-                _mainLoopLifetime.Token);
 
             syncContext = new StaSingleThreadedSynchronizationContext();
             SynchronizationContext.SetSynchronizationContext(syncContext);
             // Task.Yield is used here to force a context switch to STA thread
             // Awaiting here allows the STA thread to start and pump messages, which is necessary for the STAThread method to function correctly.
             await Task.Yield();
-            System.Diagnostics.Debug.Assert(SynchronizationContext.Current == syncContext, "SynchronizationContext should be set to the STA context.");
+            System.Diagnostics.Debug.Assert(
+                SynchronizationContext.Current == syncContext,
+                "SynchronizationContext should be set to the STA context.");
 
             try
             {
-                _ = SignalContextEnded(_logger, syncContext, cts);
+                syncContext.OnError += OnStaContextError;
 
                 await STAThread(
                         renderingEngine,
                         osMessageHandler,
                         cts.Token)
                     .ConfigureAwait(continueOnCapturedContext: true);
-
-                static async Task SignalContextEnded(
-                    ILogger logger,
-                    StaSingleThreadedSynchronizationContext staSyncContext,
-                    CancellationTokenSource cancellationTokenSource)
-                {
-                    try
-                    {
-                        /* This should NOT complete on original context,
-                         * Because in case of an error, the context will be stopped already */
-                        await staSyncContext.Completion
-                            .ConfigureAwait(continueOnCapturedContext: false);
-
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogCritical(ex, "An error occured within the STA thread synchronization context.");
-                    }
-                    finally
-                    {
-                        cancellationTokenSource.Cancel();
-                    }
-                }
             }
             catch (OperationCanceledException)
             {
@@ -178,13 +87,22 @@ internal sealed class StaThreadService
             }
             IsRunning = false;
             _mainLoopLifetime.Cancel();
+
         }
         finally
         {
             SynchronizationContext.SetSynchronizationContext(originalSynContext);
             // Force context switch back to original context to ensure all STA thread work is completed before disposing the syncContext
             await Task.Yield();
+            syncContext?.OnError -= OnStaContextError;
             syncContext?.Dispose();
+        }
+
+        void OnStaContextError(object? sender, Exception ex)
+        {
+            _logger.LogCritical(ex,
+                "An error occured within the STA thread synchronization context.");
+            cts.Cancel();
         }
     }
 
@@ -197,6 +115,7 @@ internal sealed class StaThreadService
 
         await foreach (var staAction in _channelReader
             .ReadAllAsync(cancellationToken)
+            .ConfigureAwait(continueOnCapturedContext: true)
             .WithCancellation(cancellationToken))
         {
             switch (staAction)
@@ -221,26 +140,6 @@ internal sealed class StaThreadService
         }
     }
 
-    private void Dispose(bool disposing)
-    {
-        if (!_disposedValue)
-        {
-            if (disposing)
-            {
-                _thread?.Join();
-            }
-
-            _disposedValue = true;
-        }
-    }
-
-    public void Dispose()
-    {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        Dispose(disposing: true);
-        GC.SuppressFinalize(this);
-    }
-
     internal sealed class StaSingleThreadedSynchronizationContext
         : SynchronizationContext,
           IDisposable
@@ -251,13 +150,7 @@ internal sealed class StaThreadService
         private readonly CancellationTokenSource _cancellationTokenSource = new();
         private bool _isDisposed;
 
-        private readonly TaskCompletionSource _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        /// <summary>
-        /// <see cref="Task"/> that can be observed to know when the <see cref="StaSingleThreadedSynchronizationContext"/> finishes work
-        /// and whether or not it resulted in an exception.
-        /// </summary>
-        public Task Completion => _tcs.Task;
+        public event EventHandler<Exception>? OnError;
 
         /// <inheritdoc/>
         public override void Post(SendOrPostCallback d, object? state)
@@ -277,7 +170,6 @@ internal sealed class StaThreadService
 
             try
             {
-
                 _workQueue.Add(workItem);
                 workItem.SyncEvent!.Wait();
 
@@ -334,12 +226,34 @@ internal sealed class StaThreadService
                         {
                             /* An exception cannot be thrown to the caller from here
                              * since the caller has already continued execution after posting the work item. 
-                             * Instead we stop the context and signal via Completion that an error occured */
-                            // context cannot be stopped immediately,
-                            // because the exception needs to be observed by the caller via the Completion task,
-                            // so we just signal that an error occurred and let the caller decide when to stop using the context
-                            //_cancellationTokenSource.Cancel();
-                            _ = _tcs.TrySetException(ex);
+                             * Instead an event is rised, if there's subscribers, or the process is terminated
+                             * If there are subscribers, but they don't cancel the sync context within 10 seconds
+                             * the process is terminated to avoid running in an unstable state. */
+                            if (OnError is not null)
+                            {
+                                OnError.Invoke(this, ex);
+                                _ = ExitAfter10Seconds(_cancellationTokenSource.Token);
+                            }
+                            else
+                            {
+                                Environment.Exit(-1);
+                            }
+                        }
+
+                        static async Task ExitAfter10Seconds(CancellationToken cancellationToken)
+                        {
+                            try
+                            {
+                                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken)
+                                    .ConfigureAwait(false);
+                            }
+                            catch (Exception)
+                                when (cancellationToken.IsCancellationRequested)
+                            {
+                                return;
+                            }
+
+                            Environment.Exit(-1);
                         }
                     }
                     finally
@@ -362,14 +276,6 @@ internal sealed class StaThreadService
             catch (InvalidOperationException)
             {
                 // The BlockingCollection has been marked as complete for adding, which means we're shutting down.
-            }
-            catch (Exception ex)
-            {
-                _ = _tcs.TrySetException(ex);
-            }
-            finally
-            {
-                _ = _tcs.TrySetResult();
             }
         }
 
@@ -442,61 +348,6 @@ internal sealed class StaThreadService
                 _isDisposed = true;
 
                 SyncEvent?.Dispose();
-            }
-        }
-    }
-
-    private sealed class SingleThreadedSynchronizationContextChannel
-        : SynchronizationContext
-    {
-        private readonly Channel<(SendOrPostCallback d, object? state)> _channel =
-            Channel.CreateUnbounded<(SendOrPostCallback d, object? state)>(
-                new UnboundedChannelOptions { SingleReader = true, SingleWriter = false });
-
-        public override void Post(SendOrPostCallback d, object? state)
-            => _channel.Writer.TryWrite((d, state));
-
-        public override void Send(SendOrPostCallback d, object? state)
-            => throw new InvalidOperationException("Synchronous operations are not supported!");
-
-        public static void Await(Func<Task> taskInvoker)
-        {
-            var originalContext = Current;
-            try
-            {
-                var context = new SingleThreadedSynchronizationContextChannel();
-                SetSynchronizationContext(context);
-
-                Task task;
-                try
-                {
-                    task = taskInvoker.Invoke();
-                }
-                catch (Exception ex)
-                {
-                    // If the invoker throws synchronously, complete the channel so the pump can exit.
-                    context._channel.Writer.Complete(ex);
-                    throw;
-                }
-
-                _ = task.ContinueWith(t
-                    => context._channel.Writer.Complete(t.Exception),
-                    TaskScheduler.Default);
-
-                // Pump loop: block synchronously until items are available or the writer completes.
-                while (context._channel.Reader.WaitToReadAsync().Preserve().GetAwaiter().GetResult())
-                {
-                    while (context._channel.Reader.TryRead(out var work))
-                    {
-                        work.d.Invoke(work.state);
-                    }
-                }
-
-                task.GetAwaiter().GetResult();
-            }
-            finally
-            {
-                SetSynchronizationContext(originalContext);
             }
         }
     }
