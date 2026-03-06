@@ -103,6 +103,7 @@ public class StaThreadServiceTests
             syncContext?.Dispose();
         }
 
+        // Ensures that the syncContext internal 10 second timer to exit the process was cancelled
         await Task.Delay(15_000, timeoutToken);
 
         void SyncContextOnError(object? sender, Exception ex)

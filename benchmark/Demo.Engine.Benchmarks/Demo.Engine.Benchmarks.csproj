@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Demo.Engine.Core\Demo.Engine.Core.csproj" />
     <ProjectReference Include="..\..\src\Demo.Tools.Common\Demo.Tools.Common.csproj" />
   </ItemGroup>
 

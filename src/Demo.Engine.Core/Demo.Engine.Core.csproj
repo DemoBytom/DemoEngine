@@ -23,6 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Demo.Engine.Benchmarks" />
     <InternalsVisibleTo Include="Demo.Engine.Core.UTs" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>

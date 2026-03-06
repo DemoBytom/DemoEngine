@@ -11,6 +11,7 @@ using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Demo.Engine.Core.Features.StaThread;
 
@@ -148,13 +149,17 @@ internal sealed class StaThreadService
 
         private readonly Thread _thread;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
+        private readonly ObjectPool<WorkItem>? _workItemPool;
         private bool _isDisposed;
 
         public event EventHandler<Exception>? OnError;
 
         /// <inheritdoc/>
         public override void Post(SendOrPostCallback d, object? state)
-            => _workQueue.Add(WorkItem.Asynchronous(d, state));
+            => _workQueue.Add(_workItemPool?
+                    .Get()
+                    .Set(d, state, isSynchronous: false)
+                ?? WorkItem.Asynchronous(d, state));
 
         /// <inheritdoc/>
         public override void Send(SendOrPostCallback d, object? state)
@@ -166,7 +171,10 @@ internal sealed class StaThreadService
                 return;
             }
 
-            var workItem = WorkItem.Synchronous(d, state);
+            var workItem = _workItemPool?
+                    .Get()
+                    .Set(d, state, isSynchronous: true)
+                ?? WorkItem.Synchronous(d, state);
 
             try
             {
@@ -180,11 +188,19 @@ internal sealed class StaThreadService
             }
             finally
             {
-                workItem.Dispose();
+                if (_workItemPool is not null)
+                {
+                    _workItemPool.Return(workItem);
+                }
+                else
+                {
+                    workItem.Dispose();
+                }
             }
         }
 
-        public StaSingleThreadedSynchronizationContext()
+        public StaSingleThreadedSynchronizationContext(
+            ObjectPool<WorkItem>? workItemPool = null)
         {
             _thread = new Thread(ThreadInner)
             {
@@ -203,6 +219,7 @@ internal sealed class StaThreadService
             }
 
             _thread.Start();
+            _workItemPool = workItemPool;
         }
 
         private void ThreadInner()
@@ -262,6 +279,10 @@ internal sealed class StaThreadService
                         {
                             workItem.SyncEvent.Set();
                         }
+                        else if (_workItemPool is not null)
+                        {
+                            _workItemPool.Return(workItem);
+                        }
                         else
                         {
                             workItem.Dispose();
@@ -296,19 +317,20 @@ internal sealed class StaThreadService
             _cancellationTokenSource.Dispose();
         }
 
-        private sealed class WorkItem
-            : IDisposable
+        internal sealed class WorkItem
+            : IDisposable,
+              IResettable
         {
             private bool _isDisposed;
 
-            public SendOrPostCallback Callback { get; }
+            public SendOrPostCallback Callback { get; private set; }
 
-            public object? State { get; }
+            public object? State { get; private set; }
 
             [MemberNotNullWhen(true, nameof(SyncEvent))]
-            public bool IsSynchronous { get; }
+            public bool IsSynchronous { get; private set; }
 
-            public ManualResetEventSlim? SyncEvent { get; }
+            public ManualResetEventSlim? SyncEvent { get; private set; }
 
             public Exception? Exception { get; set; }
 
@@ -324,6 +346,29 @@ internal sealed class StaThreadService
                 {
                     SyncEvent = new ManualResetEventSlim();
                 }
+            }
+
+            public WorkItem()
+            {
+                Callback = null!;
+            }
+
+            public WorkItem Set(
+                SendOrPostCallback callback,
+                object? state,
+                bool isSynchronous)
+            {
+                Callback = callback;
+                State = state;
+                IsSynchronous = isSynchronous;
+
+                if (IsSynchronous)
+                {
+                    (SyncEvent ??= new ManualResetEventSlim())
+                        .Reset();
+                }
+
+                return this;
             }
 
             public static WorkItem Synchronous(SendOrPostCallback callback, object? state)
@@ -348,6 +393,15 @@ internal sealed class StaThreadService
                 _isDisposed = true;
 
                 SyncEvent?.Dispose();
+                SyncEvent = null;
+            }
+
+            public bool TryReset()
+            {
+                SyncEvent?.Reset();
+                Exception = null;
+
+                return true;
             }
         }
     }
