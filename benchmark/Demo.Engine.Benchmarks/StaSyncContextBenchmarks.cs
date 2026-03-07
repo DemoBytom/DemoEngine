@@ -4,7 +4,9 @@
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using Demo.Engine.Core.Features.StaThread;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.ObjectPool;
+using WorkItem = Demo.Engine.Core.Features.StaThread.StaThreadService.StaSingleThreadedSynchronizationContext.WorkItem;
 
 namespace Demo.Engine.Benchmarks;
 
@@ -13,17 +15,26 @@ namespace Demo.Engine.Benchmarks;
 public class StaSyncContextBenchmarks
 {
     private readonly Random _rng = new(1050);
-    private ObjectPool<StaThreadService.StaSingleThreadedSynchronizationContext.WorkItem>? _workItemPool;
+    private ObjectPool<WorkItem>? _workItemPool;
+    private ServiceProvider? _serviceProvider = null!;
 
     [Params(10_000, 100_000)]
     public int IterationCount { get; set; }
 
-    [GlobalSetup()]
+    [GlobalSetup]
     public void SetupObjectPool()
     {
-        var provider = new DefaultObjectPoolProvider();
-        var policy = new DefaultPooledObjectPolicy<StaThreadService.StaSingleThreadedSynchronizationContext.WorkItem>();
-        _workItemPool = provider.Create(policy);
+        _serviceProvider = new ServiceCollection()
+            .AddStaWorkItemObjectPool()
+            .BuildServiceProvider();
+
+        _workItemPool = _serviceProvider.GetRequiredService<ObjectPool<WorkItem>>();
+    }
+
+    [GlobalCleanup]
+    public void CleanupObjectPool()
+    {
+        _serviceProvider?.Dispose();
     }
 
     [Benchmark(Baseline = true)]

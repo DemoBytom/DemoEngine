@@ -9,9 +9,11 @@ using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.ObjectPool;
 using NSubstitute;
 using Shouldly;
 using static Demo.Engine.Core.Features.StaThread.StaThreadRequests;
+using WorkItem = Demo.Engine.Core.Features.StaThread.StaThreadService.StaSingleThreadedSynchronizationContext.WorkItem;
 
 namespace Demo.Engine.Core.UTs;
 
@@ -33,14 +35,19 @@ public class StaThreadServiceTests
     /// </remarks>
     [Test]
     [Timeout(timeoutInMilliseconds: 20_000)]
-    public async Task TestStaThreadService(CancellationToken timeoutToken)
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task TestStaThreadService(
+        bool useObjectPool,
+        CancellationToken timeoutToken)
     {
         // Arrrange
         var cts = CancellationTokenSource.CreateLinkedTokenSource(timeoutToken);
 
         var serviceUnderTest = CreateService(
-            cts,
-            out var channel);
+            useObjectPool: useObjectPool,
+            cancellationTokenSource: cts,
+            channel: out var channel);
 
         var executingTask = serviceUnderTest.ExecutingTask;
         var sendTestRequestTask = SendTestRequests(
@@ -71,7 +78,11 @@ public class StaThreadServiceTests
     /// </remarks>
     [Test]
     [Timeout(timeoutInMilliseconds: 20_000)]
-    public async Task TestExceptionHandling(CancellationToken timeoutToken)
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task TestExceptionHandling(
+        bool useObjectPool,
+        CancellationToken timeoutToken)
     {
         // Arrange
         StaThreadService.StaSingleThreadedSynchronizationContext? syncContext = null;
@@ -82,7 +93,11 @@ public class StaThreadServiceTests
 
         try
         {
-            syncContext = new StaThreadService.StaSingleThreadedSynchronizationContext();
+            syncContext = new StaThreadService.StaSingleThreadedSynchronizationContext(
+                useObjectPool
+                    ? GetObjectPool()
+                    : null);
+
             syncContext.OnError += SyncContextOnError;
 
             SynchronizationContext.SetSynchronizationContext(syncContext);
@@ -111,6 +126,14 @@ public class StaThreadServiceTests
             ex.Message.ShouldBe("TEST EXCEPTION");
             cts.Cancel();
         }
+    }
+
+    private static ObjectPool<WorkItem> GetObjectPool()
+    {
+        var provider = new DefaultObjectPoolProvider();
+        var policy = new DefaultPooledObjectPolicy<WorkItem>();
+        var workItemPool = provider.Create(policy);
+        return workItemPool;
     }
 
 #pragma warning disable CA1822 // Mark members as static
@@ -215,6 +238,7 @@ public class StaThreadServiceTests
     }
 
     private static StaThreadService CreateService(
+        bool useObjectPool,
         CancellationTokenSource cancellationTokenSource,
         out Channel<StaThreadRequests> channel)
     {
@@ -245,12 +269,17 @@ public class StaThreadServiceTests
                 SingleWriter = false,
             });
 
+        var workItemPool = useObjectPool
+            ? GetObjectPool()
+            : null;
+
         return new StaThreadService(
                 loggerMock,
                 hostApplicationLifetimeMock,
                 renderingEngineMock,
                 osMessageHandlerMock,
                 channel.Reader,
-                mainLoopLifetimeMock);
+                mainLoopLifetimeMock,
+                workItemPool);
     }
 }

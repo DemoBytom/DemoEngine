@@ -12,6 +12,7 @@ using Demo.Engine.Core.Services;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
+using WorkItem = Demo.Engine.Core.Features.StaThread.StaThreadService.StaSingleThreadedSynchronizationContext.WorkItem;
 
 namespace Demo.Engine.Core.Features.StaThread;
 
@@ -22,6 +23,7 @@ internal sealed class StaThreadService
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private readonly ChannelReader<StaThreadRequests> _channelReader;
     private readonly IMainLoopLifetime _mainLoopLifetime;
+    private readonly ObjectPool<WorkItem>? _workItemPool;
 
     public Task ExecutingTask { get; }
     public bool IsRunning { get; private set; }
@@ -32,12 +34,14 @@ internal sealed class StaThreadService
         IRenderingEngine renderingEngine,
         IOSMessageHandler osMessageHandler,
         ChannelReader<StaThreadRequests> channelReader,
-        IMainLoopLifetime mainLoopLifetime)
+        IMainLoopLifetime mainLoopLifetime,
+        ObjectPool<WorkItem>? workItemPool = null)
     {
         _logger = logger;
         _hostApplicationLifetime = hostApplicationLifetime;
         _channelReader = channelReader;
         _mainLoopLifetime = mainLoopLifetime;
+        _workItemPool = workItemPool;
         IsRunning = true;
         ExecutingTask = RunSTAThread(
             renderingEngine,
@@ -57,7 +61,7 @@ internal sealed class StaThreadService
         try
         {
 
-            syncContext = new StaSingleThreadedSynchronizationContext();
+            syncContext = new StaSingleThreadedSynchronizationContext(_workItemPool);
             SynchronizationContext.SetSynchronizationContext(syncContext);
             // Task.Yield is used here to force a context switch to STA thread
             // Awaiting here allows the STA thread to start and pump messages, which is necessary for the STAThread method to function correctly.
@@ -156,10 +160,8 @@ internal sealed class StaThreadService
 
         /// <inheritdoc/>
         public override void Post(SendOrPostCallback d, object? state)
-            => _workQueue.Add(_workItemPool?
-                    .Get()
-                    .Set(d, state, isSynchronous: false)
-                ?? WorkItem.Asynchronous(d, state));
+            => _workQueue.Add(
+                GetAsynchronousWorkItem(d, state));
 
         /// <inheritdoc/>
         public override void Send(SendOrPostCallback d, object? state)
@@ -171,10 +173,7 @@ internal sealed class StaThreadService
                 return;
             }
 
-            var workItem = _workItemPool?
-                    .Get()
-                    .Set(d, state, isSynchronous: true)
-                ?? WorkItem.Synchronous(d, state);
+            var workItem = GetSynchronousWorkItem(d, state);
 
             try
             {
@@ -188,18 +187,15 @@ internal sealed class StaThreadService
             }
             finally
             {
-                if (_workItemPool is not null)
-                {
-                    _workItemPool.Return(workItem);
-                }
-                else
-                {
-                    workItem.Dispose();
-                }
+                DisposeWorkItem(workItem);
             }
         }
 
-        public StaSingleThreadedSynchronizationContext(
+        public StaSingleThreadedSynchronizationContext()
+            : this(null)
+        { }
+
+        internal StaSingleThreadedSynchronizationContext(
             ObjectPool<WorkItem>? workItemPool = null)
         {
             _thread = new Thread(ThreadInner)
@@ -279,13 +275,9 @@ internal sealed class StaThreadService
                         {
                             workItem.SyncEvent.Set();
                         }
-                        else if (_workItemPool is not null)
-                        {
-                            _workItemPool.Return(workItem);
-                        }
                         else
                         {
-                            workItem.Dispose();
+                            DisposeWorkItem(workItem);
                         }
                     }
                 }
@@ -297,6 +289,30 @@ internal sealed class StaThreadService
             catch (InvalidOperationException)
             {
                 // The BlockingCollection has been marked as complete for adding, which means we're shutting down.
+            }
+        }
+
+        private WorkItem GetSynchronousWorkItem(SendOrPostCallback callback, object? state)
+            => _workItemPool?
+                .Get()
+                .SetSynchronous(callback, state)
+            ?? WorkItem.Synchronous(callback, state);
+
+        private WorkItem GetAsynchronousWorkItem(SendOrPostCallback callback, object? state)
+            => _workItemPool?
+                .Get()
+                .SetAsynchronous(callback, state)
+            ?? WorkItem.Asynchronous(callback, state);
+
+        private void DisposeWorkItem(WorkItem workItem)
+        {
+            if (_workItemPool is not null)
+            {
+                _workItemPool.Return(workItem);
+            }
+            else
+            {
+                workItem.Dispose();
             }
         }
 
@@ -349,11 +365,9 @@ internal sealed class StaThreadService
             }
 
             public WorkItem()
-            {
-                Callback = null!;
-            }
+                => Callback = null!;
 
-            public WorkItem Set(
+            private WorkItem Set(
                 SendOrPostCallback callback,
                 object? state,
                 bool isSynchronous)
@@ -371,13 +385,25 @@ internal sealed class StaThreadService
                 return this;
             }
 
-            public static WorkItem Synchronous(SendOrPostCallback callback, object? state)
+            internal WorkItem SetSynchronous(SendOrPostCallback callback, object? state)
+                => Set(
+                    callback: callback,
+                    state: state,
+                    isSynchronous: true);
+
+            internal WorkItem SetAsynchronous(SendOrPostCallback callback, object? state)
+                => Set(
+                    callback: callback,
+                    state: state,
+                    isSynchronous: false);
+
+            internal static WorkItem Synchronous(SendOrPostCallback callback, object? state)
                 => new(
                     callback: callback,
                     state: state,
                     isSynchronous: true);
 
-            public static WorkItem Asynchronous(SendOrPostCallback callback, object? state)
+            internal static WorkItem Asynchronous(SendOrPostCallback callback, object? state)
                 => new(
                     callback: callback,
                     state: state,
@@ -398,8 +424,12 @@ internal sealed class StaThreadService
 
             public bool TryReset()
             {
+                ObjectDisposedException.ThrowIf(_isDisposed, this);
+
                 SyncEvent?.Reset();
                 Exception = null;
+                Callback = null!;
+                State = null;
 
                 return true;
             }
