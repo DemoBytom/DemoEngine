@@ -173,7 +173,7 @@ internal static class DescHeapAllocatorBuilderExtensions
                 .CreateDescriptorHeapAllocator(
                     capacity,
                     isShaderVisible,
-                    createAllocator: renderingEngine
+                    createAllocator: static renderingEngine
                         => new RTVDescriptorHeapAllocator(renderingEngine));
 
         internal ValueResult<DSVDescriptorHeapAllocator, ValueError> DSV(
@@ -183,7 +183,7 @@ internal static class DescHeapAllocatorBuilderExtensions
                 .CreateDescriptorHeapAllocator(
                     capacity,
                     isShaderVisible,
-                    createAllocator: renderingEngine
+                    createAllocator: static renderingEngine
                         => new DSVDescriptorHeapAllocator(renderingEngine));
 
         internal ValueResult<SRVDescriptorHeapAllocator, ValueError> SRV(
@@ -193,7 +193,7 @@ internal static class DescHeapAllocatorBuilderExtensions
                 .CreateDescriptorHeapAllocator(
                     capacity,
                     isShaderVisible,
-                    createAllocator: renderingEngine
+                    createAllocator: static renderingEngine
                         => new SRVDescriptorHeapAllocator(renderingEngine));
 
         internal ValueResult<UAVDescriptorHeapAllocator, ValueError> UAV(
