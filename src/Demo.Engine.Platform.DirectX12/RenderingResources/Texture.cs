@@ -148,7 +148,7 @@ internal sealed class Texture
                 initialState: initialStates,
                 clearValue: GetClearValue(resourceDescription, clearValue));
 
-        return resource ?? ThrowFailureCreatingResource();
+        return IfNullThrowFailureCreatingResource(resource);
     }
 
     private static ID3D12Resource CreateCommittedResource(
@@ -165,12 +165,11 @@ internal sealed class Texture
                     initialResourceState: initialStates,
                     optimizedClearValue: GetClearValue(resourceDescription, clearValue));
 
-        return resource ?? ThrowFailureCreatingResource();
+        return IfNullThrowFailureCreatingResource(resource);
     }
 
-    [DoesNotReturn]
-    private static ID3D12Resource ThrowFailureCreatingResource()
-        => throw new InvalidOperationException("Failure creating a resource!");
+    private static T IfNullThrowFailureCreatingResource<T>([NotNull] T? resource)
+        => resource ?? throw new InvalidOperationException("Failure creating a resource!");
 
     private void Dispose(bool disposing)
     {
