@@ -40,7 +40,7 @@ internal static partial class DescriptorHeapAllocatorLoggerExtensions
 
     [LoggerMessage(
         Level = LogLevel.Error,
-        Message = "Index {index} cannot be greater than the capacity {capacity}!")]
+        Message = "Index {Index} cannot be greater than the capacity {Capacity}!")]
     internal static partial void LogIndexCannotBeGreaterThanCapacity(
         ILogger logger,
         int index,
@@ -54,9 +54,40 @@ internal static partial class DescriptorHeapAllocatorLoggerExtensions
 
     [LoggerMessage(
         Level = LogLevel.Error,
-        Message = "Failed to set capacity for Descriptor Heap Allocator of type {heapType}: {errorMessage}")]
+        Message = "Failed to set capacity for Descriptor Heap Allocator of type {HeapType}: {ErrorMessage}")]
     internal static partial void LogFailedToSetCapacityForDescriptorHeapAllocator(
         this ILogger logger,
         DescriptorHeapType heapType,
         string errorMessage);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Capacity {Capacity} cannot be greater than {MaxShaderVisibleDescriptorHeapSizeTier2}!")]
+    internal static partial void LogCapacityCannotBeGreaterThanMaxShaderVisibleDescriptorHeapSizeTier2(
+        this ILogger logger,
+        uint capacity,
+        int maxShaderVisibleDescriptorHeapSizeTier2);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Capacity {Capacity} cannot be greater than {MaxShaderVisibleSamplerHeapSize} for {HeapType} heap!")]
+    internal static partial void LogCapacityCannotBeGreaterThanMaxShaderVisibleSamplerHeapSize(
+        this ILogger logger,
+        uint capacity,
+        int maxShaderVisibleSamplerHeapSize,
+        DescriptorHeapType heapType);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Descriptor heap wasn't initialized properly!")]
+    internal static partial void LogDescriptorHeapWasntInitializedProperly(
+        this ILogger logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Descriptor heap of type {HeapType} capacity reached {Capacity}")]
+    internal static partial void LogDescriptorHeapCapacityReached(
+        this ILogger logger,
+        DescriptorHeapType heapType,
+        uint capacity);
 }

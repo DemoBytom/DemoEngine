@@ -50,7 +50,7 @@ internal sealed class RenderTexture
             renderingEngine.Device.CreateRenderTargetView(
                 Resource,
                 rtvDesc,
-                _rtv[i].CPU!.Value);
+                _rtv[i].CPU);
 
             ++rtvDesc.Texture2D.MipSlice;
         }
@@ -115,7 +115,7 @@ internal sealed class RenderTexture
 
     public CpuDescriptorHandle RTV(ushort mipIndex)
         => _rtv[mipIndex] is { IsValid: true } rtv
-        ? rtv.CPU.Value
+        ? rtv.CPU
         : throw new InvalidOperationException($"Invalid descriptor handle[{mipIndex}]");
 
     private void Dispose(bool disposing)

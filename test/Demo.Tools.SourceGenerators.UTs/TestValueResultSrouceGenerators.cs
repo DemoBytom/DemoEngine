@@ -12,4 +12,20 @@ public class TestValueResultSrouceGenerators
     [Test]
     public Task ValueResultSourceGenerator_MapExtensions_Success()
         => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["MapExtensions.g.cs"]);
+
+    [Test]
+    public Task ValueResultSourceGenerator_MatchExtensions_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["MatchExtensions.g.cs"]);
+
+    [Test]
+    public Task ValueResultSourceGenerator_LogAndReturnExtensions_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["LogAndReturnExtensions.g.cs"]);
+
+    [Test]
+    public Task ValueResultSourceGenerator_Tap_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["TapExtensions.g.cs"]);
+
+    [Test]
+    public Task ValueResultSourceGenerator_Ensure_Success()
+        => TestHelper.VerifyValueResultSourceGenerator(allowFilenames: ["EnsureExtensions.g.cs"]);
 }

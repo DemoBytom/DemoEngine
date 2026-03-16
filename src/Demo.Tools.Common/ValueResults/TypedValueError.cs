@@ -55,22 +55,6 @@ public readonly ref struct TypedValueError(
     }
 }
 
-public static partial class TypedValueErrorExtensions
-{
-    public static ValueResult<TValue, TypedValueError> InvalidOperation<TValue>(
-        this ValueResult.LogAndReturnResultCallContext _,
-        string errorMessage)
-        where TValue : allows ref struct
-        => TypedValueError.InvalidOperation<TValue>(errorMessage);
-
-    public static ValueResult<TValue, TypedValueError> OutOfRange<TValue>(
-        this ValueResult.LogAndReturnResultCallContext _,
-        string parameterName,
-        string errorMessage)
-        where TValue : allows ref struct
-        => TypedValueError.OutOfRange<TValue>(parameterName, errorMessage);
-}
-
 public readonly ref struct TypedValueError<TError>(
     TypedValueError.ErrorTypes errorType,
     TError error)

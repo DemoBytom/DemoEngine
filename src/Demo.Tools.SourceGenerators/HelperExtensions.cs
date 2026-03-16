@@ -2,19 +2,143 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.CodeDom.Compiler;
+using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Demo.Tools.SourceGenerators;
 
 internal static class HelperExtensions
 {
-    public static void WriteInLoopFor(
-        this IndentedTextWriter itw,
-        (int startValue, int times) range,
-        Action<IndentedTextWriter, int> action)
+    internal static IncrementalGeneratorPostInitializationContext AddSource(
+        this IncrementalGeneratorPostInitializationContext ctx,
+        string hintName,
+        Func<ushort, string> generatorMethod,
+        ushort numberOfGenericParameters = DEFAULT_NUMBER_OF_GENERIC_PARAMETERS)
     {
-        for (var i = range.startValue; i <= range.times; i++)
+        ctx.AddSource(
+            hintName,
+            SourceText.From(
+                generatorMethod(numberOfGenericParameters),
+                Encoding.UTF8));
+
+        return ctx;
+    }
+
+    extension(IndentedTextWriter itw)
+    {
+        internal void WriteInLoopFor(
+            (int startValue, int times) range,
+            Action<IndentedTextWriter, int> action)
         {
-            action(itw, i);
+            for (var i = range.startValue; i <= range.times; i++)
+            {
+                action(itw, i);
+            }
+        }
+
+        internal void WriteInLoopFor<TParam1>(
+            TParam1 param1,
+            (int startValue, int times) range,
+            Action<IndentedTextWriter, int, TParam1> action)
+        {
+            for (var i = range.startValue; i <= range.times; i++)
+            {
+                action(itw, i, param1);
+            }
+        }
+
+        internal void WriteInLoopFor(
+            (int startValue, int times1, int times2) range,
+            Action<IndentedTextWriter, int, int> action)
+        {
+            for (var i = range.startValue; i <= range.times1; i++)
+            {
+                for (var j = range.startValue; j <= range.times2; j++)
+                {
+                    action(itw, i, j);
+                }
+            }
+        }
+
+        internal void WriteTParamsInParams(
+            int currentAmountOfGenericParams,
+            bool includeStartingComma = true)
+            => itw.WriteInLoopFor(
+                param1: includeStartingComma,
+                (1, currentAmountOfGenericParams),
+                static (itw, currentParam, includeStartingComma) =>
+                {
+                    if (includeStartingComma || currentParam > 1)
+                    {
+                        itw.WriteLine(",");
+                    }
+                    itw.Write($"scoped in TParam{currentParam} param{currentParam}");
+                });
+
+        internal void WriteTParamConstraints(
+            int currentAmountOfGenericParams,
+            bool includeStartingWriteLine = true)
+            => itw.WriteInLoopFor(
+                includeStartingWriteLine,
+                (1, currentAmountOfGenericParams),
+                static (itw, currentParam, includeStartingWriteLine) =>
+                {
+                    if (includeStartingWriteLine || currentParam > 1)
+                    {
+                        itw.WriteLine();
+                    }
+                    itw.Write($"where TParam{currentParam} : allows ref struct");
+                });
+
+        internal void WriteTParamGenericParams(
+            int currentAmountOfGenericParams,
+            bool includeStartingComma = true)
+            => itw.WriteInLoopFor(
+                includeStartingComma,
+                (1, currentAmountOfGenericParams),
+                static (itw, currentParam, includeStartingComma)
+                =>
+                {
+                    if (includeStartingComma || currentParam > 1)
+                    {
+                        itw.Write(", ");
+                    }
+                    itw.Write($"TParam{currentParam}");
+                });
+
+        internal void WriteInParams(
+            int currentAmountOfGenericParams)
+            => itw.WriteInLoopFor(
+                (1, currentAmountOfGenericParams),
+                static (itw, currentParam)
+                => itw.Write($", in param{currentParam}"));
+
+        internal void WriteFunctionalParamList(
+            string? firstParameter,
+            int amountOfParams)
+        {
+            switch (amountOfParams)
+            {
+                case <= 0:
+                    itw.Write($"{(firstParameter is null ? "()" : firstParameter)}");
+                    break;
+                case 1 when firstParameter is null:
+                    itw.Write("P1");
+                    break;
+                case 1:
+                    itw.Write($"({(firstParameter is null ? "" : firstParameter + ", ")}P1)");
+                    break;
+                case 2:
+                    itw.Write($"({(firstParameter is null ? "" : firstParameter + ", ")}P1, P2)");
+                    break;
+                case 3:
+                    itw.Write($"({(firstParameter is null ? "" : firstParameter + ", ")}P1, P2, P3)");
+                    break;
+                default:
+                    itw.Write($"({(firstParameter is null ? "" : firstParameter + ", ")}P1, ..., P{amountOfParams})");
+                    break;
+            }
         }
     }
 }

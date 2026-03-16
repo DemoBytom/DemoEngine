@@ -1,9 +1,9 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
 
 namespace Demo.Tools.Common.ValueResults;
 
@@ -21,8 +21,23 @@ public readonly ref struct ValueResult<TValue, TError>
     [MemberNotNullWhen(true, nameof(Error))]
     public bool IsError => !IsSuccess;
 
-    public TValue? Value { get; }
-    public TError? Error { get; }
+    public TValue? Value
+    {
+        get
+        {
+            Debug.Assert(IsSuccess);
+            return field;
+        }
+    }
+
+    public TError? Error
+    {
+        get
+        {
+            Debug.Assert(IsError);
+            return field;
+        }
+    }
 
     private ValueResult(
         bool isSuccess,
@@ -130,74 +145,29 @@ public static class ValueResult
         where TError : IError, allows ref struct
         => ValueResult<TError>.Failure(error);
 
-    public static ValueResult<TValue, ValueError> LogAndReturnFailure<TValue>(
-        this ILogger? logger,
-        Action<ILogger> logAction,
-        string errorMessage)
-        where TValue : allows ref struct
+    extension(scoped in LogAndReturnExtensions.LogAndReturnResultCallContext _)
     {
-        if (logger is not null)
-        {
-            logAction(logger);
-        }
-        return ValueResult<TValue, ValueError>.Failure(new(errorMessage));
-    }
+#pragma warning disable CA1822 // Mark members as static
+        public ValueResult<TValue, ValueError> Failure<TValue>(
+            string error)
+            where TValue : allows ref struct
+            => ValueResult<TValue, ValueError>.Failure(new(error));
 
-    extension<TLogger>(TLogger? logger)
-        where TLogger : ILogger
-    {
-        public LogAndReturnResultCallContext LogAndReturn(
-            Action<TLogger> logAction)
-        {
-            if (logger is not null)
-            {
-                logAction(logger);
-            }
-            return new LogAndReturnResultCallContext();
-        }
+        public ValueResult<TValue, ValueError> Success<TValue>(
+            TValue value)
+            where TValue : allows ref struct
+            => ValueResult<TValue, ValueError>.Success(value);
 
-        public LogAndReturnResultCallContext LogAndReturn<TLogValue1, TLogValue2>(
-            Action<TLogger, TLogValue1, TLogValue2> logAction,
-            TLogValue1 value1,
-            TLogValue2 value2)
-            where TLogValue1 : allows ref struct
-            where TLogValue2 : allows ref struct
-        {
-            if (logger is not null)
-            {
-                logAction(logger, value1, value2);
-            }
+        public ValueResult<TValue, TypedValueError> InvalidOperation<TValue>(
+            string errorMessage)
+            where TValue : allows ref struct
+            => TypedValueError.InvalidOperation<TValue>(errorMessage);
 
-            return new LogAndReturnResultCallContext();
-        }
-    }
-
-    public static ValueResult<TValue, ValueError> LogAndReturnFailure<TValue, TLogValue1, TLogValue2>(
-        this ILogger? logger,
-        (Action<ILogger, TLogValue1, TLogValue2> logAction, TLogValue1 logVal1, TLogValue2 logVal2) logAction,
-        string errorMessage)
-        where TValue : allows ref struct
-    {
-        if (logger is not null)
-        {
-            logAction.logAction(logger, logAction.logVal1, logAction.logVal2);
-        }
-        return ValueResult<TValue, ValueError>.Failure(new(errorMessage));
-    }
-
-    public static ValueResult<TValue, ValueError> Failure<TValue>(
-        this LogAndReturnResultCallContext _,
-        string errorMessage)
-        where TValue : allows ref struct
-        => ValueResult<TValue, ValueError>.Failure(new(errorMessage));
-
-    public static ValueResult<TValue, ValueError> Success<TValue>(
-        this LogAndReturnResultCallContext _,
-        TValue value)
-        where TValue : allows ref struct
-        => ValueResult<TValue, ValueError>.Success(value);
-
-    public readonly ref struct LogAndReturnResultCallContext()
-    {
+        public ValueResult<TValue, TypedValueError> OutOfRange<TValue>(
+            string parameterName,
+            string errorMessage)
+            where TValue : allows ref struct
+            => TypedValueError.OutOfRange<TValue>(parameterName, errorMessage);
+#pragma warning restore CA1822 // Mark members as static
     }
 }

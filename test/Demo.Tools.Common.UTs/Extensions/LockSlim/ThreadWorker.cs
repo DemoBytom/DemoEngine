@@ -13,7 +13,8 @@ public class ThreadWorker
         List<ThreadJob> threadJobs,
         CancellationToken cts)
     {
-        _completionSource = new TaskCompletionSource<bool>();
+        _completionSource = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         _thread = new Thread(() =>
         {
             try
