@@ -7,6 +7,7 @@ using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.ValueObjects;
+using Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 using Demo.Engine.Platform.DirectX12.RenderingResources;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -30,6 +31,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
     private readonly IDXGIFactory7 _dxgiFactory;
 
     private readonly RenderingCommand _d3d12Command;
+    private readonly GPass _gPass;
     private readonly bool[] _deferredReleasesFlag = new bool[Common.FRAME_BUFFER_COUNT];
     private readonly List<IDisposable>[] _deferredReleases;
 
@@ -119,6 +121,12 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         }
 
         (RTVHeapAllocator, DSVHeapAllocator, SRVHeapAllocator, UAVHeapAllocator) = descriptorHeaps.Value;
+
+        _gPass = new GPass(
+            serviceProvider.GetRequiredService<ILogger<GPass>>(),
+            this);
+        // TODO ValueResult?
+        _ = _gPass.Initialize();
 
         //renderingSurface = new RenderingSurface(
         //    serviceProvider);
@@ -416,6 +424,8 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
                     {
                         ProcessDeferredReleases(frameIndex);
                     }
+
+                    _gPass.Dispose();
 
                     //Dispose managed resources
                     // Not sure if I need to do

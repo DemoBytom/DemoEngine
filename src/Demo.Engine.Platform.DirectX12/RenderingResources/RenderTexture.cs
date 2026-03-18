@@ -22,7 +22,7 @@ internal sealed class RenderTexture
         ResourceDescription resourceDescription)
     {
         _texture = texture;
-        _mipCount = resourceDescription.MipLevels;
+        _mipCount = Resource.Description.MipLevels;
 
         ArgumentOutOfRangeException.ThrowIfGreaterThan(
             _mipCount, Common.MAX_MIPS);
@@ -124,7 +124,7 @@ internal sealed class RenderTexture
         {
             if (disposing)
             {
-                foreach (var rtv in _rtv)
+                foreach (var rtv in _rtv.AsSpan(.._mipCount))
                 {
                     rtv.Dispose();
                 }

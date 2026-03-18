@@ -52,6 +52,12 @@ public readonly record struct Height
     public static float operator /(Height left, Width right)
         => left.Value / ((float)right.Value);
 
+    public static bool operator >(Height left, Height right)
+        => left.Value > right.Value;
+
+    public static bool operator <(Height left, Height right)
+        => left.Value < right.Value;
+
     public bool Equals(int other)
         => Value.Equals(other);
 
@@ -75,4 +81,7 @@ public readonly record struct Height
     /// <inheritdoc cref="int.ToString(string?, IFormatProvider?)"/>
     public string ToString(string format, IFormatProvider formatProvider)
         => Value.ToString(format, formatProvider);
+
+    public static Height Max(Height left, Height right)
+        => left > right ? left : right;
 }

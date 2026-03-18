@@ -11,7 +11,7 @@ using Vortice.DXGI;
 namespace Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 
 /// <summary>
-/// Geometry pass
+/// Geometry pass - Depth (pre)pass + render pass
 /// </summary>
 /// <param name="logger"></param>
 /// <param name="renderingEngine"></param>
@@ -24,6 +24,10 @@ internal sealed class GPass(
 
     private const Format MAIN_BUFFER_FORMAT = Format.R16G16B16A16_Float;
     private const Format DEPTH_BUFFER_FORMAT = Format.D32_Float;
+
+    private static readonly (Width width, Height height) _defaultSize = (1024, 768);
+
+    private (Width width, Height height) _currentSize = _defaultSize;
 
     private RenderTexture? _gpasMainBuffer = null;
     private DepthBufferTexture? _gpassDepthBuffer = null;
@@ -41,6 +45,31 @@ internal sealed class GPass(
         Color = new(0.0f, 0.0f, 0.0f, 1),
     };
 #endif
+
+    public bool Initialize()
+        => CreateBuffers(_defaultSize.width, _defaultSize.height);
+
+    public void SetSize(Width width, Height height)
+    {
+        var (currentWidth, currentHeight) = _currentSize;
+        if (width > currentWidth || height > currentHeight)
+        {
+            var (newWidth, newHeight) = (
+                Width.Max(currentWidth, width),
+                Height.Max(currentHeight, height));
+
+            if (CreateBuffers(newWidth, newHeight))
+            {
+                _currentSize = (newWidth, newHeight);
+            }
+            else
+            {
+#pragma warning disable CA1873 // Avoid potentially expensive logging
+                logger.LogError("Failed to create GPass buffers with size {Width}x{Height}", width, height);
+#pragma warning restore CA1873 // Avoid potentially expensive logging
+            }
+        }
+    }
 
     [MemberNotNullWhen(true, nameof(_gpasMainBuffer), nameof(_gpassDepthBuffer))]
     private bool CreateBuffers(Width width, Height height)

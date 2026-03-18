@@ -51,6 +51,12 @@ public readonly record struct Width
     public static float operator /(Width left, Height right)
         => left.Value / ((float)right.Value);
 
+    public static bool operator >(Width left, Width right)
+        => left.Value > right.Value;
+
+    public static bool operator <(Width left, Width right)
+        => left.Value < right.Value;
+
     public bool Equals(int other)
         => Value.Equals(other);
 
@@ -74,4 +80,7 @@ public readonly record struct Width
     /// <inheritdoc cref="int.ToString(string?, IFormatProvider?)"/>
     public string ToString(string format, IFormatProvider formatProvider)
         => Value.ToString(format, formatProvider);
+
+    public static Width Max(Width left, Width right)
+        => left > right ? left : right;
 }
