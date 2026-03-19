@@ -18,7 +18,8 @@ namespace Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 internal sealed class GPass(
     ILogger<GPass> logger,
     ID3D12RenderingEngine renderingEngine)
-    : IDisposable
+    : IGPass,
+      IDisposable
 {
     private bool _disposedValue;
 
@@ -46,6 +47,7 @@ internal sealed class GPass(
     };
 #endif
 
+    [MemberNotNullWhen(true, nameof(_gpasMainBuffer), nameof(_gpassDepthBuffer))]
     public bool Initialize()
         => CreateBuffers(_defaultSize.width, _defaultSize.height);
 
@@ -64,11 +66,25 @@ internal sealed class GPass(
             }
             else
             {
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-                logger.LogError("Failed to create GPass buffers with size {Width}x{Height}", width, height);
-#pragma warning restore CA1873 // Avoid potentially expensive logging
+                logger.LogErrorCreatingGPassBuffers(width, height);
             }
         }
+    }
+
+    public void DepthPrepass(
+        ID3D12GraphicsCommandList commandList,
+        in FrameInfo frameInfo)
+    {
+        //TODO
+    }
+
+    public void Render(
+        ID3D12GraphicsCommandList commandList,
+        in FrameInfo frameInfo)
+    {
+        //TODO
+        // Set Root Signature
+        // Set Pipeline State Object
     }
 
     [MemberNotNullWhen(true, nameof(_gpasMainBuffer), nameof(_gpassDepthBuffer))]
@@ -88,7 +104,7 @@ internal sealed class GPass(
                 Flags = ResourceFlags.AllowRenderTarget,
                 Format = MAIN_BUFFER_FORMAT,
                 Layout = TextureLayout.Unknown,
-                MipLevels = 0, //make space for all mip levels
+                MipLevels = 0, // automatically calculate mip levels count
                 SampleDescription = new(1, 0),
 
                 Height = (uint)height.Value,
@@ -137,6 +153,7 @@ internal sealed class GPass(
         return _gpasMainBuffer.Resource is not null
             && _gpassDepthBuffer.Resource is not null;
     }
+
     private void Dispose(bool disposing)
     {
         if (!_disposedValue)

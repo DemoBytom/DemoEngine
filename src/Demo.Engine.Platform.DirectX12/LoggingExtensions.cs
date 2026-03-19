@@ -3,6 +3,7 @@
 
 using Demo.Engine.Core.Models.Enums;
 using Demo.Engine.Core.ValueObjects;
+using Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 using Demo.Engine.Platform.DirectX12.RenderingResources;
 using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.Logging;
@@ -31,6 +32,7 @@ internal static partial class LoggingExtensions
     private const string LOG_INVALID_SRV_DESCRIPTOR = "Invalid SRV descriptor!";
     private const string NOT_ENOUGH_DATA_TO_READ_32BIT_INT = "Not enough data to read 32-bit integer!";
     private const string UNEXPECTED_END_OF_STREAM = "Unexpected end of stream!";
+    private const string ERROR_CREATING_GPASS_BUFFERS = "Failed to create GPass buffers with size {Width}x{Height}";
 
     [LoggerMessage(
         Level = LogLevel.Debug,
@@ -148,4 +150,12 @@ internal static partial class LoggingExtensions
         Message = UNEXPECTED_END_OF_STREAM)]
     internal static partial void LogUnexpectedEndOfStream(
         this ILogger<EngineShaderManager> logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = ERROR_CREATING_GPASS_BUFFERS)]
+    internal static partial void LogErrorCreatingGPassBuffers(
+        this ILogger<GPass> logger,
+        Width width,
+        Height height);
 }
