@@ -9,67 +9,77 @@ namespace Demo.Engine.Platform.DirectX12;
 
 internal static class RootSignatureHelpers
 {
-    public static RootParameter1 ConstantsRootParameter(
-        uint numConstants,
-        ShaderVisibility shaderVisibility,
-        uint shaderRegister,
-        uint registerSpace = 0)
-        => new(
-            rootConstants: new(
+    extension(RootParameter1)
+    {
+        public static RootParameter1 ConstantsRootParameter(
+            uint numConstants,
+            ShaderVisibility visibility,
+            uint shaderRegister,
+            uint registerSpace = 0)
+            => new(
+                rootConstants: new(
+                    shaderRegister: shaderRegister,
+                    registerSpace: registerSpace,
+                    num32BitValues: numConstants),
+                visibility: visibility);
+
+        public static RootParameter1 ConstantBufferViewRootParameter(
+            ShaderVisibility visibility,
+            uint shaderRegister,
+            uint registerSpace = 0,
+            RootDescriptorFlags flags = RootDescriptorFlags.None)
+            => DescriptorRootParameter(
+                parameterType: ConstantBufferView,
+                visibility: visibility,
                 shaderRegister: shaderRegister,
                 registerSpace: registerSpace,
-                num32BitValues: numConstants),
-            visibility: shaderVisibility);
+                flags: flags);
 
-    public static RootParameter1 ConstantBufferViewRootParameter(
-        ShaderVisibility shaderVisibility,
-        uint shaderRegister,
-        uint registerSpace = 0,
-        RootDescriptorFlags flags = RootDescriptorFlags.None)
-        => DescriptorRootParameter(
-            parameterType: ConstantBufferView,
-            shaderVisibility: shaderVisibility,
-            shaderRegister: shaderRegister,
-            registerSpace: registerSpace,
-            flags: flags);
-
-    public static RootParameter1 ShaderResourceViewRootParameter(
-        ShaderVisibility shaderVisibility,
-        uint shaderRegister,
-        uint registerSpace = 0,
-        RootDescriptorFlags flags = RootDescriptorFlags.None)
-        => DescriptorRootParameter(
-            parameterType: ShaderResourceView,
-            shaderVisibility: shaderVisibility,
-            shaderRegister: shaderRegister,
-            registerSpace: registerSpace,
-            flags: flags);
-
-    public static RootParameter1 UnorderedAccessViewRootParameter(
-        ShaderVisibility shaderVisibility,
-        uint shaderRegister,
-        uint registerSpace = 0,
-        RootDescriptorFlags flags = RootDescriptorFlags.None)
-        => DescriptorRootParameter(
-            parameterType: UnorderedAccessView,
-            shaderVisibility: shaderVisibility,
-            shaderRegister: shaderRegister,
-            registerSpace: registerSpace,
-            flags: flags);
-
-    private static RootParameter1 DescriptorRootParameter(
-        RootParameterType parameterType,
-        ShaderVisibility shaderVisibility,
-        uint shaderRegister,
-        uint registerSpace = 0,
-        RootDescriptorFlags flags = RootDescriptorFlags.None)
-        => new(
-            parameterType: parameterType,
-            rootDescriptor: new(
+        public static RootParameter1 ShaderResourceViewRootParameter(
+            ShaderVisibility visibility,
+            uint shaderRegister,
+            uint registerSpace = 0,
+            RootDescriptorFlags flags = RootDescriptorFlags.None)
+            => DescriptorRootParameter(
+                parameterType: ShaderResourceView,
+                visibility: visibility,
                 shaderRegister: shaderRegister,
                 registerSpace: registerSpace,
-                flags: flags),
-            visibility: shaderVisibility);
+                flags: flags);
+
+        public static RootParameter1 UnorderedAccessViewRootParameter(
+            ShaderVisibility visibility,
+            uint shaderRegister,
+            uint registerSpace = 0,
+            RootDescriptorFlags flags = RootDescriptorFlags.None)
+            => DescriptorRootParameter(
+                parameterType: UnorderedAccessView,
+                visibility: visibility,
+                shaderRegister: shaderRegister,
+                registerSpace: registerSpace,
+                flags: flags);
+
+        public static RootParameter1 DescriptorTableRootParameter(
+            ShaderVisibility visibility,
+            params DescriptorRange1[] descriptorRanges)
+            => new(
+                 descriptorTable: new RootDescriptorTable1(descriptorRanges),
+                 visibility: visibility);
+
+        private static RootParameter1 DescriptorRootParameter(
+            RootParameterType parameterType,
+            ShaderVisibility visibility,
+            uint shaderRegister,
+            uint registerSpace = 0,
+            RootDescriptorFlags flags = RootDescriptorFlags.None)
+            => new(
+                parameterType: parameterType,
+                rootDescriptor: new(
+                    shaderRegister: shaderRegister,
+                    registerSpace: registerSpace,
+                    flags: flags),
+                visibility: visibility);
+    }
 
     public static RootSignatureFlags DenyAll = None
         | DenyVertexShaderRootAccess

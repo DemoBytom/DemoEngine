@@ -146,28 +146,20 @@ internal sealed class Cube
             | RootSignatureFlags.DenyMeshShaderRootAccess
             ;
 
-        var vertexShaderRootDescriptor = new RootDescriptor1(
-            shaderRegister: 0,
-            registerSpace: 0,
-            flags: RootDescriptorFlags.DataStaticWhileSetAtExecute);
-
-        var pixelShaderRootDescriptor = new RootDescriptor1(
-            shaderRegister: 1,
-            registerSpace: 0,
-            flags: RootDescriptorFlags.DataStaticWhileSetAtExecute);
-
         _rootSignature = _renderingEngine.Device.CreateRootSignature(
             new RootSignatureDescription1(
                 flags: ROOT_SIGNATURE_FLAGS,
                 parameters: [
-                    new (
-                        parameterType: RootParameterType.ConstantBufferView,
-                        rootDescriptor: vertexShaderRootDescriptor,
-                        visibility: ShaderVisibility.Vertex),
-                    new(
-                        parameterType: RootParameterType.ConstantBufferView,
-                        rootDescriptor: pixelShaderRootDescriptor,
-                        visibility: ShaderVisibility.Pixel),
+                    RootParameter1.ConstantBufferViewRootParameter(
+                        visibility: ShaderVisibility.Vertex,
+                        shaderRegister: 0,
+                        registerSpace: 0,
+                        flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
+                    RootParameter1.ConstantBufferViewRootParameter(
+                        ShaderVisibility.Pixel,
+                        shaderRegister: 1,
+                        registerSpace: 0,
+                        flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
                     ])
         );
 

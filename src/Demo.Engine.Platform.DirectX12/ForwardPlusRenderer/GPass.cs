@@ -32,6 +32,8 @@ internal sealed class GPass(
 
     private RenderTexture? _gpasMainBuffer = null;
     private DepthBufferTexture? _gpassDepthBuffer = null;
+    private ID3D12RootSignature? _rootSignature = null;
+    private ID3D12PipelineState? _pipelineStateObject = null;
 
 #if DEBUG
     private readonly ClearValue _clearValue = new()
@@ -47,9 +49,15 @@ internal sealed class GPass(
     };
 #endif
 
-    [MemberNotNullWhen(true, nameof(_gpasMainBuffer), nameof(_gpassDepthBuffer))]
+    [MemberNotNullWhen(true,
+        nameof(_gpasMainBuffer),
+        nameof(_gpassDepthBuffer),
+        nameof(_rootSignature),
+        nameof(_pipelineStateObject))]
     public bool Initialize()
-        => CreateBuffers(_defaultSize.width, _defaultSize.height);
+        => CreateBuffers(_defaultSize.width, _defaultSize.height)
+        && CreatePsoAndRootSignature()
+        ;
 
     public void SetSize(Width width, Height height)
     {
@@ -154,6 +162,39 @@ internal sealed class GPass(
             && _gpassDepthBuffer.Resource is not null;
     }
 
+    [MemberNotNullWhen(true, nameof(_rootSignature)/*, nameof(_pipelineStateObject)*/)]
+    private bool CreatePsoAndRootSignature()
+    {
+        if (_rootSignature is not null)
+        {
+            throw new InvalidOperationException("Root signature already created!");
+        }
+        if (_pipelineStateObject is not null)
+        {
+            throw new InvalidOperationException("Pipeline state object already created!");
+        }
+
+        //TODO
+        RootParameter1[] parameters =
+        [
+            RootParameter1.ConstantsRootParameter(
+                numConstants: 1,
+                visibility: ShaderVisibility.Pixel,
+                shaderRegister: 1),
+        ];
+
+        _rootSignature = renderingEngine.Device.CreateRootSignature(
+            new RootSignatureDescription1(
+                RootSignatureHelpers.DenyAll,
+                parameters));
+
+        _rootSignature.NameObject(
+            "GPass root signature",
+            logger);
+
+        return true;
+    }
+
     private void Dispose(bool disposing)
     {
         if (!_disposedValue)
@@ -162,6 +203,8 @@ internal sealed class GPass(
             {
                 _gpassDepthBuffer?.Dispose();
                 _gpasMainBuffer?.Dispose();
+                _rootSignature?.Dispose();
+                _pipelineStateObject?.Dispose();
             }
 
             _disposedValue = true;
