@@ -25,9 +25,10 @@ internal static partial class LoggingExtensions
     private const string ERROR_DISPOSING_RENDERING_ENGINE = "Error disposing Rendering Engine!";
     private const string DESTROYED_ENGINE = "Destroyed engine!";
 
-    private const string ATTEMPTING_SHADER_COMPILATION = "Attempting {ShaderFilePath} shader compliation";
+    private const string ATTEMPTING_SHADER_COMPILATION = "Attempting {ShaderFilePath} shader compliation, id: {ShaderId}, type: {ShaderType}";
     private const string COMPILING_SHADER = "Compiling {ShaderStage} {ShaderFilePath} with {ShaderProfile}";
     private const string FATAL_ERROR_WHEN_COMPILING = "Fatal error when compiling {ShaderFilePath}!";
+    private const string LOADED_SHADER = "Loaded {ShaderId} shader, length {Length} bytes";
 
     private const string LOG_INVALID_SRV_DESCRIPTOR = "Invalid SRV descriptor!";
     private const string NOT_ENOUGH_DATA_TO_READ_32BIT_INT = "Not enough data to read 32-bit integer!";
@@ -114,7 +115,9 @@ internal static partial class LoggingExtensions
         Message = ATTEMPTING_SHADER_COMPILATION)]
     internal static partial void LogCompilingShaderFile(
         this ILogger<ShaderCompiler> logger,
-        string shaderFilePath);
+        string shaderFilePath,
+        ShaderId shaderId,
+        ShaderType shaderType);
 
     [LoggerMessage(
         Level = LogLevel.Information,
@@ -158,4 +161,12 @@ internal static partial class LoggingExtensions
         this ILogger<GPass> logger,
         Width width,
         Height height);
+
+    [LoggerMessage(
+        Level = LogLevel.Debug,
+        Message = LOADED_SHADER)]
+    internal static partial void LogShaderLoaded(
+        this ILogger<EngineShaderManager> logger,
+        ShaderId shaderId,
+        int length);
 }

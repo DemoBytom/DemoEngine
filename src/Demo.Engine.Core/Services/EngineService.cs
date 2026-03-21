@@ -4,6 +4,8 @@
 using System.Reflection;
 using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
+using Demo.Engine.Core.Requests;
+using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,13 +15,15 @@ namespace Demo.Engine.Core.Services;
 internal sealed class EngineService(
     ILogger<EngineService> logger,
     IHostApplicationLifetime hostApplicationLifetime,
-    IServiceScopeFactory scopeFactory)
+    IServiceScopeFactory scopeFactory,
+    IMediator mediator)
     : IHostedService,
       IDisposable
 {
     private readonly ILogger<EngineService> _logger = logger;
     private readonly IHostApplicationLifetime _hostApplicationLifetime = hostApplicationLifetime;
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+    private readonly IMediator _mediator = mediator;
     private readonly string _serviceName = "Engine";
     private Task? _executingTask;
     private bool _stopRequested;
@@ -65,6 +69,9 @@ internal sealed class EngineService(
         {
             //var osMessageHandler = serviceProvider.GetRequiredService<IOSMessageHandler>();
             //var renderingEngine = serviceProvider.GetRequiredService<IRenderingEngine>();
+
+            _ = await _mediator.Send(new CompileShaders(), _hostApplicationLifetime.ApplicationStopping);
+            _ = await _mediator.Send(new LoadShadersRequest(), _hostApplicationLifetime.ApplicationStopping);
 
             var mainLoopService = serviceProvider.GetRequiredService<IMainLoopService>();
             var executeAsync = mainLoopService.ExecutingTask;

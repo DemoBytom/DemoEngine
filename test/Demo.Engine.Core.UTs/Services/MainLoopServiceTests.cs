@@ -7,7 +7,6 @@ using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Core.ValueObjects;
@@ -23,7 +22,6 @@ public class MainLoopServiceTests
     private readonly ILogger<MainLoopService> _subLogger;
     private readonly IStaThreadWriter _subStaThreadWriter;
     private readonly IMediator _subMediator;
-    private readonly IShaderAsyncCompiler _subShaderAsyncCompiler;
     private readonly IFpsTimer _subFpsTimer;
     private readonly IRenderingEngine _subRenderingEngine;
     private readonly IMainLoopLifetime _subMainLoopLifetime;
@@ -34,7 +32,6 @@ public class MainLoopServiceTests
         _subLogger = Substitute.For<ILogger<MainLoopService>>();
         _subStaThreadWriter = Substitute.For<IStaThreadWriter>();
         _subMediator = Substitute.For<IMediator>();
-        _subShaderAsyncCompiler = Substitute.For<IShaderAsyncCompiler>();
         //_subFpsTimer = Substitute.For<IFpsTimer>();
         _subFpsTimer = new FpsTimer(
             Substitute.For<ILogger<FpsTimer>>());
@@ -48,7 +45,6 @@ public class MainLoopServiceTests
             _subLogger,
             _subStaThreadWriter,
             _subMediator,
-            _subShaderAsyncCompiler,
             _subFpsTimer,
             _subRenderingEngine,
             _subMainLoopLifetime,

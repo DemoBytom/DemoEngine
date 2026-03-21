@@ -174,7 +174,6 @@ internal sealed class GPass(
             throw new InvalidOperationException("Pipeline state object already created!");
         }
 
-        //TODO
         RootParameter1[] parameters =
         [
             RootParameter1.ConstantsRootParameter(

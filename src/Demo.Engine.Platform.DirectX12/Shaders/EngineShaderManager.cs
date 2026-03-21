@@ -5,6 +5,8 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.IO.Pipelines;
 using Demo.Engine.Core.Interfaces.Platform;
+using Demo.Engine.Core.Requests;
+using Mediator;
 using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Platform.DirectX12.Shaders;
@@ -50,6 +52,7 @@ internal sealed class EngineShaderManager(
     ILogger<EngineShaderManager> logger,
     IContentFileProvider contentFileProvider)
     : IEngineShaderManager,
+      IRequestHandler<LoadShadersRequest, bool>,
       IDisposable
 {
     private bool _disposedValue;
@@ -69,6 +72,11 @@ internal sealed class EngineShaderManager(
 
     public string GetShaderDirAbsolutePath
         => _contentFileProvider.GetAbsolutePath("Shaders");
+
+    public async ValueTask<bool> Handle(
+        LoadShadersRequest request,
+        CancellationToken cancellationToken)
+        => await LoadEngineShaders(cancellationToken);
 
     public async ValueTask<bool> LoadEngineShaders(
         CancellationToken cancellationToken = default)
@@ -150,6 +158,8 @@ internal sealed class EngineShaderManager(
                 blobBuffer,
                 cancellationToken)
                 .ConfigureAwait(false);
+
+            _logger.LogShaderLoaded(shaderId, shaderLength);
 
             _compiledShaders.Add(shaderId,
                 new CompiledShader(

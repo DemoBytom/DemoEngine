@@ -5,7 +5,6 @@ using System.Diagnostics;
 using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
-using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.ValueObjects;
 using Mediator;
@@ -20,7 +19,6 @@ internal sealed class MainLoopService
     private readonly ILogger<MainLoopService> _logger;
     private readonly IStaThreadWriter _staThreadWriter;
     private readonly IMediator _mediator;
-    private readonly IShaderAsyncCompiler _shaderCompiler;
     private readonly IFpsTimer _fpsTimer;
     private readonly IMainLoopLifetime _mainLoopLifetime;
     private readonly ILoopJob _loopJob;
@@ -32,7 +30,6 @@ internal sealed class MainLoopService
         ILogger<MainLoopService> logger,
         IStaThreadWriter staThreadWriter,
         IMediator mediator,
-        IShaderAsyncCompiler shaderCompiler,
         IFpsTimer fpsTimer,
         IRenderingEngine renderingEngine,
         IMainLoopLifetime mainLoopLifetime,
@@ -41,7 +38,6 @@ internal sealed class MainLoopService
         _logger = logger;
         _staThreadWriter = staThreadWriter;
         _mediator = mediator;
-        _shaderCompiler = shaderCompiler;
         _fpsTimer = fpsTimer;
         _mainLoopLifetime = mainLoopLifetime;
         _loopJob = loopJob;
@@ -67,8 +63,6 @@ internal sealed class MainLoopService
     private async Task DoAsync(
         IRenderingEngine renderingEngine)
     {
-        _ = await _shaderCompiler.CompileShaders(_mainLoopLifetime.Token);
-
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
 

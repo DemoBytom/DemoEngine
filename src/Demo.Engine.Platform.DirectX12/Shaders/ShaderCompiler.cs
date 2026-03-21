@@ -4,7 +4,8 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Demo.Engine.Core.Interfaces.Rendering.Shaders;
+using Demo.Engine.Core.Requests;
+using Mediator;
 using Microsoft.Extensions.Logging;
 using SharpGen.Runtime;
 using Vortice.Dxc;
@@ -30,7 +31,8 @@ internal record struct ShaderFileInfo(
 internal sealed class ShaderCompiler(
     ILogger<ShaderCompiler> logger,
     IEngineShaderManager engineShaderManager)
-    : IShaderAsyncCompiler
+    : IShaderAsyncCompiler,
+      IRequestHandler<CompileShaders, bool>
 {
     private readonly ShaderFileInfo[] _shaderFiles =
     [
@@ -43,6 +45,11 @@ internal sealed class ShaderCompiler(
 
     private readonly ILogger<ShaderCompiler> _logger = logger;
     private readonly IEngineShaderManager _engineShaderManager = engineShaderManager;
+
+    public async ValueTask<bool> Handle(
+        CompileShaders request,
+        CancellationToken cancellationToken)
+        => await CompileShaders(cancellationToken);
 
     public async Task<bool> CompileShaders(
         CancellationToken cancellationToken = default)
@@ -59,14 +66,16 @@ internal sealed class ShaderCompiler(
             {
                 var shaderFile = _shaderFiles[i];
                 _logger.LogCompilingShaderFile(
-                    shaderFile.File);
+                    shaderFile.File,
+                    shaderFile.ID,
+                    shaderFile.ShaderType);
 
                 var compilationTask = CompileAShader(shaderFile, cancellationToken);
                 compilationTasks[i] = compilationTask;
             }
 
             _ = await _engineShaderManager.SaveEngineShaders(
-                    Task.WhenEach<ShaderContent>(
+                    Task.WhenEach(
                         compilationTasks
                             .AsSpan()[.._shaderFiles.Length]),
                 cancellationToken)
@@ -78,7 +87,7 @@ internal sealed class ShaderCompiler(
         {
             if (!completed)
             {
-                _ = await Task.WhenAll<ShaderContent>(
+                _ = await Task.WhenAll(
                     compilationTasks
                         .AsSpan()[.._shaderFiles.Length])
                     .ConfigureAwait(false);

@@ -30,9 +30,11 @@ try
             .AddEngineCore()
             .AddDirectX12()
             /*** End Windows Only ***/
-            //.AddMediatR(config
-            //    => config.RegisterServicesFromAssemblyContaining<KeyboardHandler>())
-            .AddMediator()
+            .AddMediator(options =>
+            {
+                options.Namespace = "Demo.Engine";
+                options.GenerateTypesAsInternal = true;
+            })
             ;
 
             _ = services.AddOptions();
