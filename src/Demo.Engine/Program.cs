@@ -1,9 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using Autofac.Extensions.DependencyInjection;
 using Demo.Engine.Core;
-using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Extensions;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
@@ -21,7 +19,6 @@ try
     var hostBuilder = new HostBuilder()
         .CreateDefault(args)
         .WithSerilog()
-        .UseServiceProviderFactory(new AutofacServiceProviderFactory())
         .ConfigureServices((hostContext, services)
         =>
         {
@@ -33,8 +30,10 @@ try
             .AddEngineCore()
             .AddDirectX12()
             /*** End Windows Only ***/
-            .AddMediatR(config
-                => config.RegisterServicesFromAssemblyContaining<KeyboardHandler>());
+            //.AddMediatR(config
+            //    => config.RegisterServicesFromAssemblyContaining<KeyboardHandler>())
+            .AddMediator()
+            ;
 
             _ = services.AddOptions();
 

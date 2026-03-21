@@ -24,7 +24,10 @@
     <DefineConstants />
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" />
+    <PackageReference Include="Mediator.SourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Logging" />
     <PackageReference Include="Serilog.Sinks.Async" />

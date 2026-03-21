@@ -11,7 +11,7 @@ using Demo.Engine.Core.ValueObjects;
 using Demo.Engine.Platform.Windows;
 using Demo.Engine.Platform.Windows.WindowMessage;
 using Demo.Tools.Common.Logging;
-using MediatR;
+using Mediator;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -133,7 +133,7 @@ public partial class RenderingForm : Form, IRenderingControl
             {
                 case WindowMessageTypes.KillFocus:
                 {
-                    _mediator.Publish(new ClearKeysNotification()).GetAwaiter().GetResult();
+                    _mediator.Publish(new ClearKeysNotification()).Preserve().GetAwaiter().GetResult();
                     break;
                 }
                 case WindowMessageTypes.SysKeyDown:
@@ -145,7 +145,7 @@ public partial class RenderingForm : Form, IRenderingControl
                     if ((lparam & 0x4000_0000) == 0)
                     {
                         var key = (VirtualKeys)wparam;
-                        _mediator.Publish(new KeyNotification(key, true)).GetAwaiter().GetResult();
+                        _mediator.Publish(new KeyNotification(key, true)).Preserve().GetAwaiter().GetResult();
                     }
                     break;
                 }
@@ -153,13 +153,13 @@ public partial class RenderingForm : Form, IRenderingControl
                 case WindowMessageTypes.KeyUp:
                 {
                     var key = (VirtualKeys)wparam;
-                    _mediator.Publish(new KeyNotification(key, false)).GetAwaiter().GetResult();
+                    _mediator.Publish(new KeyNotification(key, false)).Preserve().GetAwaiter().GetResult();
                     break;
                 }
                 case WindowMessageTypes.Char:
                 {
                     var c = (char)wparam;
-                    _mediator.Publish(new CharNotification(c)).GetAwaiter().GetResult();
+                    _mediator.Publish(new CharNotification(c)).Preserve().GetAwaiter().GetResult();
                     break;
                 }
 

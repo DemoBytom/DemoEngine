@@ -4,7 +4,7 @@
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Requests.Keyboard;
-using MediatR;
+using Mediator;
 
 namespace Demo.Engine.Core.Components.Keyboard.Internal;
 
@@ -25,10 +25,10 @@ public sealed class KeyboardHandler :
     /// <param name="notification"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task INotificationHandler<KeyNotification>.Handle(KeyNotification notification, CancellationToken cancellationToken)
+    public ValueTask Handle(KeyNotification notification, CancellationToken cancellationToken)
     {
         _keyboardCache.Key(notification.Key, notification.Down);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -37,10 +37,10 @@ public sealed class KeyboardHandler :
     /// <param name="notification"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task INotificationHandler<CharNotification>.Handle(CharNotification notification, CancellationToken cancellationToken)
+    public ValueTask Handle(CharNotification notification, CancellationToken cancellationToken)
     {
         _keyboardCache.Char(notification.Char);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -49,10 +49,10 @@ public sealed class KeyboardHandler :
     /// <param name="notification"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task INotificationHandler<ClearKeysNotification>.Handle(ClearKeysNotification notification, CancellationToken cancellationToken)
+    public ValueTask Handle(ClearKeysNotification notification, CancellationToken cancellationToken)
     {
         _keyboardCache.ClearState();
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -61,16 +61,16 @@ public sealed class KeyboardHandler :
     /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<KeyboardHandle> IRequestHandler<KeyboardHandleRequest, KeyboardHandle>.Handle(KeyboardHandleRequest request, CancellationToken cancellationToken)
+    public ValueTask<KeyboardHandle> Handle(KeyboardHandleRequest request, CancellationToken cancellationToken)
     {
         var response = new KeyboardHandle(
             _keyboardCache);
-        return Task.FromResult(response);
+        return ValueTask.FromResult(response);
     }
 
-    Task<KeyboardCharCache> IRequestHandler<KeyboardCharCacheRequest, KeyboardCharCache>.Handle(KeyboardCharCacheRequest request, CancellationToken cancellationToken)
+    public ValueTask<KeyboardCharCache> Handle(KeyboardCharCacheRequest request, CancellationToken cancellationToken)
     {
         var response = new KeyboardCharCache(_keyboardCache);
-        return Task.FromResult(response);
+        return ValueTask.FromResult(response);
     }
 }

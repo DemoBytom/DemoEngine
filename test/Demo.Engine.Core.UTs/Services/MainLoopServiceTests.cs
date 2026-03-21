@@ -11,7 +11,7 @@ using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Core.ValueObjects;
-using MediatR;
+using Mediator;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Shouldly;

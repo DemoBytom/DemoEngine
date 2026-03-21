@@ -1,7 +1,7 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using MediatR;
+using Mediator;
 
 namespace Demo.Engine.Core.Notifications.Keyboard;
 

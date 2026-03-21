@@ -4,8 +4,6 @@
 using System.Reflection;
 using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
-using Demo.Engine.Core.Interfaces.Platform;
-using Demo.Engine.Core.Interfaces.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -65,8 +63,8 @@ internal sealed class EngineService(
 
         try
         {
-            var osMessageHandler = serviceProvider.GetRequiredService<IOSMessageHandler>();
-            var renderingEngine = serviceProvider.GetRequiredService<IRenderingEngine>();
+            //var osMessageHandler = serviceProvider.GetRequiredService<IOSMessageHandler>();
+            //var renderingEngine = serviceProvider.GetRequiredService<IRenderingEngine>();
 
             var mainLoopService = serviceProvider.GetRequiredService<IMainLoopService>();
             var executeAsync = mainLoopService.ExecutingTask;

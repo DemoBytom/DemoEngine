@@ -2,7 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Demo.Engine.Core.Components.Keyboard;
-using MediatR;
+using Mediator;
 
 namespace Demo.Engine.Core.Requests.Keyboard;
 
