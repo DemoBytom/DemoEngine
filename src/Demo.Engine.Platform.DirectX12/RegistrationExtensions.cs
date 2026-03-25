@@ -24,7 +24,6 @@ public static class RegistrationExtensions
             .AddSingleton<IShaderCompiler, ShaderCompilerOld>()
             .AddSingleton<IShaderAsyncCompiler, ShaderCompiler>()
             .AddSingleton<IEngineShaderManager, EngineShaderManager>()
-            .AddScoped<EngineShaderManager>()
             //Cube
             .AddScoped<ICube, Cube>()
         ;
