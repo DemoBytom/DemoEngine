@@ -23,6 +23,25 @@ updates:
   - dependency-name: "MediatR"
     # Ignore versions of MediatR that are equal to or greater than 13.0.0
     versions: [ ">=13.0.0" ]
+    # Tunit and Verify.TUnit are updated at different cadence
+  - dependency-name: "TUnit"
+  - dependency-name: "Verify.TUnit"
+# Weekly updates ONLY for TUnit and Verify.TUnit
+- package-ecosystem: nuget
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: "03:00"
+    timezone: "Europe/Warsaw"
+  reviewers:
+  - DemoBytom
+  labels:
+  - "\U0001F527dependencies"
+  target-branch: "main"
+  allow:
+  - dependency-name: "TUnit"
+  - dependency-name: "Verify.TUnit"
 # Maintain updates for GitHub Actions
 - package-ecosystem: "github-actions"
   directory: "/"
