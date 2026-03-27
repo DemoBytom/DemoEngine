@@ -42,6 +42,12 @@ updates:
   allow:
   - dependency-name: "TUnit"
   - dependency-name: "Verify.TUnit"
+  groups:
+    tunit-packages:
+      applies-to: version-updates
+      patterns:
+      - "TUnit"
+      - "Verify.TUnit"
 # Maintain updates for GitHub Actions
 - package-ecosystem: "github-actions"
   directory: "/"
