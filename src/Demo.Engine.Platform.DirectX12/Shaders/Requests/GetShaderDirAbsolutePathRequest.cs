@@ -3,7 +3,7 @@
 
 using Mediator;
 
-namespace Demo.Engine.Core.Requests;
+namespace Demo.Engine.Platform.DirectX12.Shaders.Requests;
 
-public sealed record LoadShadersRequest
-    : IRequest<bool>;
+internal sealed record GetShaderDirAbsolutePathRequest()
+    : IRequest<string>;

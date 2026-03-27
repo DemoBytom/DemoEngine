@@ -5,6 +5,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Demo.Engine.Core.Requests;
+using Demo.Engine.Platform.DirectX12.Shaders.Requests;
 using Mediator;
 using Microsoft.Extensions.Logging;
 using SharpGen.Runtime;
@@ -18,19 +19,9 @@ internal record struct ShaderFileInfo(
     ShaderId ID,
     ShaderType ShaderType);
 
-/* Shader.bin structure:
- * int shader count
- * int combined shader length
- * [
- *   int ShaderId
- *   int shader length
- *   byte[shaderLength] shader bytecode
- * ]
- * */
-
 internal sealed class ShaderCompiler(
     ILogger<ShaderCompiler> logger,
-    IEngineShaderManager engineShaderManager)
+    IMediator mediator)
     : IShaderAsyncCompiler,
       IRequestHandler<CompileShaders, bool>
 {
@@ -41,10 +32,22 @@ internal sealed class ShaderCompiler(
             Function: "FullScreenTriangleVS",
             ID: ShaderId.FullscreenTriangle,
             ShaderType: ShaderType.Vertex),
+        new ShaderFileInfo(
+            File: Path.Combine("Triangle", "TrianglePS.hlsl"),
+            Function: "main",
+            ID: ShaderId.TrianglePS,
+            ShaderType: ShaderType.Pixel),
+        new ShaderFileInfo(
+            File: Path.Combine("Triangle", "TriangleVS.hlsl"),
+            Function: "main",
+            ID: ShaderId.TriangleVS,
+            ShaderType: ShaderType.Vertex),
     ];
 
     private readonly ILogger<ShaderCompiler> _logger = logger;
-    private readonly IEngineShaderManager _engineShaderManager = engineShaderManager;
+    private readonly IMediator _mediator = mediator;
+
+    private static readonly GetShaderDirAbsolutePathRequest _getShaderDirAbsolutePathRequest = new();
 
     public async ValueTask<bool> Handle(
         CompileShaders request,
@@ -74,12 +77,11 @@ internal sealed class ShaderCompiler(
                 compilationTasks[i] = compilationTask;
             }
 
-            _ = await _engineShaderManager.SaveEngineShaders(
-                    Task.WhenEach(
-                        compilationTasks
-                            .AsSpan()[.._shaderFiles.Length]),
-                cancellationToken)
-                .ConfigureAwait(false);
+            _ = await _mediator.Send(new SaveEngineShadersRequest(
+                Task.WhenEach(
+                    compilationTasks
+                        .AsSpan()[.._shaderFiles.Length])),
+                    cancellationToken);
 
             completed = true;
         }
@@ -100,12 +102,12 @@ internal sealed class ShaderCompiler(
         return true;
     }
 
-    private Task<ShaderContent> CompileAShader(
+    private async Task<ShaderContent> CompileAShader(
         ShaderFileInfo shaderFileInfo,
         CancellationToken cancellationToken = default)
     {
         var path = Path.Combine(
-            _engineShaderManager.GetShaderDirAbsolutePath,
+            await _mediator.Send(_getShaderDirAbsolutePathRequest, cancellationToken),
             shaderFileInfo.File);
 
         using var fs = new FileStream(
@@ -116,21 +118,10 @@ internal sealed class ShaderCompiler(
             cancellationToken);
         linkedCts.CancelAfter(TimeSpan.FromSeconds(30));
 
-        var shaderSource = sr.ReadToEnd();
+        var shaderSource = await sr.ReadToEndAsync(linkedCts.Token);
 
         using var result = DxcCompiler.Compile(
-            shaderFileInfo.ShaderType switch
-            {
-                ShaderType.Vertex => DxcShaderStage.Vertex,
-                ShaderType.Hull => DxcShaderStage.Hull,
-                ShaderType.Domain => DxcShaderStage.Domain,
-                ShaderType.Geometry => DxcShaderStage.Geometry,
-                ShaderType.Pixel => DxcShaderStage.Pixel,
-                ShaderType.Compute => DxcShaderStage.Compute,
-                ShaderType.Amplification => DxcShaderStage.Amplification,
-                ShaderType.Mesh => DxcShaderStage.Mesh,
-                _ => throw new UnreachableException()
-            },
+            shaderFileInfo.ShaderType.ToShaderStage(),
             shaderSource,
             shaderFileInfo.Function,
             new DxcCompilerOptions
@@ -153,10 +144,8 @@ internal sealed class ShaderCompiler(
             shaderFileInfo.ID,
             memory);
 
-        return Task.FromResult(shaderContent);
+        return shaderContent;
     }
-
-    //return Task.FromResult<ShaderContent>(default);
 
     private static async IAsyncEnumerable<T> AwaitEach<T>(
         IAsyncEnumerable<Task<T>> input,
@@ -177,5 +166,24 @@ internal sealed class ShaderCompiler(
             string filename,
             out IDxcBlob includeSource)
             => throw new NotImplementedException();
+    }
+}
+
+file static class SomeExtensions
+{
+    extension(ShaderType shaderType)
+    {
+        public DxcShaderStage ToShaderStage() => shaderType switch
+        {
+            ShaderType.Vertex => DxcShaderStage.Vertex,
+            ShaderType.Hull => DxcShaderStage.Hull,
+            ShaderType.Domain => DxcShaderStage.Domain,
+            ShaderType.Geometry => DxcShaderStage.Geometry,
+            ShaderType.Pixel => DxcShaderStage.Pixel,
+            ShaderType.Compute => DxcShaderStage.Compute,
+            ShaderType.Amplification => DxcShaderStage.Amplification,
+            ShaderType.Mesh => DxcShaderStage.Mesh,
+            _ => throw new UnreachableException(),
+        };
     }
 }

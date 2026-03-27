@@ -3,13 +3,13 @@
 
 namespace Demo.Engine.Platform.DirectX12.Shaders;
 
-internal interface IEngineShaderManager
+public interface IEngineShaderManager
 {
-    string GetShaderDirAbsolutePath { get; }
+    internal string GetShaderDirAbsolutePath { get; }
 
-    CompiledShader GetShader(ShaderId id);
+    internal CompiledShader GetShader(ShaderId id);
 
-    ValueTask<bool> LoadEngineShaders(CancellationToken cancellationToken = default);
+    internal ValueTask<bool> LoadEngineShaders(CancellationToken cancellationToken = default);
 
-    Task<bool> SaveEngineShaders(IAsyncEnumerable<Task<ShaderContent>> shaders, CancellationToken cancellationToken = default);
+    internal Task<bool> SaveEngineShaders(IAsyncEnumerable<Task<ShaderContent>> shaders, CancellationToken cancellationToken = default);
 }

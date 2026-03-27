@@ -5,11 +5,25 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.IO.Pipelines;
 using Demo.Engine.Core.Interfaces.Platform;
-using Demo.Engine.Core.Requests;
-using Mediator;
 using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Platform.DirectX12.Shaders;
+
+/* Shader.bin structure:
+ * byte shader schema version
+ * int shader count
+ * int combined shader length
+ * [
+ *   int ShaderId
+ *   int shader length
+ *   byte[shaderLength] shader bytecode
+ * ]
+ * */
+
+internal enum ShaderSchema : byte
+{
+    Shema_01 = 01,
+}
 
 internal enum ShaderType
 {
@@ -26,6 +40,8 @@ internal enum ShaderType
 internal enum ShaderId
 {
     FullscreenTriangle = 0,
+    TrianglePS = 1,
+    TriangleVS = 2,
 }
 
 internal readonly record struct CompiledShader(
@@ -52,9 +68,10 @@ internal sealed class EngineShaderManager(
     ILogger<EngineShaderManager> logger,
     IContentFileProvider contentFileProvider)
     : IEngineShaderManager,
-      IRequestHandler<LoadShadersRequest, bool>,
       IDisposable
 {
+    private const ShaderSchema SUPPORTED_SHADER_SCHEMA = ShaderSchema.Shema_01;
+
     private bool _disposedValue;
     private ReadOnlyMemory<byte> _shadersBlob = Array.Empty<byte>();
 
@@ -72,11 +89,6 @@ internal sealed class EngineShaderManager(
 
     public string GetShaderDirAbsolutePath
         => _contentFileProvider.GetAbsolutePath("Shaders");
-
-    public async ValueTask<bool> Handle(
-        LoadShadersRequest request,
-        CancellationToken cancellationToken)
-        => await LoadEngineShaders(cancellationToken);
 
     public async ValueTask<bool> LoadEngineShaders(
         CancellationToken cancellationToken = default)
@@ -140,6 +152,12 @@ internal sealed class EngineShaderManager(
         CancellationToken cancellationToken = default)
     {
         var pipeReader = PipeReader.Create(stream);
+        var shaderSchema = (ShaderSchema)await ReadByteAsync(pipeReader, cancellationToken);
+        if (shaderSchema > SUPPORTED_SHADER_SCHEMA)
+        {
+            throw new InvalidOperationException("Unsupporter shader schema version!");
+        }
+
         var shaderCount = await ReadInt32Async(pipeReader, cancellationToken);
         var combinesShaderLength = await ReadInt32Async(pipeReader, cancellationToken);
 
@@ -154,9 +172,9 @@ internal sealed class EngineShaderManager(
             var blobBuffer = shadersBlob.Slice(currentIndex, shaderLength);
 
             await ReadBlobAsync(
-                pipeReader,
-                blobBuffer,
-                cancellationToken)
+                    pipeReader,
+                    blobBuffer,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             _logger.LogShaderLoaded(shaderId, shaderLength);
@@ -169,6 +187,30 @@ internal sealed class EngineShaderManager(
 
             currentIndex += shaderLength;
         }
+    }
+
+    private async ValueTask<byte> ReadByteAsync(
+        PipeReader pipeReader,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await pipeReader
+            .ReadAtLeastAsync(sizeof(byte), cancellationToken)
+            .ConfigureAwait(false);
+
+        var buffer = result.Buffer;
+
+        if (buffer.Length < sizeof(int))
+        {
+            _logger.LogNotEnoughDataToReadByte();
+            throw new InvalidOperationException(
+                "Not enough data to read a byte!");
+        }
+
+        var returnValue = buffer.FirstSpan[0];
+
+        pipeReader.AdvanceTo(buffer.GetPosition(sizeof(byte)));
+
+        return returnValue;
     }
 
     private async ValueTask<int> ReadInt32Async(
@@ -228,13 +270,25 @@ internal sealed class EngineShaderManager(
        int combinedShaderLength = 0,
        CancellationToken cancellationToken = default)
     {
-        const int BUFFER_LENGTH = sizeof(int) * 2;
+        const int BUFFER_LENGTH = sizeof(byte) + (sizeof(int) * 2);
         var headerBuffer = pipeWriter.GetSpan(BUFFER_LENGTH);
-        BinaryPrimitives.WriteInt32LittleEndian(headerBuffer, shaderCount);
-        BinaryPrimitives.WriteInt32LittleEndian(headerBuffer[sizeof(int)..], combinedShaderLength);
+
+        // Header
+        headerBuffer[0] = (byte)SUPPORTED_SHADER_SCHEMA;
+        var index = sizeof(byte);
+
+        // Shader count
+        BinaryPrimitives.WriteInt32LittleEndian(headerBuffer[index..], shaderCount);
+        index += sizeof(int);
+
+        // Combined shader length
+        BinaryPrimitives.WriteInt32LittleEndian(headerBuffer[index..], combinedShaderLength);
 
         pipeWriter.Advance(BUFFER_LENGTH);
-        _ = await pipeWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
+        _ = await pipeWriter
+            .FlushAsync(cancellationToken)
+            .ConfigureAwait(false);
+
         return;
     }
 

@@ -18,8 +18,8 @@ public class ShaderCompilationTests
         var loggerMock = Substitute.For<ILogger<ShaderCompiler>>();
         var loggerMock2 = Substitute.For<ILogger<EngineShaderManager>>();
         var contentFileProvider = Substitute.For<IContentFileProvider>();
-        //I expect a 34 byte file
-        var fileBuffer = new byte[34];
+        //I expect a 35 byte file
+        var fileBuffer = new byte[35];
 
         _ = contentFileProvider
             .CreateFile(

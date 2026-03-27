@@ -3,7 +3,8 @@
 
 using Mediator;
 
-namespace Demo.Engine.Core.Requests;
+namespace Demo.Engine.Platform.DirectX12.Shaders.Requests;
 
-public sealed record LoadShadersRequest
+internal sealed record SaveEngineShadersRequest(
+    IAsyncEnumerable<Task<ShaderContent>> Shaders)
     : IRequest<bool>;

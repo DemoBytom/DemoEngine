@@ -31,6 +31,7 @@ internal static partial class LoggingExtensions
     private const string LOADED_SHADER = "Loaded {ShaderId} shader, length {Length} bytes";
 
     private const string LOG_INVALID_SRV_DESCRIPTOR = "Invalid SRV descriptor!";
+    private const string NOT_ENOUGH_DATA_TO_READ_BYTE = "Not enough data to read a byte!";
     private const string NOT_ENOUGH_DATA_TO_READ_32BIT_INT = "Not enough data to read 32-bit integer!";
     private const string UNEXPECTED_END_OF_STREAM = "Unexpected end of stream!";
     private const string ERROR_CREATING_GPASS_BUFFERS = "Failed to create GPass buffers with size {Width}x{Height}";
@@ -144,9 +145,15 @@ internal static partial class LoggingExtensions
 
     [LoggerMessage(
         Level = LogLevel.Error,
+        Message = NOT_ENOUGH_DATA_TO_READ_BYTE)]
+    internal static partial void LogNotEnoughDataToReadByte(
+        this ILogger<EngineShaderManager> logger);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
         Message = NOT_ENOUGH_DATA_TO_READ_32BIT_INT)]
     internal static partial void LogNotEnoughDataToRead32BitInteger(
-        this ILogger<EngineShaderManager> logger);
+    this ILogger<EngineShaderManager> logger);
 
     [LoggerMessage(
         Level = LogLevel.Error,
