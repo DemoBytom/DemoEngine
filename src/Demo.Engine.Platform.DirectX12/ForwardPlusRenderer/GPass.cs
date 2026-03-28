@@ -4,6 +4,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Demo.Engine.Core.ValueObjects;
 using Demo.Engine.Platform.DirectX12.RenderingResources;
+using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
@@ -17,7 +18,8 @@ namespace Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 /// <param name="renderingEngine"></param>
 internal sealed class GPass(
     ILogger<GPass> logger,
-    ID3D12RenderingEngine renderingEngine)
+    ID3D12RenderingEngine renderingEngine,
+    IEngineShaderManager engineShaderManager)
     : IGPass,
       IDisposable
 {
@@ -162,7 +164,7 @@ internal sealed class GPass(
             && _gpassDepthBuffer.Resource is not null;
     }
 
-    [MemberNotNullWhen(true, nameof(_rootSignature)/*, nameof(_pipelineStateObject)*/)]
+    [MemberNotNullWhen(true, nameof(_rootSignature), nameof(_pipelineStateObject))]
     private bool CreatePsoAndRootSignature()
     {
         if (_rootSignature is not null)
@@ -176,19 +178,63 @@ internal sealed class GPass(
 
         RootParameter1[] parameters =
         [
-            RootParameter1.ConstantsRootParameter(
-                numConstants: 1,
+            RootParameter1.ConstantBufferViewRootParameter(
+                visibility: ShaderVisibility.Vertex,
+                shaderRegister: 0,
+                registerSpace: 0,
+                flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
+            RootParameter1.ConstantBufferViewRootParameter(
                 visibility: ShaderVisibility.Pixel,
-                shaderRegister: 1),
+                shaderRegister: 1,
+                registerSpace: 0,
+                flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
         ];
+
+        const RootSignatureFlags ROOT_SIGNATURE_FLAGS =
+            RootSignatureFlags.AllowInputAssemblerInputLayout
+            | RootSignatureFlags.DenyAmplificationShaderRootAccess
+            | RootSignatureFlags.DenyDomainShaderRootAccess
+            | RootSignatureFlags.DenyGeometryShaderRootAccess
+            | RootSignatureFlags.DenyHullShaderRootAccess
+            | RootSignatureFlags.DenyMeshShaderRootAccess
+            ;
+
+        // This should be an equivalent to the above
+        //const RootSignatureFlags ROOT_SIGNATURE_FLAGS = RootSignatureHelpers.DenyAll
+        //    & ~RootSignatureFlags.DenyPixelShaderRootAccess
+        //    & ~RootSignatureFlags.DenyVertexShaderRootAccess
+        //    & RootSignatureFlags.AllowInputAssemblerInputLayout
+        //    ;
 
         _rootSignature = renderingEngine.Device.CreateRootSignature(
             new RootSignatureDescription1(
-                RootSignatureHelpers.DenyAll,
+                ROOT_SIGNATURE_FLAGS,
                 parameters));
 
         _rootSignature.NameObject(
             "GPass root signature",
+            logger);
+
+        var vertexShader = engineShaderManager.GetShader(ShaderId.TriangleVS);
+        var pixelShader = engineShaderManager.GetShader(ShaderId.TrianglePS);
+        var primitiveTopology = PrimitiveTopologyType.Triangle;
+        var renderTagetFormats = new Format[] { MAIN_BUFFER_FORMAT };
+        var depthStencilFormat = DEPTH_BUFFER_FORMAT;
+
+        _pipelineStateObject = renderingEngine.Device.CreateGraphicsPipelineState(
+            new GraphicsPipelineStateDescription()
+            {
+                RootSignature = _rootSignature,
+                VertexShader = vertexShader.ShaderBlob,
+                PixelShader = pixelShader.ShaderBlob,
+                PrimitiveTopologyType = primitiveTopology,
+                RenderTargetFormats = renderTagetFormats,
+                DepthStencilFormat = depthStencilFormat,
+                RasterizerState = RasterizerDescription.CullNone, // no culling
+                DepthStencilState = DepthStencilDescription.None, // disabled
+            });
+        _pipelineStateObject.NameObject(
+            "GPass pipeline state object",
             logger);
 
         return true;

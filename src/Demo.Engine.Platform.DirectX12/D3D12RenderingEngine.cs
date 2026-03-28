@@ -9,6 +9,7 @@ using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.ValueObjects;
 using Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 using Demo.Engine.Platform.DirectX12.RenderingResources;
+using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -123,8 +124,9 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         (RTVHeapAllocator, DSVHeapAllocator, SRVHeapAllocator, UAVHeapAllocator) = descriptorHeaps.Value;
 
         _gPass = new GPass(
-            serviceProvider.GetRequiredService<ILogger<GPass>>(),
-            this);
+            logger: serviceProvider.GetRequiredService<ILogger<GPass>>(),
+            renderingEngine: this,
+            engineShaderManager: serviceProvider.GetRequiredService<IEngineShaderManager>());
         // TODO ValueResult?
         _ = _gPass.Initialize();
 
