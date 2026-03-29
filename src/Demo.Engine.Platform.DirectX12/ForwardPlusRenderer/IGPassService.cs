@@ -7,7 +7,7 @@ using Vortice.Direct3D12;
 
 namespace Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 
-internal interface IGPass : IDisposable
+internal interface IGPassService : IDisposable
 {
     void AddTransitionForDepthPrepass(ResourceBarrierGroup barriers);
     void AddTransitionForGPass(ResourceBarrierGroup barriers);

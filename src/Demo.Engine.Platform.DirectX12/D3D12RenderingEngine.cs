@@ -32,7 +32,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
     private readonly IDXGIFactory7 _dxgiFactory;
 
     private readonly RenderingCommand _d3d12Command;
-    private readonly IGPass _gPass;
+    private readonly IGPassService _gPass;
     private readonly ResourceBarrierGroup _barriers = new();
     private readonly bool[] _deferredReleasesFlag = new bool[Common.FRAME_BUFFER_COUNT];
     private readonly List<IDisposable>[] _deferredReleases;
@@ -124,8 +124,8 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 
         (RTVHeapAllocator, DSVHeapAllocator, SRVHeapAllocator, UAVHeapAllocator) = descriptorHeaps.Value;
 
-        _gPass = new GPass(
-            logger: serviceProvider.GetRequiredService<ILogger<GPass>>(),
+        _gPass = new GPassService(
+            logger: serviceProvider.GetRequiredService<ILogger<GPassService>>(),
             renderingEngine: this,
             engineShaderManager: serviceProvider.GetRequiredService<IEngineShaderManager>());
         // TODO ValueResult?

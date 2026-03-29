@@ -17,11 +17,11 @@ namespace Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 /// </summary>
 /// <param name="logger"></param>
 /// <param name="renderingEngine"></param>
-internal sealed class GPass(
-    ILogger<GPass> logger,
+internal sealed class GPassService(
+    ILogger<GPassService> logger,
     ID3D12RenderingEngine renderingEngine,
     IEngineShaderManager engineShaderManager)
-    : IGPass,
+    : IGPassService,
       IDisposable
 {
     private bool _disposedValue;

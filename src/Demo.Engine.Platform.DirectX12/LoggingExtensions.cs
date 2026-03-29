@@ -165,7 +165,7 @@ internal static partial class LoggingExtensions
         Level = LogLevel.Error,
         Message = ERROR_CREATING_GPASS_BUFFERS)]
     internal static partial void LogErrorCreatingGPassBuffers(
-        this ILogger<GPass> logger,
+        this ILogger<GPassService> logger,
         Width width,
         Height height);
 
