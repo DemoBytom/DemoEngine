@@ -33,6 +33,11 @@ internal sealed class ShaderCompiler(
             ID: ShaderId.FullscreenTriangle,
             ShaderType: ShaderType.Vertex),
         new ShaderFileInfo(
+            File: "FillColor.hlsl",
+            Function: "FillColorPS",
+            ID: ShaderId.FillColor,
+            ShaderType: ShaderType.Pixel),
+        new ShaderFileInfo(
             File: Path.Combine("Triangle", "TrianglePS.hlsl"),
             Function: "main",
             ID: ShaderId.TrianglePS,

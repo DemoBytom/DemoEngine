@@ -32,7 +32,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
     private readonly IDXGIFactory7 _dxgiFactory;
 
     private readonly RenderingCommand _d3d12Command;
-    private readonly GPass _gPass;
+    private readonly IGPass _gPass;
     private readonly ResourceBarrierGroup _barriers = new();
     private readonly bool[] _deferredReleasesFlag = new bool[Common.FRAME_BUFFER_COUNT];
     private readonly List<IDisposable>[] _deferredReleases;

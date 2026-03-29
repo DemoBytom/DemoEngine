@@ -1,7 +1,6 @@
 struct VSOutput
 {
     noperspective float4 Position : SV_Position;
-
     noperspective float2 UV : TEXCOORD;
 };
 

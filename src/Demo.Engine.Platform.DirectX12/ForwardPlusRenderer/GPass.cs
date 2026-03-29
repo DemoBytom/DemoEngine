@@ -6,6 +6,7 @@ using Demo.Engine.Core.ValueObjects;
 using Demo.Engine.Platform.DirectX12.RenderingResources;
 using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.Logging;
+using Vortice.Direct3D;
 using Vortice.Direct3D12;
 using Vortice.DXGI;
 
@@ -88,13 +89,22 @@ internal sealed class GPass(
         //TODO
     }
 
+    int _frame = 0;
+
     public void Render(
         ID3D12GraphicsCommandList commandList,
         in FrameInfo frameInfo)
     {
-        //TODO
-        // Set Root Signature
-        // Set Pipeline State Object
+        commandList.SetGraphicsRootSignature(_rootSignature);
+        commandList.SetPipelineState(_pipelineStateObject);
+
+        ++_frame;
+        commandList.SetGraphicsRoot32BitConstant(0, _frame, 0);
+
+        commandList.IASetPrimitiveTopology(
+            PrimitiveTopology.TriangleList);
+
+        commandList.DrawInstanced(3, 1, 0, 0);
     }
 
     public void AddTransitionForDepthPrepass(ResourceBarrierGroup barriers)
@@ -267,8 +277,10 @@ internal sealed class GPass(
             "GPass root signature",
             logger);
 
-        var vertexShader = engineShaderManager.GetShader(ShaderId.TriangleVS);
-        var pixelShader = engineShaderManager.GetShader(ShaderId.TrianglePS);
+        //var vertexShader = engineShaderManager.GetShader(ShaderId.TriangleVS);
+        //var pixelShader = engineShaderManager.GetShader(ShaderId.TrianglePS);
+        var vertexShader = engineShaderManager.GetShader(ShaderId.FullscreenTriangle);
+        var pixelShader = engineShaderManager.GetShader(ShaderId.FillColor);
         var primitiveTopology = PrimitiveTopologyType.Triangle;
         var renderTagetFormats = new Format[] { MAIN_BUFFER_FORMAT };
         var depthStencilFormat = DEPTH_BUFFER_FORMAT;
@@ -286,10 +298,10 @@ internal sealed class GPass(
                 DepthStencilState = DepthStencilDescription.None, // disabled
 
                 // TEMP - vertex layout from Cube
-                InputLayout = new InputLayoutDescription
-                {
-                    Elements = Cube.VertexLayout(),
-                }
+                //InputLayout = new InputLayoutDescription
+                //{
+                //    Elements = Cube.VertexLayout(),
+                //}
             });
         _pipelineStateObject.NameObject(
             "GPass pipeline state object",

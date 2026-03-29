@@ -40,8 +40,9 @@ internal enum ShaderType
 internal enum ShaderId
 {
     FullscreenTriangle = 0,
-    TrianglePS = 1,
-    TriangleVS = 2,
+    FillColor = 1,
+    TrianglePS = 2,
+    TriangleVS = 3,
 }
 
 internal readonly record struct CompiledShader(
