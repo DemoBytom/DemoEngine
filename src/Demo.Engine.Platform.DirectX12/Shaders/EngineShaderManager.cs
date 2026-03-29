@@ -41,6 +41,7 @@ internal enum ShaderId
 {
     FullscreenTriangleVS = 0,
     FillColorPS = 1,
+    PostProcessPS = 2,
 
     TrianglePS = 101,
     TriangleVS = 102,

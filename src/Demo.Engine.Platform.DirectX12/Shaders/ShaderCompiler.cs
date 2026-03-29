@@ -38,6 +38,11 @@ internal sealed class ShaderCompiler(
             ID: ShaderId.FillColorPS,
             ShaderType: ShaderType.Pixel),
         new ShaderFileInfo(
+            File: Path.Combine("ShaderFiles", "PostProcess.hlsl"),
+            Function: "PostProcessPS",
+            ID: ShaderId.PostProcessPS,
+            ShaderType: ShaderType.Pixel),
+        new ShaderFileInfo(
             File: Path.Combine("Triangle", "TrianglePS.hlsl"),
             Function: "main",
             ID: ShaderId.TrianglePS,

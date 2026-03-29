@@ -38,6 +38,10 @@ internal sealed class GPassService(
     private ID3D12RootSignature? _rootSignature = null;
     private ID3D12PipelineState? _pipelineStateObject = null;
 
+    // TODO NRT!
+    public RenderTexture MainBuffer => _gpasMainBuffer!;
+    public DepthBufferTexture DepthBuffer => _gpassDepthBuffer!;
+
 #if DEBUG
     private readonly ClearValue _clearValue = new()
     {
@@ -99,12 +103,19 @@ internal sealed class GPassService(
         commandList.SetPipelineState(_pipelineStateObject);
 
         ++_frame;
-        commandList.SetGraphicsRoot32BitConstant(0, _frame, 0);
+        commandList.SetGraphicsRoot32BitConstant(
+            rootParameterIndex: 0,
+            srcData: _frame,
+            destOffsetIn32BitValues: 0);
 
         commandList.IASetPrimitiveTopology(
             PrimitiveTopology.TriangleList);
 
-        commandList.DrawInstanced(3, 1, 0, 0);
+        commandList.DrawInstanced(
+            vertexCountPerInstance: 3,
+            instanceCount: 1,
+            startVertexLocation: 0,
+            startInstanceLocation: 0);
     }
 
     public void AddTransitionForDepthPrepass(ResourceBarrierGroup barriers)

@@ -97,6 +97,7 @@ internal sealed class EngineService(
         {
             if (!_stopRequested)
             {
+                await scope.DisposeAsync();
                 _hostApplicationLifetime.StopApplication();
             }
         }

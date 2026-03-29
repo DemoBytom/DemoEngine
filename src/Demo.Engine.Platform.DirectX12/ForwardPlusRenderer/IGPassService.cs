@@ -9,6 +9,9 @@ namespace Demo.Engine.Platform.DirectX12.ForwardPlusRenderer;
 
 internal interface IGPassService : IDisposable
 {
+    RenderTexture MainBuffer { get; }
+    DepthBufferTexture DepthBuffer { get; }
+
     void AddTransitionForDepthPrepass(ResourceBarrierGroup barriers);
     void AddTransitionForGPass(ResourceBarrierGroup barriers);
     void AddTranstionForPostProcess(ResourceBarrierGroup barriers);

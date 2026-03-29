@@ -33,6 +33,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 
     private readonly RenderingCommand _d3d12Command;
     private readonly IGPassService _gPass;
+    private readonly IPostProcessService _postProcess;
     private readonly ResourceBarrierGroup _barriers = new();
     private readonly bool[] _deferredReleasesFlag = new bool[Common.FRAME_BUFFER_COUNT];
     private readonly List<IDisposable>[] _deferredReleases;
@@ -129,8 +130,15 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
             renderingEngine: this,
             engineShaderManager: serviceProvider.GetRequiredService<IEngineShaderManager>());
 
+        _postProcess = new PostProcessService(
+            logger: serviceProvider.GetRequiredService<ILogger<PostProcessService>>(),
+            renderingEngine: this,
+            gPassService: _gPass,
+            engineShaderManager: serviceProvider.GetRequiredService<IEngineShaderManager>());
+
         // TODO ValueResult?
         _ = _gPass.Initialize()
+            && _postProcess.Initialize()
             ;
 
         //renderingSurface = new RenderingSurface(
@@ -365,6 +373,12 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         //// END OLD Begin Frame
 
         // New Record commands
+        ReadOnlySpan<ID3D12DescriptorHeap> heaps =
+        [
+            SRVHeapAllocator.DescriptorHeap!,
+        ];
+        _d3d12Command.CommandList.SetDescriptorHeaps(heaps);
+
         _d3d12Command.CommandList.RSSetViewport(
             renderingSurface.Viewport);
         _d3d12Command.CommandList.RSSetScissorRect(
@@ -399,7 +413,9 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         _gPass.AddTranstionForPostProcess(_barriers);
         _barriers.Apply(_d3d12Command.CommandList);
         // Will write to the current back buffer
-
+        _postProcess.PostProcess(
+            _d3d12Command.CommandList,
+            renderingSurface.RTV.Value);
         // after post process
         _d3d12Command.CommandList.ResourceBarrierTransition(
             currentBackBuffer,
@@ -488,6 +504,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
                         ProcessDeferredReleases(frameIndex);
                     }
 
+                    _postProcess.Dispose();
                     _gPass.Dispose();
 
                     //Dispose managed resources
