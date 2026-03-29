@@ -197,7 +197,11 @@ internal sealed class RenderingSurface
             minDepth: 1.0f,
             maxDepth: 0.0f);
 
-        ScissorRect = new RawRect(0, 0, RenderingControl.DrawWidth.Value, RenderingControl.DrawHeight.Value);
+        ScissorRect = new RawRect(
+            left: 0,
+            top: 0,
+            right: RenderingControl.DrawWidth.Value,
+            bottom: RenderingControl.DrawHeight.Value);
     }
 
     private static Format ToNonSrgb(Format format)

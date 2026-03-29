@@ -97,6 +97,58 @@ internal sealed class GPass(
         // Set Pipeline State Object
     }
 
+    public void AddTransitionForDepthPrepass(ResourceBarrierGroup barriers)
+        => barriers.AddTransitionBarrier(
+            resource: _gpassDepthBuffer!.Resource,
+            before: ResourceStates.DepthRead
+                  | ResourceStates.PixelShaderResource
+                  | ResourceStates.NonPixelShaderResource,
+            after: ResourceStates.DepthWrite);
+
+    public void AddTransitionForGPass(ResourceBarrierGroup barriers)
+        => barriers
+            .AddTransitionBarrier(
+                resource: _gpasMainBuffer!.Resource,
+                before: ResourceStates.PixelShaderResource,
+                after: ResourceStates.RenderTarget)
+            .AddTransitionBarrier(
+                resource: _gpassDepthBuffer!.Resource,
+                before: ResourceStates.DepthWrite,
+                after: ResourceStates.DepthRead
+                     | ResourceStates.PixelShaderResource
+                     | ResourceStates.NonPixelShaderResource);
+
+    public void AddTranstionForPostProcess(ResourceBarrierGroup barriers)
+        => barriers.AddTransitionBarrier(
+            resource: _gpasMainBuffer!.Resource,
+            before: ResourceStates.RenderTarget,
+            after: ResourceStates.PixelShaderResource);
+
+    public void SetRenderTargetsForDepthPrepass(ID3D12GraphicsCommandList commandList)
+    {
+        commandList.ClearDepthStencilView(
+            depthStencilView: _gpassDepthBuffer!.DSV,
+            clearFlags: ClearFlags.Depth | ClearFlags.Stencil,
+            depth: 0.0f,
+            stencil: 0);
+        commandList.OMSetRenderTargets(
+            renderTargetDescriptor: CpuDescriptorHandle.Default,
+            depthStencilDescriptor: _gpassDepthBuffer!.DSV);
+    }
+
+    public void SetRenderTargetsForGPass(ID3D12GraphicsCommandList commandList)
+    {
+        var rtv = _gpasMainBuffer!.RTV(0);
+        var dsv = _gpassDepthBuffer!.DSV;
+
+        commandList.ClearRenderTargetView(
+            renderTargetView: rtv,
+            color: _clearValue.Color);
+        commandList.OMSetRenderTargets(
+            renderTargetDescriptor: rtv,
+            depthStencilDescriptor: dsv);
+    }
+
     [MemberNotNullWhen(true, nameof(_gpasMainBuffer), nameof(_gpassDepthBuffer))]
     private bool CreateBuffers(Width width, Height height)
     {

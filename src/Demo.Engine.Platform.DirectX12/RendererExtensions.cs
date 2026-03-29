@@ -65,4 +65,20 @@ internal static partial class RendererExtensions
     internal static partial void LogDisposedObject(
         this ILogger logger,
         string name);
+
+    extension(ID3D12GraphicsCommandList10 commandList)
+    {
+        public void TransitionResource(
+            ID3D12Resource resource,
+            ResourceStates before,
+            ResourceStates after,
+            ResourceBarrierFlags flags = ResourceBarrierFlags.None,
+            uint subresource = D3D12.ResourceBarrierAllSubResources)
+            => commandList.ResourceBarrierTransition(
+                resource,
+                before,
+                after,
+                subresource,
+                flags);
+    }
 }

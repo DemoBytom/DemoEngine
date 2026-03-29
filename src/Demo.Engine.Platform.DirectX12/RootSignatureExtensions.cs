@@ -7,7 +7,7 @@ using static Vortice.Direct3D12.RootSignatureFlags;
 
 namespace Demo.Engine.Platform.DirectX12;
 
-internal static class RootSignatureHelpers
+internal static class RootSignatureExtensions
 {
     extension(RootParameter1)
     {

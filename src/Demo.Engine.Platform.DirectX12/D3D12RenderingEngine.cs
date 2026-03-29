@@ -33,6 +33,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 
     private readonly RenderingCommand _d3d12Command;
     private readonly GPass _gPass;
+    private readonly ResourceBarrierGroup _barriers = new();
     private readonly bool[] _deferredReleasesFlag = new bool[Common.FRAME_BUFFER_COUNT];
     private readonly List<IDisposable>[] _deferredReleases;
 
@@ -340,21 +341,79 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
             ProcessDeferredReleases(frameIndex);
         }
 
+        var currentBackBuffer = renderingSurface.BackBuffer;
+
+        var frameInfo = new FrameInfo
+        {
+            Width = renderingSurface.Width,
+            Height = renderingSurface.Height
+        };
+
+        _gPass.SetSize(
+            frameInfo.Width,
+            frameInfo.Height);
+
         _ = renderingSurface.Present();
 
-        // recrod commands
-        BeginFrame(
-            renderingSurface.BackBuffer,
-            renderingSurface.RTV.Value);
+        //// recrod commands
+        //// TODO remove OLD Begin Frame
+        //BeginFrame(
+        //    renderingSurface.BackBuffer,
+        //    renderingSurface.RTV.Value);
+        //// END OLD Begin Frame
 
-        //TODO draw
-        foreach (var drawable in drawables)
-        {
-            drawable.Draw(renderingSurface);
-        }
+        // New Record commands
+        _d3d12Command.CommandList.RSSetViewport(
+            renderingSurface.Viewport);
+        _d3d12Command.CommandList.RSSetScissorRect(
+            renderingSurface.ScissorRect);
 
-        EndFrame(renderingSurface.BackBuffer);
+        // Depth prepass
+        _gPass.AddTransitionForDepthPrepass(
+            _barriers);
+        _barriers.Apply(_d3d12Command.CommandList);
+        _gPass.SetRenderTargetsForDepthPrepass(
+            _d3d12Command.CommandList);
+        _gPass.DepthPrepass(
+            _d3d12Command.CommandList,
+            frameInfo);
 
+        // Geometry and lightning pass
+        _gPass.AddTransitionForGPass(
+            _barriers);
+        _barriers.Apply(_d3d12Command.CommandList);
+        _gPass.SetRenderTargetsForGPass(
+            _d3d12Command.CommandList);
+        _gPass.Render(
+            _d3d12Command.CommandList,
+            frameInfo);
+
+        _d3d12Command.CommandList.ResourceBarrierTransition(
+            resource: currentBackBuffer,
+            stateBefore: ResourceStates.Present,
+            stateAfter: ResourceStates.RenderTarget);
+
+        // Post processing
+        _gPass.AddTranstionForPostProcess(_barriers);
+        _barriers.Apply(_d3d12Command.CommandList);
+        // Will write to the current back buffer
+
+        // after post process
+        _d3d12Command.CommandList.ResourceBarrierTransition(
+            currentBackBuffer,
+            ResourceStates.RenderTarget,
+            ResourceStates.Present);
+
+        ////TODO remove OLD drawable.Draw
+        //foreach (var drawable in drawables)
+        //{
+        //    drawable.Draw(renderingSurface);
+        //}
+
+        //EndFrame(renderingSurface.BackBuffer);
+        //// end remove OLD drawable.Draw
+
+        // This executes the _d3d12Command.EndFrame();
         ExecuteCommandList();
     }
 
