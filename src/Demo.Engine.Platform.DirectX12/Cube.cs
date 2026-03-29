@@ -338,7 +338,7 @@ internal sealed class Cube
         _matricesBuffer = new MatricesBuffer(worldMatrix, viewProjectionMatrix);
     }
 
-    private static InputElementDescription[] VertexLayout()
+    public static InputElementDescription[] VertexLayout()
     {
         var vertexLayout = new InputElementDescription[] {
             new (

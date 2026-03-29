@@ -284,6 +284,12 @@ internal sealed class GPass(
                 DepthStencilFormat = depthStencilFormat,
                 RasterizerState = RasterizerDescription.CullNone, // no culling
                 DepthStencilState = DepthStencilDescription.None, // disabled
+
+                // TEMP - vertex layout from Cube
+                InputLayout = new InputLayoutDescription
+                {
+                    Elements = Cube.VertexLayout(),
+                }
             });
         _pipelineStateObject.NameObject(
             "GPass pipeline state object",
