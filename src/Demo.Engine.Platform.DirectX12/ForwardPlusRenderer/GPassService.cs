@@ -279,8 +279,8 @@ internal sealed class GPassService(
 
         //var vertexShader = engineShaderManager.GetShader(ShaderId.TriangleVS);
         //var pixelShader = engineShaderManager.GetShader(ShaderId.TrianglePS);
-        var vertexShader = engineShaderManager.GetShader(ShaderId.FullscreenTriangle);
-        var pixelShader = engineShaderManager.GetShader(ShaderId.FillColor);
+        var vertexShader = engineShaderManager.GetShader(ShaderId.FullscreenTriangleVS);
+        var pixelShader = engineShaderManager.GetShader(ShaderId.FillColorPS);
         var primitiveTopology = PrimitiveTopologyType.Triangle;
         var renderTagetFormats = new Format[] { MAIN_BUFFER_FORMAT };
         var depthStencilFormat = DEPTH_BUFFER_FORMAT;

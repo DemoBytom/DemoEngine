@@ -38,10 +38,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Shaders\FillColor.hlsl">
+    <None Update="Shaders\ShaderFiles\FillColor.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\FullScreenTriangle.hlsl">
+    <None Update="Shaders\ShaderFiles\FullScreenTriangle.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Shaders\Triangle\TrianglePS.hlsl">

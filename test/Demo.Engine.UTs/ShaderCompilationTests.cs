@@ -42,9 +42,9 @@ public class ShaderCompilationTests
         _ = await engineShaderManager.SaveEngineShaders(shaders);
         _ = await engineShaderManager.LoadEngineShaders();
 
-        var shader = engineShaderManager.GetShader(ShaderId.FullscreenTriangle);
+        var shader = engineShaderManager.GetShader(ShaderId.FullscreenTriangleVS);
 
-        shader.ID.ShouldBe(ShaderId.FullscreenTriangle);
+        shader.ID.ShouldBe(ShaderId.FullscreenTriangleVS);
         shader.Size.ShouldBe(6);
         shader.ShaderBlob.ToArray().ShouldBe([55, 123, 55, 46, 23, 123]);
 
@@ -61,7 +61,7 @@ public class ShaderCompilationTests
             await Task.Yield();
 
             yield return Task.FromResult(new ShaderContent(
-                ShaderId.FullscreenTriangle,
+                ShaderId.FullscreenTriangleVS,
                 blob));
 
             yield return Task.FromResult(new ShaderContent(

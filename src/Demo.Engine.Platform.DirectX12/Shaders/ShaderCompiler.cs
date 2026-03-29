@@ -28,14 +28,14 @@ internal sealed class ShaderCompiler(
     private readonly ShaderFileInfo[] _shaderFiles =
     [
         new ShaderFileInfo(
-            File: "FullScreenTriangle.hlsl",
+            File: Path.Combine("ShaderFiles", "FullScreenTriangle.hlsl"),
             Function: "FullScreenTriangleVS",
-            ID: ShaderId.FullscreenTriangle,
+            ID: ShaderId.FullscreenTriangleVS,
             ShaderType: ShaderType.Vertex),
         new ShaderFileInfo(
-            File: "FillColor.hlsl",
+            File: Path.Combine("ShaderFiles", "FillColor.hlsl"),
             Function: "FillColorPS",
-            ID: ShaderId.FillColor,
+            ID: ShaderId.FillColorPS,
             ShaderType: ShaderType.Pixel),
         new ShaderFileInfo(
             File: Path.Combine("Triangle", "TrianglePS.hlsl"),

@@ -128,8 +128,10 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
             logger: serviceProvider.GetRequiredService<ILogger<GPassService>>(),
             renderingEngine: this,
             engineShaderManager: serviceProvider.GetRequiredService<IEngineShaderManager>());
+
         // TODO ValueResult?
-        _ = _gPass.Initialize();
+        _ = _gPass.Initialize()
+            ;
 
         //renderingSurface = new RenderingSurface(
         //    serviceProvider);
