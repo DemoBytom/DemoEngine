@@ -106,10 +106,12 @@ internal sealed class RenderingCommand
             in commandList);
     }
 
-    public void EndFrame()
+    public void EndFrame(RenderingSurface renderingSurface)
     {
         CommandList.Close();
         CommandQueue.ExecuteCommandList(CommandList);
+
+        renderingSurface.Present();
 
         var commandFrame = _commandFrames[FrameIndex];
 

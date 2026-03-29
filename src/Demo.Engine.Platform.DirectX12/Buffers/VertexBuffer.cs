@@ -61,7 +61,7 @@ internal sealed class VertexBuffer<TVertices>
                srcOffset: 0,
                numBytes: Vertex.SizeInBytes * (ulong)vertices.Length);
 
-        _renderingEngine.ExecuteCommandList();
+        //_renderingEngine.ExecuteCommandList();
 
         _vertexBufferView = new VertexBufferView(
             _vertexBuffer.GPUVirtualAddress,

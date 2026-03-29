@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.Logging;
 using Vortice.Direct3D;
@@ -44,14 +45,14 @@ internal sealed class PostProcessService(
 
         commandList.SetGraphicsRoot32BitConstant(
             rootParameterIndex: (int)RootParametersIndices.RootConstants,
-            srcData: gPassService.MainBuffer.SRV.Index,
+            srcData: (uint)gPassService.MainBuffer.SRV.Index,
             destOffsetIn32BitValues: 0);
         commandList.SetGraphicsRootDescriptorTable(
             rootParameterIndex: (int)RootParametersIndices.DescriptorTable,
             //                                                      TODO NRT!
             baseDescriptor: renderingEngine.SRVHeapAllocator.GPU_Start!.Value);
         commandList.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-        commandList.OMSetRenderTargets(targetRTV);
+        commandList.OMSetRenderTargets(1, targetRTV);
         commandList.DrawInstanced(
             vertexCountPerInstance: 3,
             instanceCount: 1,
@@ -80,17 +81,26 @@ internal sealed class PostProcessService(
             registerSpace: 0,
             flags: DescriptorRangeFlags.DescriptorsVolatile);
 
-        RootParameter1[] parameters =
-        [
-            RootParameter1.ConstantBufferViewRootParameter(
+        var parameters = new RootParameter1[(int)RootParametersIndices.Count];
+
+        parameters[(int)RootParametersIndices.RootConstants] = RootParameter1
+            .ConstantsRootParameter(
+                numConstants: 1,
                 visibility: ShaderVisibility.Pixel,
-                shaderRegister: 1,
-                registerSpace: 1,
-                flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
-            RootParameter1.DescriptorTableRootParameter(
+                shaderRegister: 1);
+        parameters[(int)RootParametersIndices.DescriptorTable] = RootParameter1
+            .DescriptorTableRootParameter(
                 visibility: ShaderVisibility.Pixel,
-                range)
-        ];
+                range);
+
+        //const RootSignatureFlags ROOT_SIGNATURE_FLAGS =
+        //   RootSignatureFlags.AllowInputAssemblerInputLayout
+        //   | RootSignatureFlags.DenyAmplificationShaderRootAccess
+        //   | RootSignatureFlags.DenyDomainShaderRootAccess
+        //   | RootSignatureFlags.DenyGeometryShaderRootAccess
+        //   | RootSignatureFlags.DenyHullShaderRootAccess
+        //   | RootSignatureFlags.DenyMeshShaderRootAccess
+        //   ;
 
         _rootSignature = renderingEngine.Device.CreateRootSignature(
             new RootSignatureDescription1(
@@ -107,21 +117,34 @@ internal sealed class PostProcessService(
         var primitiveTopology = PrimitiveTopologyType.Triangle;
         var renderTagetFormats = new Format[] { Common.DEFAULT_BACK_BUFFER_FORMAT };
 
-        _pipelineStateObject = renderingEngine.Device.CreateGraphicsPipelineState(
-            new GraphicsPipelineStateDescription()
-            {
-                RootSignature = _rootSignature,
-                VertexShader = vertexShader.ShaderBlob,
-                PixelShader = pixelShader.ShaderBlob,
-                PrimitiveTopologyType = primitiveTopology,
-                RenderTargetFormats = renderTagetFormats,
-                RasterizerState = RasterizerDescription.CullNone, // no culling
-            });
+        PipelineStateStream stream = new()
+        {
+
+            RootSignature = new(_rootSignature),
+            VertexShader = new(vertexShader.ShaderBlob.Span),
+            PixelShader = new(pixelShader.ShaderBlob.Span),
+            PrimitiveTopology = new(primitiveTopology),
+            RenderTargetFormats = new(renderTagetFormats),
+            Rasterizer = new(RasterizerDescription.CullNone), // no culling
+        };
+
+        _pipelineStateObject = renderingEngine.Device.CreatePipelineState(stream);
         _pipelineStateObject.NameObject(
             "Post Process FX pipeline state object",
             logger);
 
         return true;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly struct PipelineStateStream
+    {
+        public required PipelineStateSubObjectTypeRootSignature RootSignature { get; init; }
+        public required PipelineStateSubObjectTypeVertexShader VertexShader { get; init; }
+        public required PipelineStateSubObjectTypePixelShader PixelShader { get; init; }
+        public required PipelineStateSubObjectTypePrimitiveTopology PrimitiveTopology { get; init; }
+        public required PipelineStateSubObjectTypeRenderTargetFormats RenderTargetFormats { get; init; }
+        public required PipelineStateSubObjectTypeRasterizer Rasterizer { get; init; }
     }
 
     private void Dispose(bool disposing)
@@ -145,9 +168,12 @@ internal sealed class PostProcessService(
         GC.SuppressFinalize(this);
     }
 
-    enum RootParametersIndices
+    private enum RootParametersIndices
     {
-        RootConstants = 0,
-        DescriptorTable = 1,
+        RootConstants,
+        DescriptorTable,
+
+        // MUST BE LAST! :)
+        Count,
     }
 }

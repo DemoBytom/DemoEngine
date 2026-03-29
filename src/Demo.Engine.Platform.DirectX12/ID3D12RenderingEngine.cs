@@ -19,7 +19,7 @@ internal interface ID3D12RenderingEngine : IRenderingEngine
 
     void InitCommandList();
 
-    void ExecuteCommandList();
+    //void ExecuteCommandList();
 
     uint CurrentFrameIndex();
 

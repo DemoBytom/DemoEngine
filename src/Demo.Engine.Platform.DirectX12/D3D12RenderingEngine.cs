@@ -363,7 +363,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
             frameInfo.Width,
             frameInfo.Height);
 
-        _ = renderingSurface.Present();
+        //_ = renderingSurface.Present();
 
         //// recrod commands
         //// TODO remove OLD Begin Frame
@@ -432,7 +432,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         //// end remove OLD drawable.Draw
 
         // This executes the _d3d12Command.EndFrame();
-        ExecuteCommandList();
+        ExecuteCommandList(renderingSurface);
     }
 
     public bool EndScene(
@@ -480,8 +480,8 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
     public void InitCommandList()
         => _d3d12Command.BeginFrame();
 
-    public void ExecuteCommandList()
-        => _d3d12Command.EndFrame();
+    public void ExecuteCommandList(RenderingSurface renderingSurface)
+        => _d3d12Command.EndFrame(renderingSurface);
 
     public T GetRequiredService<T>()
         where T : notnull

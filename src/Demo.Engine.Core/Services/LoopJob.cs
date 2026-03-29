@@ -36,7 +36,7 @@ internal sealed class LoopJob
 
         _drawables =
         [
-            _serviceProvider.GetRequiredService<ICube>(),
+            //_serviceProvider.GetRequiredService<ICube>(),
         ];
     }
 
