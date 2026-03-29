@@ -251,16 +251,16 @@ internal sealed class GPassService(
 
         RootParameter1[] parameters =
         [
-            RootParameter1.ConstantBufferViewRootParameter(
-                visibility: ShaderVisibility.Vertex,
-                shaderRegister: 0,
-                registerSpace: 0,
-                flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
-            RootParameter1.ConstantBufferViewRootParameter(
+            //RootParameter1.ConstantBufferViewRootParameter(
+            //    visibility: ShaderVisibility.Vertex,
+            //    shaderRegister: 0,
+            //    registerSpace: 0,
+            //    flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
+            RootParameter1.ConstantsRootParameter(
+                numConstants: 1,
                 visibility: ShaderVisibility.Pixel,
                 shaderRegister: 1,
-                registerSpace: 0,
-                flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
+                registerSpace: 1),
         ];
 
         const RootSignatureFlags ROOT_SIGNATURE_FLAGS =
@@ -306,7 +306,7 @@ internal sealed class GPassService(
                 RenderTargetFormats = renderTagetFormats,
                 DepthStencilFormat = depthStencilFormat,
                 RasterizerState = RasterizerDescription.CullNone, // no culling
-                DepthStencilState = DepthStencilDescription.None, // disabled
+                DepthStencilState = DepthStencilDescription.Default, // disabled
 
                 // TEMP - vertex layout from Cube
                 //InputLayout = new InputLayoutDescription

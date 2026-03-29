@@ -44,14 +44,14 @@ internal sealed class PostProcessService(
 
         commandList.SetGraphicsRoot32BitConstant(
             rootParameterIndex: (int)RootParametersIndices.RootConstants,
-            srcData: gPassService.MainBuffer.SRV.Index,
+            srcData: (uint)gPassService.MainBuffer.SRV.Index,
             destOffsetIn32BitValues: 0);
         commandList.SetGraphicsRootDescriptorTable(
             rootParameterIndex: (int)RootParametersIndices.DescriptorTable,
             //                                                      TODO NRT!
             baseDescriptor: renderingEngine.SRVHeapAllocator.GPU_Start!.Value);
         commandList.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-        commandList.OMSetRenderTargets(targetRTV);
+        commandList.OMSetRenderTargets(1, targetRTV);
         commandList.DrawInstanced(
             vertexCountPerInstance: 3,
             instanceCount: 1,
@@ -82,20 +82,29 @@ internal sealed class PostProcessService(
 
         RootParameter1[] parameters =
         [
-            RootParameter1.ConstantBufferViewRootParameter(
+            RootParameter1.ConstantsRootParameter(
+                numConstants: 1,
                 visibility: ShaderVisibility.Pixel,
                 shaderRegister: 1,
-                registerSpace: 1,
-                flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
+                registerSpace: 1),
             RootParameter1.DescriptorTableRootParameter(
                 visibility: ShaderVisibility.Pixel,
                 range)
         ];
 
+        const RootSignatureFlags ROOT_SIGNATURE_FLAGS =
+           RootSignatureFlags.AllowInputAssemblerInputLayout
+           | RootSignatureFlags.DenyAmplificationShaderRootAccess
+           | RootSignatureFlags.DenyDomainShaderRootAccess
+           | RootSignatureFlags.DenyGeometryShaderRootAccess
+           | RootSignatureFlags.DenyHullShaderRootAccess
+           | RootSignatureFlags.DenyMeshShaderRootAccess
+           ;
+
         _rootSignature = renderingEngine.Device.CreateRootSignature(
             new RootSignatureDescription1(
-                //ROOT_SIGNATURE_FLAGS,
-                RootSignatureExtensions.DenyAll,
+                ROOT_SIGNATURE_FLAGS,
+                //RootSignatureExtensions.DenyAll,
                 parameters));
 
         _rootSignature.NameObject(
