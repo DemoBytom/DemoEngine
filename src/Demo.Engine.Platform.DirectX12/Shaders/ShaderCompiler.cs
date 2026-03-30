@@ -116,8 +116,11 @@ internal sealed class ShaderCompiler(
         ShaderFileInfo shaderFileInfo,
         CancellationToken cancellationToken = default)
     {
+        var shaderDirAbsolutePath = await _mediator.Send(
+            _getShaderDirAbsolutePathRequest, cancellationToken);
+
         var path = Path.Combine(
-            await _mediator.Send(_getShaderDirAbsolutePathRequest, cancellationToken),
+            shaderDirAbsolutePath,
             shaderFileInfo.File);
 
         using var fs = new FileStream(
@@ -137,7 +140,11 @@ internal sealed class ShaderCompiler(
             new DxcCompilerOptions
             {
                 ShaderModel = DxcShaderModel.Model6_4,
-            });
+            },
+            additionalArguments: [
+                // Include path for additional shader files loaded using #include
+                $"-I{Path.Combine(shaderDirAbsolutePath, "ShaderFiles")}",
+                ]);
 
         if (result.GetStatus().Failure)
         {

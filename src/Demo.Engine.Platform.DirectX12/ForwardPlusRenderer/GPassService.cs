@@ -96,6 +96,13 @@ internal sealed class GPassService(
 
     int _frame = 0;
 
+    private readonly struct MandlebrotData
+    {
+        public float Width { get; init; }
+        public float Height { get; init; }
+        public uint Frame { get; init; }
+    }
+
     public void Render(
         ID3D12GraphicsCommandList commandList,
         in FrameInfo frameInfo)
@@ -103,10 +110,15 @@ internal sealed class GPassService(
         commandList.SetGraphicsRootSignature(_rootSignature);
         commandList.SetPipelineState(_pipelineStateObject);
 
-        ++_frame;
-        commandList.SetGraphicsRoot32BitConstant(
+        var mandlebrotData = new MandlebrotData
+        {
+            Width = _currentSize.width.Value,
+            Height = _currentSize.height.Value,
+            Frame = (uint)++_frame,
+        };
+        commandList.SetGraphicsRoot32BitConstants(
             rootParameterIndex: 0,
-            srcData: _frame,
+            srcData: mandlebrotData,
             destOffsetIn32BitValues: 0);
 
         commandList.IASetPrimitiveTopology(
@@ -258,7 +270,7 @@ internal sealed class GPassService(
             //    registerSpace: 0,
             //    flags: RootDescriptorFlags.DataStaticWhileSetAtExecute),
             RootParameter1.ConstantsRootParameter(
-                numConstants: 1,
+                numConstants: 3,
                 visibility: ShaderVisibility.Pixel,
                 shaderRegister: 1),
         ];
@@ -282,7 +294,8 @@ internal sealed class GPassService(
         _rootSignature = renderingEngine.Device.CreateRootSignature(
             new RootSignatureDescription1(
                 //ROOT_SIGNATURE_FLAGS,
-                RootSignatureExtensions.DenyAll,
+                RootSignatureExtensions.DenyAll
+                & ~RootSignatureFlags.DenyPixelShaderRootAccess,
                 parameters));
 
         _rootSignature.NameObject(

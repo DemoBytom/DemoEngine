@@ -105,7 +105,8 @@ internal sealed class PostProcessService(
         _rootSignature = renderingEngine.Device.CreateRootSignature(
             new RootSignatureDescription1(
                 //ROOT_SIGNATURE_FLAGS,
-                RootSignatureExtensions.DenyAll,
+                RootSignatureExtensions.DenyAll
+                & ~RootSignatureFlags.DenyPixelShaderRootAccess,
                 parameters));
 
         _rootSignature.NameObject(
