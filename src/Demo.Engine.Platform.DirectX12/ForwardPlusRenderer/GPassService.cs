@@ -94,9 +94,7 @@ internal sealed class GPassService(
         //TODO
     }
 
-    int _frame = 0;
-
-    private readonly struct MandlebrotData
+    private readonly struct FractalData
     {
         public float Width { get; init; }
         public float Height { get; init; }
@@ -110,15 +108,15 @@ internal sealed class GPassService(
         commandList.SetGraphicsRootSignature(_rootSignature);
         commandList.SetPipelineState(_pipelineStateObject);
 
-        var mandlebrotData = new MandlebrotData
+        var fractalData = new FractalData
         {
             Width = _currentSize.width.Value,
             Height = _currentSize.height.Value,
-            Frame = (uint)++_frame,
+            Frame = frameInfo.UPS_Frame,
         };
         commandList.SetGraphicsRoot32BitConstants(
             rootParameterIndex: 0,
-            srcData: mandlebrotData,
+            srcData: fractalData,
             destOffsetIn32BitValues: 0);
 
         commandList.IASetPrimitiveTopology(
@@ -337,7 +335,7 @@ internal sealed class GPassService(
         return true;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
     private readonly struct PipelineStateStream
     {
         public required PipelineStateSubObjectTypeRootSignature RootSignature { get; init; }

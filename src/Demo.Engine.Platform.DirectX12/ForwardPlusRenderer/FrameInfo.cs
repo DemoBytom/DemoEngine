@@ -9,4 +9,5 @@ public readonly struct FrameInfo
 {
     public required Width Width { get; init; }
     public required Height Height { get; init; }
+    public required uint UPS_Frame { get; init; }
 }

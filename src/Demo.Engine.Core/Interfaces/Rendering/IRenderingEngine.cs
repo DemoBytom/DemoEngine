@@ -19,9 +19,16 @@ public interface IRenderingEngine : IAsyncDisposable
 
     ValueTask<RenderingSurfaceId> CreateSurfaceAsync(CancellationToken cancellationToken = default);
 
-    void Draw(RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables);
+    void Draw(
+        RenderingSurfaceId renderingSurfaceId,
+        IEnumerable<IDrawable> drawables,
+        uint upsFrame);
 
-    void Draw(Color4 color, RenderingSurfaceId renderingSurfaceId, IEnumerable<IDrawable> drawables);
+    void Draw(
+        Color4 color,
+        RenderingSurfaceId renderingSurfaceId,
+        IEnumerable<IDrawable> drawables,
+        uint upsFrame);
 
     public void LogDebugMessages();
 

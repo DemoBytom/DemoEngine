@@ -322,16 +322,19 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 
     public void Draw(
         RenderingSurfaceId renderingSurfaceId,
-        IEnumerable<IDrawable> drawables)
+        IEnumerable<IDrawable> drawables,
+        uint upsFrame)
         => Draw(
             _clearColor,
             renderingSurfaceId,
-            drawables);
+            drawables,
+            upsFrame);
 
     public void Draw(
         Color4 color,
         RenderingSurfaceId renderingSurfaceId,
-        IEnumerable<IDrawable> drawables)
+        IEnumerable<IDrawable> drawables,
+        uint upsFrame)
     {
         InitCommandList();
 
@@ -356,7 +359,8 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         var frameInfo = new FrameInfo
         {
             Width = renderingSurface.Width,
-            Height = renderingSurface.Height
+            Height = renderingSurface.Height,
+            UPS_Frame = upsFrame,
         };
 
         _gPass.SetSize(

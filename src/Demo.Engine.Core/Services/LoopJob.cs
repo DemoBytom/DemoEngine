@@ -45,12 +45,14 @@ internal sealed class LoopJob
     private float _sin = 0.0f;
     private bool _fullscreen = false;
     private bool _f11Pressed = false;
+    private uint _upsFrame = 0;
 
     public ValueTask Update(
         IRenderingSurface renderingSurface,
         KeyboardHandle keyboardHandle,
         KeyboardCharCache keyboardCharCache)
     {
+        _upsFrame += 1;
         if (keyboardHandle.GetKeyPressed(VirtualKeys.OemOpenBrackets))
         {
             keyboardCharCache.Clear();
@@ -168,7 +170,8 @@ internal sealed class LoopJob
         => renderingEngine.Draw(
             color: new Color4(_r, _g, _b, 1.0f),
             renderingSurfaceId: renderingSurfaceId,
-            drawables: _drawables);
+            drawables: _drawables,
+            _upsFrame);
 
     private void Dispose(bool disposing)
     {
