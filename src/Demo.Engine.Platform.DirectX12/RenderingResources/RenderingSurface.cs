@@ -25,6 +25,19 @@ internal sealed class RenderingSurface
         _scope = serviceProvider.CreateAsyncScope();
         _logger = _scope.ServiceProvider.GetRequiredService<ILogger<RenderingSurface>>();
         RenderingControl = _scope.ServiceProvider.GetRequiredService<IRenderingControl>();
+
+        RenderingControl.UserResized += (sender, eventArgs) =>
+        {
+#pragma warning disable CA1873 // Avoid potentially expensive logging
+            _logger.LogTrace(
+                "Rendering surface {SurfaceId} resized by user, new size: {Width}x{Height}",
+                ID,
+                eventArgs.Width,
+                eventArgs.Height);
+#pragma warning restore CA1873 // Avoid potentially expensive logging
+
+            Resize();
+        };
     }
 
     public RenderingSurfaceId ID { get; } = RenderingSurfaceId.NewId();

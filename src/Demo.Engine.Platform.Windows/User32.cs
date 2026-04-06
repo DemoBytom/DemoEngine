@@ -30,6 +30,7 @@
 
 using System.Runtime.InteropServices;
 using Demo.Engine.Core.Maths.Interop;
+using Demo.Engine.Core.Platform;
 
 namespace Demo.Engine.Platform.Windows;
 
@@ -51,4 +52,7 @@ internal static unsafe partial class User32
 
     [LibraryImport("user32")]
     public static partial RawBool GetClientRect(nint hWnd, RawRectangle* lpRect);
+
+    [LibraryImport("user32")]
+    public static partial short GetAsyncKeyState(VirtualKeys vKey);
 }

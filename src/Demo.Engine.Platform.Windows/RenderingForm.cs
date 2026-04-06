@@ -27,7 +27,7 @@ public partial class RenderingForm : Form, IRenderingControl
     private FormWindowState _currentNonFullscreenState;
     private bool _allowUserResizing;
 
-    //private readonly ILogger<RenderingForm> _logger;
+    private readonly ILogger<RenderingForm> _logger;
     private readonly IMediator _mediator;
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -40,7 +40,7 @@ public partial class RenderingForm : Form, IRenderingControl
     {
         using var loggingContext = logger.LogScopeInitialization();
 
-        //_logger = logger;
+        _logger = logger;
         _mediator = mediator;
         _formSettings = formSettings;
 
@@ -53,10 +53,38 @@ public partial class RenderingForm : Form, IRenderingControl
         _currentNonFullscreenState = FormWindowState.Normal;
 
         SetFullscreen(_formSettings.CurrentValue.Fullscreen);
+
+        ResizeEnd += (sender, args) =>
+        {
+            if (!IsFullscreen)
+            {
+                //_formSettings.CurrentValue.Width = ClientSize.Width;
+                //_formSettings.CurrentValue.Height = ClientSize.Height;
+#pragma warning disable CA1873 // Avoid potentially expensive logging
+                _logger.LogTrace(
+                    "Resize ended, new size: {Width}x{Height}",
+                    ClientSize.Width,
+                    ClientSize.Height);
+#pragma warning restore CA1873 // Avoid potentially expensive logging
+            }
+        };
     }
 
+    public event EventHandler<RenderingControlSizeEventArgs>? UserResized;
+
+    protected void OnUserResized(scoped in RenderingControlSizeEventArgs e)
+        => UserResized?.Invoke(this, e);
+
     protected override void OnResizeEnd(EventArgs e)
-        => base.OnResizeEnd(e);
+    {
+        base.OnResizeEnd(e);
+        var width = new Width(ClientSize.Width);
+        var height = new Height(ClientSize.Height);
+
+        OnUserResized(new RenderingControlSizeEventArgs(
+            ref width,
+            ref height));
+    }
 
     protected override void OnMaximizedBoundsChanged(EventArgs e)
         => base.OnMaximizedBoundsChanged(e);
@@ -123,6 +151,8 @@ public partial class RenderingForm : Form, IRenderingControl
         IsFullscreen = fullscreen;
     }
 
+    private bool _resized = false;
+
     protected override void WndProc(ref Message m)
     {
         if (!IsDisposed && !Disposing)
@@ -173,7 +203,8 @@ public partial class RenderingForm : Form, IRenderingControl
                     //HIWORD
                     var height = Helpers.HIWORD(lparam);
 
-                    var resizingRequest = m.WParam.ToInt64();
+                    var resizingRequest = (SizeValues)m.WParam.ToInt64();
+                    _resized = resizingRequest != SizeValues.SizeMinimized;
 
                     if (height != ClientSize.Height || width != ClientSize.Width)
                     {
@@ -183,6 +214,13 @@ public partial class RenderingForm : Form, IRenderingControl
                     break;
                 }
             }
+        }
+
+        if (_resized && User32.GetAsyncKeyState(VirtualKeys.LButton) >= 0)
+        {
+            Debug.WriteLine($"Resising ended");
+
+            _resized = false;
         }
 
         base.WndProc(ref m);
