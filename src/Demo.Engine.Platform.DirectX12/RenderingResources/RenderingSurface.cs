@@ -36,7 +36,7 @@ internal sealed class RenderingSurface
                 eventArgs.Height);
 #pragma warning restore CA1873 // Avoid potentially expensive logging
 
-            Resize();
+            //Resize();
         };
     }
 

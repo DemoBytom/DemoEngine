@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using Demo.Engine.Core.Interfaces.Platform;
+using Demo.Engine.Core.Maths.Interop;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Notifications.Keyboard;
 using Demo.Engine.Core.Platform;
@@ -19,13 +20,17 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32;
 
 public partial class RenderingForm : Form, IRenderingControl
 {
-    //private readonly FormWindowState _previousWindowState;
+    private FormWindowState _previousWindowState;
+    private Size _cachedSize;
     private readonly IOptionsMonitor<RenderSettings> _formSettings;
 
     private Point _currentNonFullscreenPosition;
     private Size? _currentNonFullScreenSize;
     private FormWindowState _currentNonFullscreenState;
     private bool _allowUserResizing;
+
+    private bool _isUserResizing;
+    private bool _isSizeChangedWithoutResizeBegin;
 
     private readonly ILogger<RenderingForm> _logger;
     private readonly IMediator _mediator;
@@ -51,6 +56,7 @@ public partial class RenderingForm : Form, IRenderingControl
 
         _currentNonFullscreenPosition = DesktopLocation;
         _currentNonFullscreenState = FormWindowState.Normal;
+        _previousWindowState = FormWindowState.Normal;
 
         SetFullscreen(_formSettings.CurrentValue.Fullscreen);
 
@@ -69,25 +75,6 @@ public partial class RenderingForm : Form, IRenderingControl
             }
         };
     }
-
-    public event EventHandler<RenderingControlSizeEventArgs>? UserResized;
-
-    protected void OnUserResized(scoped in RenderingControlSizeEventArgs e)
-        => UserResized?.Invoke(this, e);
-
-    protected override void OnResizeEnd(EventArgs e)
-    {
-        base.OnResizeEnd(e);
-        var width = new Width(ClientSize.Width);
-        var height = new Height(ClientSize.Height);
-
-        OnUserResized(new RenderingControlSizeEventArgs(
-            ref width,
-            ref height));
-    }
-
-    protected override void OnMaximizedBoundsChanged(EventArgs e)
-        => base.OnMaximizedBoundsChanged(e);
 
     /// <summary>
     /// Width of the drawable area
@@ -142,7 +129,7 @@ public partial class RenderingForm : Form, IRenderingControl
             WindowState = _currentNonFullscreenState;
             FormBorderStyle = _allowUserResizing
                 ? FormBorderStyle.Sizable
-                : FormBorderStyle.FixedToolWindow;
+                : FormBorderStyle.FixedSingle;
 
             _formSettings.CurrentValue.Width = ClientSize.Width;
             _formSettings.CurrentValue.Height = ClientSize.Height;
@@ -151,16 +138,36 @@ public partial class RenderingForm : Form, IRenderingControl
         IsFullscreen = fullscreen;
     }
 
-    private bool _resized = false;
-
-    protected override void WndProc(ref Message m)
+    protected override unsafe void WndProc(ref Message m)
     {
+#pragma warning disable CA1873 // Avoid potentially expensive logging
+        _logger.LogTrace(
+            "Received window message: {Message}",
+            (WindowMessageTypes)m.Msg);
+#pragma warning restore CA1873 // Avoid potentially expensive logging
+
         if (!IsDisposed && !Disposing)
         {
             //we run 64bit only
             var wparam = m.WParam.ToInt64();
             switch ((WindowMessageTypes)m.Msg)
             {
+                case (WindowMessageTypes)0x0006:
+                {
+                    var fg = User32.GetForegroundWindow();
+                    if (fg != Handle)
+                    {
+#pragma warning disable CA1873 // Avoid potentially expensive logging
+                        _logger.LogError("Other window {WindowHandle} has received focus, expected {ExpectedHandle}", fg, Handle);
+#pragma warning restore CA1873 // Avoid potentially expensive logging
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Correct window received activation");
+                    }
+                    break;
+                }
+
                 case WindowMessageTypes.KillFocus:
                 {
                     _mediator.Publish(new ClearKeysNotification()).Preserve().GetAwaiter().GetResult();
@@ -198,17 +205,72 @@ public partial class RenderingForm : Form, IRenderingControl
                     var lparam = m.LParam.ToInt32();
 
                     //LOWORD
-                    var width = Helpers.LOWORD(lparam);
+                    var width = new Width(Helpers.LOWORD(lparam));
 
                     //HIWORD
-                    var height = Helpers.HIWORD(lparam);
+                    var height = new Height(Helpers.HIWORD(lparam));
 
                     var resizingRequest = (SizeValues)m.WParam.ToInt64();
-                    _resized = resizingRequest != SizeValues.SizeMinimized;
 
                     if (height != ClientSize.Height || width != ClientSize.Width)
                     {
                     }
+
+                    /***/
+                    if (resizingRequest == SizeValues.SizeMinimized)
+                    {
+                        _previousWindowState = FormWindowState.Minimized;
+                        OnPauseRendering(EventArgs.Empty);
+                    }
+                    else
+                    {
+                        RawRectangle clientRect;
+                        _ = User32.GetClientRect(Handle, &clientRect);
+                        if (clientRect.Bottom - clientRect.Top == 0)
+                        {
+                            // Rapidly clicking the task bar to minimize and restore a window
+                            // can cause a WM_SIZE message with SIZE_RESTORED when 
+                            // the window has actually become minimized due to rapid change
+                            // so just ignore this message
+                        }
+                        else if (resizingRequest == SizeValues.SizeMaximized)
+                        {
+                            if (_previousWindowState == FormWindowState.Minimized)
+                            {
+                                OnResumeRendering(EventArgs.Empty);
+                            }
+
+                            _previousWindowState = FormWindowState.Maximized;
+
+                            OnUserResized(new RenderingControlSizeEventArgs(
+                                ref width,
+                                ref height));
+
+                            _cachedSize = Size;
+                        }
+                        else if (resizingRequest == SizeValues.SizeRestored)
+                        {
+                            if (_previousWindowState == FormWindowState.Minimized)
+                            {
+                                OnResumeRendering(EventArgs.Empty);
+                            }
+
+                            if (!_isUserResizing && (Size != _cachedSize || _previousWindowState == FormWindowState.Maximized))
+                            {
+                                _previousWindowState = FormWindowState.Normal;
+
+                                if (_cachedSize != Size.Empty)
+                                {
+                                    _isSizeChangedWithoutResizeBegin = true;
+                                }
+                            }
+                            else
+                            {
+                                _previousWindowState = FormWindowState.Normal;
+                            }
+                        }
+                    }
+                    /***/
                     Debug.WriteLine(
                         $"New: {width}x{height} vs {ClientSize.Width}x{ClientSize.Height}, requestType {resizingRequest}");
                     break;
@@ -216,13 +278,65 @@ public partial class RenderingForm : Form, IRenderingControl
             }
         }
 
-        if (_resized && User32.GetAsyncKeyState(VirtualKeys.LButton) >= 0)
-        {
-            Debug.WriteLine($"Resising ended");
+        base.WndProc(ref m);
+    }
 
-            _resized = false;
+    protected override void OnResizeBegin(EventArgs e)
+    {
+        _isUserResizing = true;
+
+        base.OnResizeBegin(e);
+        _cachedSize = Size;
+        OnPauseRendering(e);
+    }
+
+    protected override void OnResizeEnd(EventArgs e)
+    {
+        base.OnResizeEnd(e);
+        if (_isUserResizing && _cachedSize != Size)
+        {
+            var width = new Width(ClientSize.Width);
+            var height = new Height(ClientSize.Height);
+
+            OnUserResized(new RenderingControlSizeEventArgs(
+                ref width,
+                ref height));
         }
 
-        base.WndProc(ref m);
+        _isUserResizing = false;
+        OnResumeRendering(e);
+    }
+
+    protected override void OnClientSizeChanged(EventArgs e)
+    {
+        base.OnClientSizeChanged(e);
+
+        if (!_isUserResizing && (_isSizeChangedWithoutResizeBegin || _cachedSize != Size))
+        {
+            _isSizeChangedWithoutResizeBegin = false;
+            _cachedSize = Size;
+
+            var width = new Width(ClientSize.Width);
+            var height = new Height(ClientSize.Height);
+
+            OnUserResized(new RenderingControlSizeEventArgs(
+                ref width,
+                ref height));
+        }
+    }
+
+    public event EventHandler<RenderingControlSizeEventArgs>? UserResized;
+
+    protected virtual void OnUserResized(scoped in RenderingControlSizeEventArgs e)
+        => UserResized?.Invoke(this, e);
+
+    protected virtual void OnPauseRendering(EventArgs eventArgs)
+    {
+        // TODO
+    }
+
+    protected virtual void OnResumeRendering(EventArgs eventArgs)
+    {
+        // TODO
     }
 }

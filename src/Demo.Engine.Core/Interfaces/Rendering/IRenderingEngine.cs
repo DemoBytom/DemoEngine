@@ -30,7 +30,7 @@ public interface IRenderingEngine : IAsyncDisposable
         IEnumerable<IDrawable> drawables,
         uint upsFrame);
 
-    public void LogDebugMessages();
+    void LogDebugMessages();
 
-    public void SetFullscreen(bool fullscreen);
+    void SetFullscreen(bool fullscreen);
 }

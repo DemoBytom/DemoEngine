@@ -23,6 +23,12 @@ internal enum WindowMessageTypes
     ActivateApp = 0x001C,
 
     /// <summary>
+    /// WM_WINDOWPOS: Sent to a window whose size, position, or place in the Z order has changed
+    /// as a result of a call to the SetWindowPos function or another window-management function.
+    /// </summary>
+    WindowPosition = 0x0047,
+
+    /// <summary>
     /// The WM_DISPLAYCHANGE message is sent to all windows when the display resolution has changed.
     /// </summary>
     DisplayChange = 0x007E,
@@ -91,5 +97,5 @@ internal enum WindowMessageTypes
     /// <summary>
     /// WM_POWERBROADCAST: Notifies applications that a power-management event has occurred.
     /// </summary>
-    PowerBroadcast = 0x0218
+    PowerBroadcast = 0x0218,
 }

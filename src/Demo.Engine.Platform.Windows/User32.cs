@@ -55,4 +55,7 @@ internal static unsafe partial class User32
 
     [LibraryImport("user32")]
     public static partial short GetAsyncKeyState(VirtualKeys vKey);
+
+    [LibraryImport("user32")]
+    public static partial IntPtr GetForegroundWindow();
 }
