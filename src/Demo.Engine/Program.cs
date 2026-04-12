@@ -26,7 +26,7 @@ try
             .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
             /*** Windows Only ***/
             .AddScoped<IRenderingControl, RenderingForm>()
-            .AddScoped<IOSMessageHandler, WindowsMessagesHandler>()
+            .AddSingleton<IOSMessageHandler, WindowsMessagesHandler>()
             .AddEngineCore()
             .AddDirectX12()
             /*** End Windows Only ***/

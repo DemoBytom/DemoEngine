@@ -38,7 +38,7 @@ internal static unsafe partial class User32
 {
     public const string LIBRARY_NAME = "user32.dll";
 
-    [LibraryImport("user32")]
+    [LibraryImport("user32", EntryPoint = "PeekMessageW")]
     public static partial RawBool PeekMessageW(NativeMessage* lpMsg, nint hWnd, uint wMsgFilterMin, uint wMsgFilterMax, uint wRemoveMsg);
 
     [LibraryImport("user32")]
@@ -58,4 +58,50 @@ internal static unsafe partial class User32
 
     [LibraryImport("user32")]
     public static partial IntPtr GetForegroundWindow();
+
+    /* debugging */
+    [LibraryImport("user32", EntryPoint = "GetClassNameW", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial int GetClassName(
+        IntPtr hWnd,
+        Span<char> lpClassName,
+        int nMaxCount);
+
+    [LibraryImport("user32", EntryPoint = "GetWindowTextW", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial int GetWindowText(
+        IntPtr hWnd,
+        Span<char> lpString,
+        int nMaxCount);
+
+    [LibraryImport("user32")]
+    public static partial uint GetWindowThreadProcessId(
+        IntPtr hWnd,
+        out uint processId);
+
+    [LibraryImport("user32")]
+    public static partial void DisableProcessWindowsGhosting();
+
+    [Flags]
+    public enum QueueStatusFlags : uint
+    {
+        AllInput = 0x04FF
+    }
+
+    [Flags]
+    public enum WaitFlags : uint
+    {
+        None = 0,
+        Alertable = 0x0002,
+        AllInput = 0x0004
+    }
+
+    [LibraryImport("user32", SetLastError = true)]
+    public static partial uint MsgWaitForMultipleObjectsEx(
+        uint nCount,
+        IntPtr pHandles, // Use IntPtr.Zero if waiting on 0 handles
+        uint dwMilliseconds,
+        QueueStatusFlags dwWakeMask,
+        WaitFlags dwFlags);
+
+    [LibraryImport("user32", SetLastError = false)]
+    internal static partial void PostQuitMessage(int nExitCode);
 }

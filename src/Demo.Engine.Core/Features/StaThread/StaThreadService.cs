@@ -116,7 +116,7 @@ internal sealed class StaThreadService
         IOSMessageHandler osMessageHandler,
         CancellationToken cancellationToken)
     {
-        var doEventsOk = true;
+        var doEventsOkInvoked = true;
 
         await foreach (var staAction in _channelReader
             .ReadAllAsync(cancellationToken)
@@ -126,7 +126,7 @@ internal sealed class StaThreadService
             switch (staAction)
             {
                 case StaThreadRequests.DoEventsOkRequest doEventsOkRequest:
-                    doEventsOk &= await doEventsOkRequest
+                    doEventsOkInvoked &= await doEventsOkRequest
                         .InvokeAsync(renderingEngine, osMessageHandler, cancellationToken)
                         .ConfigureAwait(continueOnCapturedContext: true);
                     break;
@@ -138,7 +138,7 @@ internal sealed class StaThreadService
                     break;
             }
 
-            if (!doEventsOk || !IsRunning || cancellationToken.IsCancellationRequested)
+            if (!doEventsOkInvoked || !IsRunning || cancellationToken.IsCancellationRequested)
             {
                 break;
             }

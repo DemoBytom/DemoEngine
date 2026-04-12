@@ -11,8 +11,9 @@ namespace Demo.Engine.Core.Features.StaThread;
 internal abstract record StaThreadRequests
 {
     public static DoEventsOkRequest DoEventsOk(
-        RenderingSurfaceId renderingSurfaceId)
-        => new(renderingSurfaceId);
+        RenderingSurfaceId renderingSurfaceId,
+        bool blockingCall)
+        => new(renderingSurfaceId, blockingCall);
 
     public static CreateSurfaceRequest CreateSurface()
         => new();
@@ -62,14 +63,14 @@ internal abstract record StaThreadRequests
             try
             {
                 var returnValue = await InvokeFuncInternalAsync(renderingEngine, osMessageHandler, cancellationToken);
-                _tcs.SetResult(returnValue);
+                _ = _tcs.TrySetResult(returnValue);
                 _ = _tcsRegistration?.Unregister();
                 return true;
             }
             catch (Exception ex)
             {
                 _ = _tcsRegistration?.Unregister();
-                _tcs.SetException(ex);
+                _ = _tcs.TrySetException(ex);
             }
             return false;
         }
@@ -87,7 +88,7 @@ internal abstract record StaThreadRequests
             _tcs = new TaskCompletionSource<TResult>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
             _tcsRegistration = cancellationToken.Register(()
-                => _tcs.SetCanceled());
+                => _tcs.TrySetCanceled());
         }
 
         protected void ResetCompleted()
@@ -117,17 +118,18 @@ internal abstract record StaThreadRequests
           IResettable
     {
         private RenderingSurfaceId _renderingSurfaceId;
+        private bool _blockingCall;
 
         public DoEventsOkRequest()
-            : this(RenderingSurfaceId.Empty)
+            : this(RenderingSurfaceId.Empty, blockingCall: false)
         {
-
         }
 
         internal DoEventsOkRequest(
-            RenderingSurfaceId renderingSurfaceId)
+            RenderingSurfaceId renderingSurfaceId,
+            bool blockingCall)
             : base(false)
-            => _renderingSurfaceId = renderingSurfaceId;
+            => (_renderingSurfaceId, _blockingCall) = (renderingSurfaceId, blockingCall);
 
         protected override ValueTask<bool> InvokeFuncInternalAsync(
             IRenderingEngine renderingEngine,
@@ -136,12 +138,17 @@ internal abstract record StaThreadRequests
             => renderingEngine.TryGetRenderingSurface(
                 _renderingSurfaceId,
                 out var renderingSurface)
-            ? ValueTask.FromResult(osMessageHandler.DoEvents(
-                renderingSurface.RenderingControl))
+            ? _blockingCall
+                ? ValueTask.FromResult(osMessageHandler.BlockingDoEvents(
+                    renderingSurface.RenderingControl,
+                    cancellationToken))
+                : ValueTask.FromResult(osMessageHandler.DoEvents(
+                    renderingSurface.RenderingControl))
             : throw new InvalidOperationException("No RenderingSurface provided!");
 
         public void Reset(
             RenderingSurfaceId renderingSurfaceId,
+            bool blockingCall,
             CancellationToken cancellationToken)
         {
             if (renderingSurfaceId == RenderingSurfaceId.Empty)
@@ -153,6 +160,7 @@ internal abstract record StaThreadRequests
                 Reset(cancellationToken);
             }
             _renderingSurfaceId = renderingSurfaceId;
+            _blockingCall = blockingCall;
         }
 
         public bool TryReset()
@@ -162,7 +170,7 @@ internal abstract record StaThreadRequests
                 return false;
             }
 
-            Reset(RenderingSurfaceId.Empty, CancellationToken.None);
+            Reset(RenderingSurfaceId.Empty, blockingCall: false, CancellationToken.None);
 
             return true;
         }

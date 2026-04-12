@@ -18,7 +18,9 @@ public static class HostExtensions
         this IHostBuilder hostBuilder)
     {
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
+            .MinimumLevel.Information()//.Verbose()
+                                       //.MinimumLevel.Override(
+                                       //    "Demo.Engine.Core.Services.FpsTimer", Serilog.Events.LogEventLevel.Information)
             .Enrich.FromLogContext()
             .WriteTo.Async(writeTo =>
                 writeTo.Console()

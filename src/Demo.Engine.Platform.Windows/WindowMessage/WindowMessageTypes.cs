@@ -6,6 +6,14 @@ namespace Demo.Engine.Platform.Windows.WindowMessage;
 internal enum WindowMessageTypes
 {
     /// <summary>
+    /// WM_DESTROY: Sent when a window is being destroyed.
+    /// It is sent to the window procedure of the window being destroyed after the window is removed from the screen.
+    /// This message is sent first to the window being destroyed and then to the child windows (if any) as they are destroyed.
+    /// During the processing of the message, it can be assumed that all child windows still exist.
+    /// </summary>
+    Destroy = 0x0002,
+
+    /// <summary>
     /// WM_SIZE: Sent to a window after its size has changed.
     /// </summary>
     Size = 0x0005,
@@ -39,7 +47,7 @@ internal enum WindowMessageTypes
     /// The WM_NCDESTROY message is sent after the child windows have been destroyed. In contrast, WM_DESTROY is sent before the child windows are destroyed.
     ///</para>
     /// </summary>
-    Destroy = 0x0082,
+    NcDestroy = 0x0082,
 
     /// <summary>
     /// WM_KEYDOWN: Posted to the window with the keyboard focus when a nonsystem key is pressed.

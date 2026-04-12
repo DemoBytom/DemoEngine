@@ -5,6 +5,8 @@ namespace Demo.Engine.Core.Interfaces.Platform;
 
 public interface IOSMessageHandler
 {
+    bool BlockingDoEvents(IRenderingControl control, CancellationToken cancellationToken);
+
     /// <summary>
     /// Call this on each tick of the main loop to process all Windows messages in the queue
     /// </summary>

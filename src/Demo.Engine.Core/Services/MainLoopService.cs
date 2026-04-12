@@ -45,7 +45,9 @@ internal sealed class MainLoopService
         {
             try
             {
-                await DoAsync(renderingEngine);
+                await Task.WhenAll(
+                    DoAsync(renderingEngine),
+                    DoEventsAsync(renderingEngine));
             }
             catch (TaskCanceledException)
             {
@@ -66,13 +68,20 @@ internal sealed class MainLoopService
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
 
+        //await Task.Delay(10_000);
         var surfaces = new RenderingSurfaceId[]
         {
             await _staThreadWriter.CreateSurface(
                 _mainLoopLifetime.Token),
-            //await _channelWriter.CreateSurface(
-            //    _mainLoopLifetime.Token),
+            await _staThreadWriter.CreateSurface(
+                _mainLoopLifetime.Token),
         };
+
+        if (surfaces is [var mainFormId, ..]
+            && renderingEngine.TryGetRenderingSurface(mainFormId, out var mainForm))
+        {
+            mainForm.RenderingControl.RenderingFormClosed += (_, _) => _mainLoopLifetime.Cancel();
+        }
 
         var previous = Stopwatch.GetTimestamp();
         var lag = TimeSpan.Zero;
@@ -123,9 +132,9 @@ internal sealed class MainLoopService
             //Render
             foreach (var renderingSurfaceId in surfaces)
             {
-                doEventsOk &= await _staThreadWriter.DoEventsOk(
-                    renderingSurfaceId,
-                    _mainLoopLifetime.Token);
+                //doEventsOk &= await _staThreadWriter.DoEventsOk(
+                //    renderingSurfaceId,
+                //    _mainLoopLifetime.Token);
 
                 using var scope = _fpsTimer.StartRenderingTimerScope(
                     renderingSurfaceId);
@@ -134,8 +143,39 @@ internal sealed class MainLoopService
                     renderingEngine,
                     renderingSurfaceId);
             }
+            //await Task.Delay(15).ConfigureAwait(true);
         }
         _mainLoopLifetime.Cancel();
+    }
+
+    private long _doEventsCnt = 0;
+    private async Task DoEventsAsync(
+        IRenderingEngine renderingEngine)
+    {
+        var doEventsOk = true;
+        try
+        {
+            do
+            {
+                var surfaces = renderingEngine.RenderingSurfaces;
+                foreach (var renderingSurfaceId in surfaces)
+                {
+                    doEventsOk &= await _staThreadWriter.BlockingDoEventsOk(
+                        renderingSurfaceId.ID,
+                        _mainLoopLifetime.Token);
+                    _doEventsCnt += 1;
+                }
+            } while (doEventsOk
+                /*&& !_disposedValue
+                && !_mainLoopLifetime.Token.IsCancellationRequested*/);
+        }
+        finally
+        {
+#pragma warning disable CA1873 // Avoid potentially expensive logging
+            _logger.LogInformation("Called DoEvents {Count} times", _doEventsCnt);
+#pragma warning restore CA1873 // Avoid potentially expensive logging
+            _mainLoopLifetime.Cancel();
+        }
     }
 
     private async ValueTask Dispose(bool disposing)

@@ -13,4 +13,8 @@ internal interface IStaThreadWriter
     ValueTask<bool> DoEventsOk(
         RenderingSurfaceId renderingSurfaceId,
         CancellationToken cancellationToken = default);
+
+    ValueTask<bool> BlockingDoEventsOk(
+        RenderingSurfaceId renderingSurfaceId,
+        CancellationToken cancellationToken = default);
 }

@@ -36,7 +36,29 @@ internal sealed class StaThreadWriter(
 
         try
         {
-            request.Reset(renderingSurfaceId, cancellationToken);
+            request.Reset(renderingSurfaceId, blockingCall: false, cancellationToken);
+
+            await _channelWriter.WriteAsync(
+                request,
+                cancellationToken);
+
+            return await request.Invoked;
+        }
+        finally
+        {
+            _doEventsOkPool.Return(request);
+        }
+    }
+
+    public async ValueTask<bool> BlockingDoEventsOk(
+        RenderingSurfaceId renderingSurfaceId,
+        CancellationToken cancellationToken = default)
+    {
+        var request = _doEventsOkPool.Get();
+
+        try
+        {
+            request.Reset(renderingSurfaceId, blockingCall: true, cancellationToken);
 
             await _channelWriter.WriteAsync(
                 request,
