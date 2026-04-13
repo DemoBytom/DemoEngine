@@ -31,6 +31,7 @@
 using System.Runtime.InteropServices;
 using Demo.Engine.Core.Maths.Interop;
 using Demo.Engine.Core.Platform;
+using Demo.Engine.Platform.Windows.WindowMessage;
 
 namespace Demo.Engine.Platform.Windows;
 
@@ -41,6 +42,41 @@ internal static unsafe partial class User32
     [LibraryImport("user32", EntryPoint = "PeekMessageW")]
     public static partial RawBool PeekMessageW(NativeMessage* lpMsg, nint hWnd, uint wMsgFilterMin, uint wMsgFilterMax, uint wRemoveMsg);
 
+    /// <summary>
+    /// Retrieves a message from the calling thread's message queue. The function dispatches incoming sent messages until a posted message is available for retrieval.
+    /// <para/>
+    /// Unlike GetMessage, the <see cref="PeekMessageW(NativeMessage*, nint, uint, uint, uint)"/> function does not wait for a message to be posted before returning.
+    /// </summary>
+    /// <param name="lpMsg">A pointer to an MSG structure that receives message information from the thread's message queue.</param>
+    /// <param name="hWnd">
+    /// A handle to the window whose messages are to be retrieved. The window must belong to the current thread.
+    /// <para/>
+    /// If hWnd is NULL, GetMessage retrieves messages for any window that belongs to the current thread, and any messages on the current thread's message queue whose hwnd value is NULL (see the MSG structure). Therefore if hWnd is NULL, both window messages and thread messages are processed.
+    /// <para/>
+    /// If hWnd is -1, GetMessage retrieves only messages on the current thread's message queue whose hwnd value is NULL, that is, thread messages as posted by PostMessage (when the hWnd parameter is NULL) or PostThreadMessage.
+    /// </param>
+    /// <param name="wMsgFilterMin">
+    /// The integer value of the lowest message value to be retrieved. Use WM_KEYFIRST (0x0100) to specify the first keyboard message or WM_MOUSEFIRST (0x0200) to specify the first mouse message.
+    /// <para/>
+    /// Use WM_INPUT here and in wMsgFilterMax to specify only the WM_INPUT messages.
+    /// <para/>
+    /// If wMsgFilterMin and wMsgFilterMax are both zero, GetMessage returns all available messages(that is, no range filtering is performed).
+    /// </param>
+    /// <param name="wMsgFilterMax">
+    /// The integer value of the highest message value to be retrieved. Use WM_KEYLAST to specify the last keyboard message or WM_MOUSELAST to specify the last mouse message.
+    ///<para/>
+    /// Use WM_INPUT here and in wMsgFilterMin to specify only the WM_INPUT messages.
+    /// <para/>
+    /// If wMsgFilterMin and wMsgFilterMax are both zero, GetMessage returns all available messages(that is, no range filtering is performed).
+    /// </param>
+    /// <returns>
+    /// If the function retrieves a message other than <see cref="WindowMessageTypes.Quit"/>, the return value is nonzero.
+    /// <para/>
+    /// If the function retrieves the <see cref="WindowMessageTypes.Quit"/> message, the return value is zero.
+    /// <para/>
+    /// If there is an error, the return value is -1. For example, the function fails if hWnd is an invalid window handle or lpMsg is an invalid pointer.
+    /// To get extended error information, call GetLastError.
+    /// </returns>
     [LibraryImport("user32")]
     public static partial RawBool GetMessageW(NativeMessage* lpMsg, nint hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
 

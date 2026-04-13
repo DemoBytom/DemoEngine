@@ -372,11 +372,7 @@ public partial class RenderingForm : Form, IRenderingControl
     public event EventHandler<EventArgs>? RenderingFormClosed;
 
     protected virtual void OnRenderingFormClosed(FormClosedEventArgs eventArgs)
-    {
-        RenderingFormClosed?.Invoke(this, eventArgs);
-
-        User32.PostQuitMessage(0);
-    }
+        => RenderingFormClosed?.Invoke(this, eventArgs);
 
     /// <summary>
     /// Clean up any resources being used.

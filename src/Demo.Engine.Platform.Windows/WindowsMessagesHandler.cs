@@ -3,7 +3,7 @@
 
 using System.Runtime.InteropServices;
 using Demo.Engine.Core.Interfaces.Platform;
-using Demo.Engine.Platform.Windows.WindowMessage;
+using Demo.Engine.Core.Maths.Interop;
 using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Platform.Windows;
@@ -25,13 +25,6 @@ public class WindowsMessagesHandler : IOSMessageHandler
         var isControlAlive = !control.IsDisposed;
         if (isControlAlive)
         {
-            //_ = User32.MsgWaitForMultipleObjectsEx(
-            //    0,
-            //    IntPtr.Zero,
-            //    0,
-            //    User32.QueueStatusFlags.AllInput,
-            //    User32.WaitFlags.Alertable);
-
             var localHandle = control.Handle;
             if (localHandle != IntPtr.Zero)
             {
@@ -48,15 +41,6 @@ public class WindowsMessagesHandler : IOSMessageHandler
                         return false;
                     }
 
-                    if (msg.Message == (uint)WindowMessageTypes.NcDestroy)
-                    {
-                        isControlAlive = false;
-                    }
-                    if (msg.Message == (uint)WindowMessageTypes.Destroy)
-                    {
-                        isControlAlive = false;
-                    }
-
                     var message = Message.Create(
                         hWnd: msg.HWnd,
                         msg: (int)(nint)msg.Message,
@@ -67,18 +51,6 @@ public class WindowsMessagesHandler : IOSMessageHandler
                     {
                         _ = User32.TranslateMessage(&msg);
                         _ = User32.DispatchMessageW(&msg);
-
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-                        _logger.LogTrace("Dispatched message {MessageId} with Handle {MessageHandle} to controll {ControlHandle}",
-                            message.Msg,
-                            message.HWnd,
-                            control.IsDisposed ? nint.Zero : control.Handle);
-                        InspectWindow(message.HWnd);
-#pragma warning restore CA1873 // Avoid potentially expensive logging
-                    }
-                    else
-                    {
-
                     }
                 }
             }
@@ -88,6 +60,8 @@ public class WindowsMessagesHandler : IOSMessageHandler
 
     public unsafe bool BlockingDoEvents(IRenderingControl control, CancellationToken cancellationToken)
     {
+        using var tokenRegistration = cancellationToken.Register(() => User32.PostQuitMessage(0));
+
         var isControlAlive = !control.IsDisposed;
         if (isControlAlive)
         {
@@ -95,30 +69,20 @@ public class WindowsMessagesHandler : IOSMessageHandler
             if (localHandle != IntPtr.Zero)
             {
                 NativeMessage msg;
-                //while (User32.PeekMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0, wRemoveMsg: 0))
-                while (User32.GetMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0) is var getMessageW && !cancellationToken.IsCancellationRequested)
-                {
-                    //var getMessageW = User32.GetMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0);
+                RawBool getMessageW;
 
+                while (getMessageW = User32.GetMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0) == true
+                    /*cancellation token is required here in case an ESC is used to exit. 
+                     * For now it doesn't seem to properly signal quit message? 
+                     * Need to investigate why, because cancelling it should trigger User32.PostQuitMessage and end the pump..
+                     * Maybe the StaThreadService is already down and cannot process it anymore? */
+                    && !cancellationToken.IsCancellationRequested
+                    )
+                {
                     if ((int)getMessageW == -1)
                     {
                         _logger.LogErroInMainLoopProcessingWindowsMessages(
                             Marshal.GetLastWin32Error);
-
-                        return false;
-                    }
-
-                    if (msg.Message == (uint)WindowMessageTypes.NcDestroy)
-                    {
-                        isControlAlive = false;
-                    }
-                    if (msg.Message == (uint)WindowMessageTypes.Destroy)
-                    {
-                        isControlAlive = false;
-                        return false;
-                    }
-                    if (msg.Message == (uint)18)
-                    {
 
                         return false;
                     }
@@ -133,43 +97,13 @@ public class WindowsMessagesHandler : IOSMessageHandler
                     {
                         _ = User32.TranslateMessage(&msg);
                         _ = User32.DispatchMessageW(&msg);
-
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-                        _logger.LogTrace("Dispatched message {MessageId} with Handle {MessageHandle} to controll {ControlHandle}",
-                            message.Msg,
-                            message.HWnd,
-                            control.IsDisposed ? nint.Zero : control.Handle);
-                        InspectWindow(message.HWnd);
-#pragma warning restore CA1873 // Avoid potentially expensive logging
-                    }
-                    else
-                    {
-
                     }
                 }
             }
         }
+
         return isControlAlive
-            && !cancellationToken.IsCancellationRequested;
-    }
-
-    void InspectWindow(IntPtr hwnd)
-    {
-        Span<char> classBuffer = stackalloc char[256];
-        var classLen = User32.GetClassName(hwnd, classBuffer, classBuffer.Length);
-        var className = new string(classBuffer.Slice(0, classLen));
-
-        Span<char> textBuffer = stackalloc char[256];
-        var textLen = User32.GetWindowText(hwnd, textBuffer, textBuffer.Length);
-        var title = new string(textBuffer[..textLen]);
-
-        var tid = User32.GetWindowThreadProcessId(hwnd, out var pid);
-
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-#pragma warning disable CA1727 // Use PascalCase for named placeholders
-        _logger.LogTrace("HWND: {hwnd} Class: {className} Title: {title} PID: {pid} TID: {tid}",
-            hwnd, className, title, pid, tid);
-#pragma warning restore CA1727 // Use PascalCase for named placeholders
-#pragma warning restore CA1873 // Avoid potentially expensive logging
+            && !cancellationToken.IsCancellationRequested
+            ;
     }
 }

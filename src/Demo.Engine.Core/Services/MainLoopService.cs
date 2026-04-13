@@ -160,10 +160,10 @@ internal sealed class MainLoopService
                 var surfaces = renderingEngine.RenderingSurfaces;
                 foreach (var renderingSurfaceId in surfaces)
                 {
+                    _doEventsCnt += 1;
                     doEventsOk &= await _staThreadWriter.BlockingDoEventsOk(
                         renderingSurfaceId.ID,
                         _mainLoopLifetime.Token);
-                    _doEventsCnt += 1;
                 }
             } while (doEventsOk
                 /*&& !_disposedValue

@@ -24,6 +24,11 @@ internal enum WindowMessageTypes
     KillFocus = 0x0008,
 
     /// <summary>
+    /// WM_QUIT: Indicates a request to terminate an application, and is generated when the application calls the PostQuitMessage function. This message causes the GetMessage function to return zero.
+    /// </summary>
+    Quit = 0x0012,
+
+    /// <summary>
     /// WM_ACTIVATEAPP: Sent when a window belonging to a different application than the active
     /// window is about to be activated. The message is sent to the application whose window is
     /// being activated and to the application whose window is being deactivated.
