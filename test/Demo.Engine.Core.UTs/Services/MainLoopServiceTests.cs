@@ -51,18 +51,20 @@ public class MainLoopServiceTests
             _subLoopJob);
 
     [Test]
+    [Timeout(10_000)]
     [SuppressMessage(
         category: "Reliability",
         checkId: "CA2012:Use ValueTasks correctly",
         Justification = "There are several ValueTasks that report as not being awaited, because they are actually only nSubstitute mock setups/verifies")]
-    public async Task MainLoopService_Constructor_Starts_Loop_And_Can_Be_Properly_Finished()
+    public async Task MainLoopService_Constructor_Starts_Loop_And_Can_Be_Properly_Finished(
+        CancellationToken cancellationToken)
     {
         // Arrange
         var keyboardCacheSub = Substitute.For<IKeyboardCache>();
         var keyboardCharCache = new KeyboardCharCache(keyboardCacheSub);
         var keyboardHandle = new KeyboardHandle(keyboardCacheSub);
 
-        var cts = new CancellationTokenSource();
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _ = _subMainLoopLifetime.Token.Returns(cts.Token);
 
         _ = _subMediator
@@ -109,7 +111,7 @@ public class MainLoopServiceTests
                 new ValueTask());
 
         _ = _subStaThreadWriter
-            .DoEventsOk(
+            .BlockingDoEventsOk(
                 renderingSurfaceId: renderingSurfaceId,
                 cancellationToken: cts.Token)
             .Returns(

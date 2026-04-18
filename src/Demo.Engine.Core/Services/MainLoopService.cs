@@ -183,8 +183,9 @@ internal sealed class MainLoopService
                         _mainLoopLifetime.Token);
                 }
             } while (doEventsOk
-                /*&& !_disposedValue
-                && !_mainLoopLifetime.Token.IsCancellationRequested*/);
+                // Currently the unit test relies on those conditions
+                && !_disposedValue
+                && !_mainLoopLifetime.Token.IsCancellationRequested);
         }
         finally
         {
