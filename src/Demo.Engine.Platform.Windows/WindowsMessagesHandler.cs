@@ -72,7 +72,7 @@ public class WindowsMessagesHandler : IOSMessageHandler
                 RawBool getMessageW;
 
                 while (getMessageW = User32.GetMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0) == true
-                    /*cancellation token is required here in case an ESC is used to exit. 
+                    /* cancellation token is required here in case an ESC is used to exit. 
                      * For now it doesn't seem to properly signal quit message? 
                      * Need to investigate why, because cancelling it should trigger User32.PostQuitMessage and end the pump..
                      * Maybe the StaThreadService is already down and cannot process it anymore? */

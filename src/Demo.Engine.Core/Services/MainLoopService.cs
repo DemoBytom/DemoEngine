@@ -69,12 +69,12 @@ internal sealed class MainLoopService
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
 
         //await Task.Delay(10_000);
-        var surfaces = new RenderingSurfaceId[]
+        var surfaces = new List<RenderingSurfaceId>
         {
             await _staThreadWriter.CreateSurface(
                 _mainLoopLifetime.Token),
-            await _staThreadWriter.CreateSurface(
-                _mainLoopLifetime.Token),
+            //await _staThreadWriter.CreateSurface(
+            //    _mainLoopLifetime.Token),
         };
 
         if (surfaces is [var mainFormId, ..]
@@ -89,7 +89,7 @@ internal sealed class MainLoopService
         var msPerUpdate = TimeSpan.FromSeconds(1) / 60;
 
         var doEventsOk = true;
-
+        var cnt = 0;
         while (
             doEventsOk
             //&& IsRunning
@@ -109,6 +109,9 @@ internal sealed class MainLoopService
                 //Update
                 // TODO - fix the UPS timer.. somehow :D
                 _fpsTimer.StopUpdateTimer();
+                RenderingSurfaceId? sId = null;
+
+                ++cnt;
                 foreach (var renderingSurfaceId in surfaces)
                 {
                     if (!renderingEngine.TryGetRenderingSurface(
@@ -124,6 +127,20 @@ internal sealed class MainLoopService
                           renderingSurface,
                           keyboardHandle,
                           keyboardCharCache);
+
+                    if (cnt == 10 * 60)
+                    {
+                        sId = await renderingSurface.RenderingControl.CreateSurface(
+                            renderingEngine,
+                            _mainLoopLifetime.Token);
+
+                        cnt = 0;
+                    }
+                }
+                if (sId is not null)
+                {
+                    surfaces.Add(sId.Value);
+                    sId = null;
                 }
                 lag -= msPerUpdate;
                 _fpsTimer.StartUpdateTimer();

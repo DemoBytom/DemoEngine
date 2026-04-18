@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using Demo.Engine.Core.Interfaces.Platform;
+using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Maths.Interop;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Notifications.Keyboard;
@@ -18,6 +19,9 @@ using Microsoft.Extensions.Options;
 
 namespace Demo.Engine.Windows.Platform.Netstandard.Win32;
 
+// As we can't currently design in VS in the runtime solution,
+// mark as "Default" so this opens in code view by default.
+[DesignerCategory("Default")]
 public partial class RenderingForm : Form, IRenderingControl
 {
     private FormWindowState _previousWindowState;
@@ -48,10 +52,8 @@ public partial class RenderingForm : Form, IRenderingControl
         _logger = logger;
         _mediator = mediator;
         _formSettings = formSettings;
-
         Name = "RenderingForm";
         Text = "Demo Engine";
-
         InitializeComponent();
 
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
@@ -78,6 +80,13 @@ public partial class RenderingForm : Form, IRenderingControl
             }
         };
     }
+
+    public async ValueTask<RenderingSurfaceId> CreateSurface(
+        IRenderingEngine renderingEngine,
+        CancellationToken cancellationToken = default)
+        => await InvokeAsync(
+            renderingEngine.CreateSurfaceAsync,
+            cancellationToken);
 
     /// <summary>
     /// Width of the drawable area
