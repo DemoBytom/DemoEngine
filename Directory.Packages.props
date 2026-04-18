@@ -47,5 +47,7 @@
     <PackageVersion Include="coveralls.net" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup Label="Transitive packages">
+    <PackageVersion Include="NuGet.Packaging" Version="[7.3.1,)" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="[10.0.6,)" />
   </ItemGroup>
 </Project>
