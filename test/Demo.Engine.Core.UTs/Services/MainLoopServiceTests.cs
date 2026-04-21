@@ -83,6 +83,7 @@ public class MainLoopServiceTests
 
         var renderingSurfaceId = RenderingSurfaceId.NewId();
         _ = _subStaThreadWriter.CreateSurface(
+            _subRenderingEngine,
             cts.Token)
             .Returns(
                 Task.FromResult(
@@ -112,6 +113,8 @@ public class MainLoopServiceTests
 
         _ = _subStaThreadWriter
             .BlockingDoEventsOk(
+                _subRenderingEngine,
+                null!,
                 renderingSurfaceId: renderingSurfaceId,
                 cancellationToken: cts.Token)
             .Returns(

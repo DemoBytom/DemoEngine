@@ -2,6 +2,8 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Threading.Channels;
+using Demo.Engine.Core.Interfaces.Platform;
+using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.ObjectPool;
 
@@ -18,9 +20,10 @@ internal sealed class StaThreadWriter(
     private bool _disposedValue;
 
     public async Task<RenderingSurfaceId> CreateSurface(
+        IRenderingEngine renderingEngine,
         CancellationToken cancellationToken = default)
     {
-        var createSurfaceRequest = StaThreadRequests.CreateSurface();
+        var createSurfaceRequest = StaThreadRequests.CreateSurface(renderingEngine);
         await _channelWriter.WriteAsync(
                 createSurfaceRequest,
                 cancellationToken);
@@ -29,6 +32,8 @@ internal sealed class StaThreadWriter(
     }
 
     public async ValueTask<bool> DoEventsOk(
+        IRenderingEngine renderingEngine,
+        IOSMessageHandler osMessageHandler,
         RenderingSurfaceId renderingSurfaceId,
         CancellationToken cancellationToken = default)
     {
@@ -36,7 +41,7 @@ internal sealed class StaThreadWriter(
 
         try
         {
-            request.Reset(renderingSurfaceId, blockingCall: false, cancellationToken);
+            request.Reset(renderingEngine, osMessageHandler, renderingSurfaceId, blockingCall: false, cancellationToken);
 
             await _channelWriter.WriteAsync(
                 request,
@@ -51,6 +56,8 @@ internal sealed class StaThreadWriter(
     }
 
     public async ValueTask<bool> BlockingDoEventsOk(
+        IRenderingEngine renderingEngine,
+        IOSMessageHandler osMessageHandler,
         RenderingSurfaceId renderingSurfaceId,
         CancellationToken cancellationToken = default)
     {
@@ -58,7 +65,7 @@ internal sealed class StaThreadWriter(
 
         try
         {
-            request.Reset(renderingSurfaceId, blockingCall: true, cancellationToken);
+            request.Reset(renderingEngine, osMessageHandler, renderingSurfaceId, blockingCall: true, cancellationToken);
 
             await _channelWriter.WriteAsync(
                 request,

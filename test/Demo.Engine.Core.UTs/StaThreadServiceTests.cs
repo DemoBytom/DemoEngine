@@ -215,8 +215,6 @@ public class StaThreadServiceTests
         : StaThreadWorkInner<bool>
     {
         protected override ValueTask<bool> InvokeFuncInternalAsync(
-            IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler,
             CancellationToken cancellationToken = default)
         {
             Thread.CurrentThread.Name.ShouldBe(ExpectedThreadName);

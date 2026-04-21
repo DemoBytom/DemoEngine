@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!--WinExe spawns the app without a console window-->
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Platforms>x64;ARM64</Platforms>

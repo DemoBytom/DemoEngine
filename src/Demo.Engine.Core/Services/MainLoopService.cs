@@ -46,8 +46,8 @@ internal sealed class MainLoopService
             try
             {
                 await Task.WhenAll(
-                    DoAsync(renderingEngine),
-                    DoEventsAsync(renderingEngine));
+                    DoAsync(renderingEngine)/*,
+                    DoEventsAsync(renderingEngine)*/);
             }
             catch (TaskCanceledException)
             {
@@ -72,6 +72,7 @@ internal sealed class MainLoopService
         var surfaces = new List<RenderingSurfaceId>
         {
             await _staThreadWriter.CreateSurface(
+                renderingEngine,
                 _mainLoopLifetime.Token),
             //await _staThreadWriter.CreateSurface(
             //    _mainLoopLifetime.Token),
@@ -179,6 +180,8 @@ internal sealed class MainLoopService
                 {
                     _doEventsCnt += 1;
                     doEventsOk &= await _staThreadWriter.BlockingDoEventsOk(
+                        renderingEngine,
+                        null!,
                         renderingSurfaceId.ID,
                         _mainLoopLifetime.Token);
                 }

@@ -8,22 +8,23 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace Demo.Engine.Core.Features.StaThread;
 
-internal abstract record StaThreadRequests
+public abstract record StaThreadRequests
 {
     public static DoEventsOkRequest DoEventsOk(
+        IRenderingEngine renderingEngine,
+        IOSMessageHandler osMessageHandler,
         RenderingSurfaceId renderingSurfaceId,
         bool blockingCall)
-        => new(renderingSurfaceId, blockingCall);
+        => new(renderingEngine, osMessageHandler, renderingSurfaceId, blockingCall);
 
-    public static CreateSurfaceRequest CreateSurface()
-        => new();
+    public static CreateSurfaceRequest CreateSurface(
+        IRenderingEngine renderingEngine)
+        => new(renderingEngine);
 
     public abstract ValueTask<bool> InvokeAsync(
-            IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler,
             CancellationToken cancellationToken = default);
 
-    internal abstract record StaThreadWorkInner<TResult>
+    public abstract record StaThreadWorkInner<TResult>
         : StaThreadRequests
     {
         private static TaskCompletionSource<TResult> Empty { get; }
@@ -46,13 +47,9 @@ internal abstract record StaThreadRequests
             => _tcs.Task;
 
         protected abstract ValueTask<TResult> InvokeFuncInternalAsync(
-            IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler,
             CancellationToken cancellationToken = default);
 
         public override async ValueTask<bool> InvokeAsync(
-            IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler,
             CancellationToken cancellationToken = default)
         {
             if (Invoked.IsCompleted)
@@ -62,7 +59,7 @@ internal abstract record StaThreadRequests
 
             try
             {
-                var returnValue = await InvokeFuncInternalAsync(renderingEngine, osMessageHandler, cancellationToken);
+                var returnValue = await InvokeFuncInternalAsync(cancellationToken);
                 _ = _tcs.TrySetResult(returnValue);
                 _ = _tcsRegistration?.Unregister();
                 return true;
@@ -103,50 +100,56 @@ internal abstract record StaThreadRequests
             _tcs = Empty;
         }
     }
-    internal sealed record CreateSurfaceRequest
+    public sealed record CreateSurfaceRequest(
+        IRenderingEngine RenderingEngine)
         : StaThreadWorkInner<RenderingSurfaceId>
     {
         protected override async ValueTask<RenderingSurfaceId> InvokeFuncInternalAsync(
-            IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler,
             CancellationToken cancellationToken = default)
-            => await renderingEngine.CreateSurfaceAsync(cancellationToken);
+            => await RenderingEngine.CreateSurfaceAsync(cancellationToken);
     }
 
-    internal sealed record DoEventsOkRequest
+    public sealed record DoEventsOkRequest
         : StaThreadWorkInner<bool>,
           IResettable
     {
+        private IRenderingEngine _renderingEngine;
+        private IOSMessageHandler _osMessageHandler;
         private RenderingSurfaceId _renderingSurfaceId;
         private bool _blockingCall;
 
         public DoEventsOkRequest()
-            : this(RenderingSurfaceId.Empty, blockingCall: false)
+            : this(
+                  null!,
+                  null!,
+                  RenderingSurfaceId.Empty, blockingCall: false)
         {
         }
 
         internal DoEventsOkRequest(
+            IRenderingEngine renderingEngine,
+            IOSMessageHandler osMessageHandler,
             RenderingSurfaceId renderingSurfaceId,
             bool blockingCall)
             : base(false)
-            => (_renderingSurfaceId, _blockingCall) = (renderingSurfaceId, blockingCall);
+            => (_renderingEngine, _osMessageHandler, _renderingSurfaceId, _blockingCall) = (renderingEngine, osMessageHandler, renderingSurfaceId, blockingCall);
 
         protected override ValueTask<bool> InvokeFuncInternalAsync(
-            IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler,
             CancellationToken cancellationToken = default)
-            => renderingEngine.TryGetRenderingSurface(
+            => _renderingEngine.TryGetRenderingSurface(
                 _renderingSurfaceId,
                 out var renderingSurface)
             ? _blockingCall
-                ? ValueTask.FromResult(osMessageHandler.BlockingDoEvents(
+                ? ValueTask.FromResult(_osMessageHandler.BlockingDoEvents(
                     renderingSurface.RenderingControl,
                     cancellationToken))
-                : ValueTask.FromResult(osMessageHandler.DoEvents(
+                : ValueTask.FromResult(_osMessageHandler.DoEvents(
                     renderingSurface.RenderingControl))
             : throw new InvalidOperationException("No RenderingSurface provided!");
 
         public void Reset(
+            IRenderingEngine renderingEngine,
+            IOSMessageHandler osMessageHandler,
             RenderingSurfaceId renderingSurfaceId,
             bool blockingCall,
             CancellationToken cancellationToken)
@@ -159,6 +162,8 @@ internal abstract record StaThreadRequests
             {
                 Reset(cancellationToken);
             }
+            _renderingEngine = renderingEngine;
+            _osMessageHandler = osMessageHandler;
             _renderingSurfaceId = renderingSurfaceId;
             _blockingCall = blockingCall;
         }
@@ -170,7 +175,10 @@ internal abstract record StaThreadRequests
                 return false;
             }
 
-            Reset(RenderingSurfaceId.Empty, blockingCall: false, CancellationToken.None);
+            Reset(
+                renderingEngine: null!,
+                osMessageHandler: null!,
+                RenderingSurfaceId.Empty, blockingCall: false, CancellationToken.None);
 
             return true;
         }

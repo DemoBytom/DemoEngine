@@ -2,7 +2,6 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Reflection;
-using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Requests;
 using Mediator;
@@ -76,13 +75,13 @@ internal sealed class EngineService(
             var mainLoopService = serviceProvider.GetRequiredService<IMainLoopService>();
             var executeAsync = mainLoopService.ExecutingTask;
 
-            var staThreadService = serviceProvider.GetRequiredService<IStaThreadService>();
-            var runStaThread = staThreadService.ExecutingTask;
+            //var staThreadService = serviceProvider.GetRequiredService<IStaThreadService>();
+            //var runStaThread = staThreadService.ExecutingTask;
 
             await Task.WhenAll(
                 [
-                    executeAsync,
-                    runStaThread
+                    executeAsync/*,
+                    runStaThread*/
                 ]);
         }
         catch (OperationCanceledException)
@@ -97,6 +96,7 @@ internal sealed class EngineService(
         {
             if (!_stopRequested)
             {
+                //await Task.Delay(10_000);
                 await scope.DisposeAsync();
                 _hostApplicationLifetime.StopApplication();
             }

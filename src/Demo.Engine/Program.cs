@@ -28,6 +28,7 @@ try
             .AddScoped<IRenderingControl, RenderingForm>()
             .AddSingleton<IOSMessageHandler, WindowsMessagesHandler>()
             .AddEngineCore()
+            .AddHostedService<WindowsMessagePump>()
             .AddDirectX12()
             /*** End Windows Only ***/
             .AddMediator(options =>

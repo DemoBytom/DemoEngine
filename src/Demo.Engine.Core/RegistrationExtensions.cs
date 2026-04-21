@@ -27,16 +27,16 @@ public static class RegistrationExtensions
                 .AddStaThreadFeature()
                 ;
 
-    internal static IServiceCollection AddScopedBoundedChannel<T>(
+    internal static IServiceCollection AddSingletonBoundedChannel<T>(
         this IServiceCollection services,
             BoundedChannelOptions options)
         => services
-            .AddScoped(_
+            .AddSingleton(_
                 => Channel.CreateBounded<T>(
                     options))
-            .AddScoped(sp
+            .AddSingleton(sp
                 => sp.GetRequiredService<Channel<T>>().Reader)
-            .AddScoped(sp
+            .AddSingleton(sp
                 => sp.GetRequiredService<Channel<T>>().Writer)
         ;
 }

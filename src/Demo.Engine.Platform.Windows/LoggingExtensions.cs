@@ -14,11 +14,11 @@ internal static partial class LoggingExtensions
         Message = ERROR_IN_MAIN_LOOP_PROCESSING_WINDOWS_MESSAGES,
         SkipEnabledCheck = true)]
     private static partial void LogErroInMainLoopProcessingWindowsMessages(
-        this ILogger<WindowsMessagesHandler> logger,
+        this ILogger logger,
         int errorCode);
 
     internal static void LogErroInMainLoopProcessingWindowsMessages(
-        this ILogger<WindowsMessagesHandler> logger,
+        this ILogger logger,
         Func<int> errorCodeAction)
     {
         if (logger.IsEnabled(LogLevel.Error))

@@ -16,7 +16,7 @@ internal static class StaThreadRegistrationExtensions
     {
         _ = services
             .AddScoped<IStaThreadService, StaThreadService>()
-            .AddScopedBoundedChannel<StaThreadRequests>(
+            .AddSingletonBoundedChannel<StaThreadRequests>(
                 new BoundedChannelOptions(10)
                 {
                     AllowSynchronousContinuations = false,

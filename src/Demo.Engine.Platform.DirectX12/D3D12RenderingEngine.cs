@@ -508,9 +508,6 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
                         ProcessDeferredReleases(frameIndex);
                     }
 
-                    _postProcess.Dispose();
-                    _gPass.Dispose();
-
                     //Dispose managed resources
                     // Not sure if I need to do
                     //    the deferred releasing here..
@@ -523,6 +520,9 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
                     //Flush all buffers that might be waiting in the queue
                     FlushBuffers();
                     _d3d12Command.Dispose();
+
+                    _postProcess.Dispose();
+                    _gPass.Dispose();
 
                     foreach (var renderingSurface in _surfaces.Values)
                     {

@@ -127,13 +127,13 @@ internal sealed class StaThreadService
             {
                 case StaThreadRequests.DoEventsOkRequest doEventsOkRequest:
                     doEventsOkInvoked &= await doEventsOkRequest
-                        .InvokeAsync(renderingEngine, osMessageHandler, cancellationToken)
+                        .InvokeAsync(cancellationToken)
                         .ConfigureAwait(continueOnCapturedContext: true);
                     break;
 
                 default:
                     _ = await staAction
-                        .InvokeAsync(renderingEngine, osMessageHandler, cancellationToken)
+                        .InvokeAsync(cancellationToken)
                         .ConfigureAwait(continueOnCapturedContext: true);
                     break;
             }
