@@ -24,7 +24,8 @@ internal static class StaThreadRegistrationExtensions
                     SingleReader = true,
                     SingleWriter = false,
                 })
-            .AddScoped<IStaThreadWriter, StaThreadWriter>()
+            .AddSingleton<IStaThreadWriter, StaThreadWriter>()
+            .AddSingleton<IStaThreadReader, StaThreadReader>()
             .AddStaWorkItemObjectPool()
             ;
 

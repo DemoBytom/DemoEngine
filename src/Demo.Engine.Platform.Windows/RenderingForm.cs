@@ -4,7 +4,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using Demo.Engine.Core.Interfaces.Platform;
-using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Maths.Interop;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Core.Notifications.Keyboard;
@@ -80,13 +79,6 @@ public partial class RenderingForm : Form, IRenderingControl
             }
         };
     }
-
-    public async ValueTask<RenderingSurfaceId> CreateSurface(
-        IRenderingEngine renderingEngine,
-        CancellationToken cancellationToken = default)
-        => await InvokeAsync(
-            renderingEngine.CreateSurfaceAsync,
-            cancellationToken);
 
     /// <summary>
     /// Width of the drawable area

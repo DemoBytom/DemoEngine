@@ -2,7 +2,6 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Drawing;
-using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.ValueObjects;
 
 namespace Demo.Engine.Core.Interfaces.Platform;
@@ -55,12 +54,4 @@ public interface IRenderingControl : IDisposable
     RectangleF DrawingArea { get; }
 
     public void SetFullscreen(bool isFullscreen);
-
-    Task<T> InvokeAsync<T>(
-        Func<CancellationToken, ValueTask<T>> callback,
-        CancellationToken cancellationToken = default);
-
-    ValueTask<RenderingSurfaceId> CreateSurface(
-        IRenderingEngine renderingEngine,
-        CancellationToken cancellationToken = default);
 }

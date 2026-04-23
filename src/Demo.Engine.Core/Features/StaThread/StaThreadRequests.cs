@@ -8,7 +8,7 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace Demo.Engine.Core.Features.StaThread;
 
-public abstract record StaThreadRequests
+internal abstract record StaThreadRequests
 {
     public static DoEventsOkRequest DoEventsOk(
         IRenderingEngine renderingEngine,
@@ -24,7 +24,7 @@ public abstract record StaThreadRequests
     public abstract ValueTask<bool> InvokeAsync(
             CancellationToken cancellationToken = default);
 
-    public abstract record StaThreadWorkInner<TResult>
+    internal abstract record StaThreadWorkInner<TResult>
         : StaThreadRequests
     {
         private static TaskCompletionSource<TResult> Empty { get; }
@@ -100,7 +100,8 @@ public abstract record StaThreadRequests
             _tcs = Empty;
         }
     }
-    public sealed record CreateSurfaceRequest(
+
+    internal sealed record CreateSurfaceRequest(
         IRenderingEngine RenderingEngine)
         : StaThreadWorkInner<RenderingSurfaceId>
     {
@@ -109,7 +110,7 @@ public abstract record StaThreadRequests
             => await RenderingEngine.CreateSurfaceAsync(cancellationToken);
     }
 
-    public sealed record DoEventsOkRequest
+    internal sealed record DoEventsOkRequest
         : StaThreadWorkInner<bool>,
           IResettable
     {
@@ -132,7 +133,8 @@ public abstract record StaThreadRequests
             RenderingSurfaceId renderingSurfaceId,
             bool blockingCall)
             : base(false)
-            => (_renderingEngine, _osMessageHandler, _renderingSurfaceId, _blockingCall) = (renderingEngine, osMessageHandler, renderingSurfaceId, blockingCall);
+            => (_renderingEngine, _osMessageHandler, _renderingSurfaceId, _blockingCall)
+            = (renderingEngine, osMessageHandler, renderingSurfaceId, blockingCall);
 
         protected override ValueTask<bool> InvokeFuncInternalAsync(
             CancellationToken cancellationToken = default)
