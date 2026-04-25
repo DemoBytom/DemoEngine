@@ -23,6 +23,8 @@ public sealed class WindowsMessagePump
 
     private readonly TaskCompletionSource<Control> _marshallingControl = new(
         TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _staThreadJob = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
 
     public WindowsMessagePump(
         ILogger<WindowsMessagePump> logger,
@@ -57,7 +59,7 @@ public sealed class WindowsMessagePump
     {
         _thread.Start();
 
-        return Task.CompletedTask;
+        return _staThreadJob.Task;
     }
 
     private async Task RunStaRequestHandler()
@@ -78,45 +80,58 @@ public sealed class WindowsMessagePump
 
     private unsafe void ThreadInner()
     {
-        var cancellationToken = _hostApplicationLifetime.ApplicationStopping;
-        var marshallingControl = new MarshallingControl();
-        _marshallingControl.SetResult(marshallingControl);
-
-        using var tokenRegistration = cancellationToken.Register(
-            () => marshallingControl.Invoke(
-                () => User32.PostQuitMessage(0)));
-
-        NativeMessage msg;
-        RawBool getMessageW;
-
-        while (getMessageW = User32.GetMessageW(&msg, hWnd: IntPtr.Zero, wMsgFilterMin: 0, wMsgFilterMax: 0) == true
-            /* cancellation token is required here in case an ESC is used to exit. 
-             * For now it doesn't seem to properly signal quit message? 
-             * Need to investigate why, because cancelling it should trigger User32.PostQuitMessage and end the pump..
-             * Maybe the StaThreadService is already down and cannot process it anymore? */
-            //&& !cancellationToken.IsCancellationRequested
-            )
+        try
         {
-            if ((int)getMessageW == -1)
+            var cancellationToken = _hostApplicationLifetime.ApplicationStopping;
+            var marshallingControl = new MarshallingControl();
+            _marshallingControl.SetResult(marshallingControl);
+
+            using var tokenRegistration = cancellationToken.Register(
+                () => marshallingControl.Invoke(
+                    () => User32.PostQuitMessage(0)));
+
+            NativeMessage msg;
+            RawBool getMessageW;
+
+            while (getMessageW = User32
+                .GetMessageW(
+                    lpMsg: &msg,
+                    hWnd: IntPtr.Zero,
+                    wMsgFilterMin: 0,
+                    wMsgFilterMax: 0)
+                == true)
             {
-                _logger.LogErroInMainLoopProcessingWindowsMessages(
-                    Marshal.GetLastWin32Error);
+                if ((int)getMessageW == -1)
+                {
+                    _logger.LogErroInMainLoopProcessingWindowsMessages(
+                        Marshal.GetLastWin32Error);
 
-                _hostApplicationLifetime.StopApplication();
-                return;
+                    _hostApplicationLifetime.StopApplication();
+                    return;
+                }
+
+                var message = Message.Create(
+                    hWnd: msg.HWnd,
+                    msg: (int)(nint)msg.Message,
+                    wparam: (nint)msg.WParam,
+                    lparam: msg.LParam);
+
+                if (!Application.FilterMessage(ref message))
+                {
+                    _ = User32.TranslateMessage(&msg);
+                    _ = User32.DispatchMessageW(&msg);
+                }
             }
-
-            var message = Message.Create(
-                hWnd: msg.HWnd,
-                msg: (int)(nint)msg.Message,
-                wparam: (nint)msg.WParam,
-                lparam: msg.LParam);
-
-            if (!Application.FilterMessage(ref message))
-            {
-                _ = User32.TranslateMessage(&msg);
-                _ = User32.DispatchMessageW(&msg);
-            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error in Windows Message Pump processing Windows messages!");
+        }
+        finally
+        {
+            _ = _staThreadJob.TrySetResult();
         }
     }
 

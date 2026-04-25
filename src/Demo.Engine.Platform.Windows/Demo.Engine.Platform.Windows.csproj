@@ -46,4 +46,10 @@
     </Compile>
   </ItemGroup>
 
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Demo.Engine.UTs" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
 </Project>
