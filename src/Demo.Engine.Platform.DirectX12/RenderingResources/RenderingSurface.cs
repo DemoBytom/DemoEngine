@@ -28,13 +28,6 @@ internal sealed class RenderingSurface
 
         RenderingControl.UserResized += (sender, eventArgs) =>
         {
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-            _logger.LogTrace(
-                "Rendering surface {SurfaceId} resized by user, new size: {Width}x{Height}",
-                ID,
-                eventArgs.Width,
-                eventArgs.Height);
-#pragma warning restore CA1873 // Avoid potentially expensive logging
             //Resize();
         };
     }

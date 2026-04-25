@@ -55,7 +55,6 @@ internal sealed class MainLoopService
             {
                 _logger.LogMainLoopFailedWithError(ex);
                 _mainLoopLifetime.Cancel();
-                //throw;
             }
         });
     }

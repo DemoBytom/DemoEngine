@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Platform.Windows;
 
-public sealed class WindowsMessagePump
+internal sealed class WindowsMessagePump
     : BackgroundService
     , IAsyncDisposable
 {
@@ -125,9 +125,7 @@ public sealed class WindowsMessagePump
         }
         catch (Exception ex)
         {
-            _logger.LogError(
-                ex,
-                "Error in Windows Message Pump processing Windows messages!");
+            _logger.LogExceptionInMessageLoopProcessingWindowsMessages(ex);
         }
         finally
         {
@@ -174,9 +172,7 @@ public sealed class WindowsMessagePump
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error while disposing WindowsMessagePump!");
+                _logger.LogExceptionDisposingWindowsMessagePump(ex);
             }
         }
     }

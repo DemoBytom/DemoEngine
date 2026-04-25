@@ -3,13 +3,11 @@
 
 using Demo.Engine.Core;
 using Demo.Engine.Core.Extensions;
-using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
 using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Extensions;
 using Demo.Engine.Platform.DirectX12;
 using Demo.Engine.Platform.Windows;
-using Demo.Engine.Windows.Platform.Netstandard.Win32;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -25,9 +23,8 @@ try
             _ = services
             .Configure<RenderSettings>(hostContext.Configuration.GetSection(nameof(RenderSettings)))
             /*** Windows Only ***/
-            .AddScoped<IRenderingControl, RenderingForm>()
             .AddEngineCore()
-            .AddHostedService<WindowsMessagePump>()
+            .AddPlatformWindows()
             .AddDirectX12()
             /*** End Windows Only ***/
             .AddMediator(options =>

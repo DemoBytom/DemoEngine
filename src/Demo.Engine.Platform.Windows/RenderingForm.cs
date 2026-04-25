@@ -21,7 +21,7 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32;
 // As we can't currently design in VS in the runtime solution,
 // mark as "Default" so this opens in code view by default.
 [DesignerCategory("Default")]
-public partial class RenderingForm : Form, IRenderingControl
+internal sealed partial class RenderingForm : Form, IRenderingControl
 {
     private FormWindowState _previousWindowState;
     private Size _cachedSize;
@@ -70,12 +70,6 @@ public partial class RenderingForm : Form, IRenderingControl
             {
                 //_formSettings.CurrentValue.Width = ClientSize.Width;
                 //_formSettings.CurrentValue.Height = ClientSize.Height;
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-                _logger.LogTrace(
-                    "Resize ended, new size: {Width}x{Height}",
-                    ClientSize.Width,
-                    ClientSize.Height);
-#pragma warning restore CA1873 // Avoid potentially expensive logging
             }
         };
     }
@@ -144,58 +138,14 @@ public partial class RenderingForm : Form, IRenderingControl
         FormClosed += (s, e) => OnRenderingFormClosed(e);
     }
 
-    void InspectWindow(IntPtr hwnd)
-    {
-        Span<char> classBuffer = stackalloc char[256];
-        var classLen = User32.GetClassName(hwnd, classBuffer, classBuffer.Length);
-        var className = new string(classBuffer.Slice(0, classLen));
-
-        Span<char> textBuffer = stackalloc char[256];
-        var textLen = User32.GetWindowText(hwnd, textBuffer, textBuffer.Length);
-        var title = new string(textBuffer[..textLen]);
-
-        var tid = User32.GetWindowThreadProcessId(hwnd, out var pid);
-
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-#pragma warning disable CA1727 // Use PascalCase for named placeholders
-        _logger.LogTrace("HWND: {hwnd} Class: {className} Title: {title} PID: {pid} TID: {tid}",
-            hwnd, className, title, pid, tid);
-#pragma warning restore CA1727 // Use PascalCase for named placeholders
-#pragma warning restore CA1873 // Avoid potentially expensive logging
-    }
-
     protected override unsafe void WndProc(ref Message m)
     {
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-        _logger.LogTrace(
-            "Received window message: {Message}",
-            (WindowMessageTypes)m.Msg);
-#pragma warning restore CA1873 // Avoid potentially expensive logging
-
         if (!IsDisposed && !Disposing)
         {
             //we run 64bit only
             var wparam = m.WParam.ToInt64();
             switch ((WindowMessageTypes)m.Msg)
             {
-                case WindowMessageTypes.Destroy:
-                    break;
-                case WindowMessageTypes.NcDestroy:
-                    break;
-                case (WindowMessageTypes)0x0112: // WM_SYSCOMMAND
-                                                 // 0xF020 is SC_MINIMIZE, 0xF120 is SC_RESTORE
-                    var command = (int)m.WParam & 0xFFF0;
-                    if (command == 0xF060) //SC CLOSE
-                    {
-                        //Close();
-                        //User32.PostQuitMessage(0);
-                        //return;
-                    }
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-                    _logger.LogInformation("Processing SysCommand: {Command}", command);
-#pragma warning restore CA1873 // Avoid potentially expensive logging
-                    break;
-
                 case WindowMessageTypes.KillFocus:
                 {
                     _mediator.Publish(new ClearKeysNotification()).Preserve().GetAwaiter().GetResult();
@@ -249,7 +199,6 @@ public partial class RenderingForm : Form, IRenderingControl
                     {
                         _previousWindowState = FormWindowState.Minimized;
                         OnPauseRendering(EventArgs.Empty);
-                        _logger.LogInformation("Window minimized, pausing rendering");
                     }
                     else
                     {
@@ -282,7 +231,6 @@ public partial class RenderingForm : Form, IRenderingControl
                             if (_previousWindowState == FormWindowState.Minimized)
                             {
                                 OnResumeRendering(EventArgs.Empty);
-                                _logger.LogInformation("Window restored from minimized state, resuming rendering");
                             }
 
                             if (!_isUserResizing && (Size != _cachedSize || _previousWindowState == FormWindowState.Maximized))
@@ -357,22 +305,22 @@ public partial class RenderingForm : Form, IRenderingControl
 
     public event EventHandler<RenderingControlSizeEventArgs>? UserResized;
 
-    protected virtual void OnUserResized(scoped in RenderingControlSizeEventArgs e)
+    private void OnUserResized(scoped in RenderingControlSizeEventArgs e)
         => UserResized?.Invoke(this, e);
 
-    protected virtual void OnPauseRendering(EventArgs eventArgs)
+    private void OnPauseRendering(EventArgs eventArgs)
     {
         // TODO
     }
 
-    protected virtual void OnResumeRendering(EventArgs eventArgs)
+    private void OnResumeRendering(EventArgs eventArgs)
     {
         // TODO
     }
 
     public event EventHandler<EventArgs>? RenderingFormClosed;
 
-    protected virtual void OnRenderingFormClosed(FormClosedEventArgs eventArgs)
+    private void OnRenderingFormClosed(FormClosedEventArgs eventArgs)
         => RenderingFormClosed?.Invoke(this, eventArgs);
 
     /// <summary>
