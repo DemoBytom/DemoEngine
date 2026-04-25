@@ -45,9 +45,7 @@ internal sealed class MainLoopService
         {
             try
             {
-                await Task.WhenAll(
-                    DoAsync(renderingEngine)/*,
-                    DoEventsAsync(renderingEngine)*/);
+                await DoAsync(renderingEngine);
             }
             catch (TaskCanceledException)
             {
@@ -68,7 +66,6 @@ internal sealed class MainLoopService
         var keyboardHandle = await _mediator.Send(new KeyboardHandleRequest(), CancellationToken.None);
         var keyboardCharCache = await _mediator.Send(new KeyboardCharCacheRequest(), CancellationToken.None);
 
-        //await Task.Delay(10_000);
         var surfaces = new List<RenderingSurfaceId>
         {
             await _staThreadWriter.CreateSurface(
@@ -89,12 +86,10 @@ internal sealed class MainLoopService
 
         var msPerUpdate = TimeSpan.FromSeconds(1) / 60;
 
-        var doEventsOk = true;
         var cnt = 0;
         while (
-            doEventsOk
             //&& IsRunning
-            && !_disposedValue
+            !_disposedValue
             && !_mainLoopLifetime.Token.IsCancellationRequested)
         {
             var current = Stopwatch.GetTimestamp();
@@ -150,10 +145,6 @@ internal sealed class MainLoopService
             //Render
             foreach (var renderingSurfaceId in surfaces)
             {
-                //doEventsOk &= await _staThreadWriter.DoEventsOk(
-                //    renderingSurfaceId,
-                //    _mainLoopLifetime.Token);
-
                 using var scope = _fpsTimer.StartRenderingTimerScope(
                     renderingSurfaceId);
 
@@ -161,42 +152,8 @@ internal sealed class MainLoopService
                     renderingEngine,
                     renderingSurfaceId);
             }
-            //await Task.Delay(15).ConfigureAwait(true);
         }
         _mainLoopLifetime.Cancel();
-    }
-
-    private long _doEventsCnt = 0;
-    private async Task DoEventsAsync(
-        IRenderingEngine renderingEngine)
-    {
-        var doEventsOk = true;
-        try
-        {
-            do
-            {
-                var surfaces = renderingEngine.RenderingSurfaces;
-                foreach (var renderingSurfaceId in surfaces)
-                {
-                    _doEventsCnt += 1;
-                    doEventsOk &= await _staThreadWriter.BlockingDoEventsOk(
-                        renderingEngine,
-                        null!,
-                        renderingSurfaceId.ID,
-                        _mainLoopLifetime.Token);
-                }
-            } while (doEventsOk
-                // Currently the unit test relies on those conditions
-                && !_disposedValue
-                && !_mainLoopLifetime.Token.IsCancellationRequested);
-        }
-        finally
-        {
-#pragma warning disable CA1873 // Avoid potentially expensive logging
-            _logger.LogInformation("Called DoEvents {Count} times", _doEventsCnt);
-#pragma warning restore CA1873 // Avoid potentially expensive logging
-            _mainLoopLifetime.Cancel();
-        }
     }
 
     private async ValueTask Dispose(bool disposing)
@@ -209,6 +166,7 @@ internal sealed class MainLoopService
 
             _disposedValue = true;
             //Make sure the loop finishes
+            _mainLoopLifetime.Cancel();
             await ExecutingTask;
         }
     }

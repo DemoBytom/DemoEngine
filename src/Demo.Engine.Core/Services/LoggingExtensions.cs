@@ -1,7 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.Logging;
 
@@ -19,7 +18,6 @@ internal static partial class LoggingExtensions
     private const string AVERAGE_UPS = "Avg. update (ms): {Millisecond}, ups: {UPS}";
 
     private const string MAIN_LOOP_RENDERING_SURFACE_NOT_FOUND = "Rendering surface {SurfaceId} not found!";
-    private const string STA_THREAD_WAS_CANCELLED = "STA thread operation was canceled.";
 
     [LoggerMessage(
         Level = LogLevel.Debug,
@@ -93,10 +91,4 @@ internal static partial class LoggingExtensions
     internal static partial void LogRenderingSurfaceNotFound(
         this ILogger<MainLoopService> logger,
         RenderingSurfaceId surfaceId);
-
-    [LoggerMessage(
-        Level = LogLevel.Debug,
-        Message = STA_THREAD_WAS_CANCELLED)]
-    internal static partial void LogStaThreadServiceWasCancelled(
-        this ILogger<StaThreadService> logger);
 }

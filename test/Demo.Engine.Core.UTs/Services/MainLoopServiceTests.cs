@@ -32,7 +32,6 @@ public class MainLoopServiceTests
         _subLogger = Substitute.For<ILogger<MainLoopService>>();
         _subStaThreadWriter = Substitute.For<IStaThreadWriter>();
         _subMediator = Substitute.For<IMediator>();
-        //_subFpsTimer = Substitute.For<IFpsTimer>();
         _subFpsTimer = new FpsTimer(
             Substitute.For<ILogger<FpsTimer>>());
         _subRenderingEngine = Substitute.For<IRenderingEngine>();
@@ -111,15 +110,6 @@ public class MainLoopServiceTests
             .Returns(
                 new ValueTask());
 
-        _ = _subStaThreadWriter
-            .BlockingDoEventsOk(
-                _subRenderingEngine,
-                null!,
-                renderingSurfaceId: renderingSurfaceId,
-                cancellationToken: cts.Token)
-            .Returns(
-                ValueTask.FromResult(true));
-
         _subLoopJob.Render(
             _subRenderingEngine,
             renderingSurfaceId);
@@ -134,7 +124,7 @@ public class MainLoopServiceTests
             mainLoopService.ExecutingTask.IsCompleted
                 .ShouldBeFalse();
 
-            await Task.Delay(100);
+            await Task.Delay(100, cancellationToken);
         }
         finally
         {

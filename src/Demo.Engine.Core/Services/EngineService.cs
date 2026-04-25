@@ -66,23 +66,12 @@ internal sealed class EngineService(
 
         try
         {
-            //var osMessageHandler = serviceProvider.GetRequiredService<IOSMessageHandler>();
-            //var renderingEngine = serviceProvider.GetRequiredService<IRenderingEngine>();
-
             _ = await _mediator.Send(new CompileShaders(), _hostApplicationLifetime.ApplicationStopping);
             _ = await _mediator.Send(new LoadShadersRequest(), _hostApplicationLifetime.ApplicationStopping);
 
             var mainLoopService = serviceProvider.GetRequiredService<IMainLoopService>();
-            var executeAsync = mainLoopService.ExecutingTask;
 
-            //var staThreadService = serviceProvider.GetRequiredService<IStaThreadService>();
-            //var runStaThread = staThreadService.ExecutingTask;
-
-            await Task.WhenAll(
-                [
-                    executeAsync/*,
-                    runStaThread*/
-                ]);
+            await mainLoopService.ExecutingTask;
         }
         catch (OperationCanceledException)
         {
@@ -96,7 +85,6 @@ internal sealed class EngineService(
         {
             if (!_stopRequested)
             {
-                //await Task.Delay(10_000);
                 await scope.DisposeAsync();
                 _hostApplicationLifetime.StopApplication();
             }

@@ -1,22 +1,13 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.ValueObjects;
-using Microsoft.Extensions.ObjectPool;
 
 namespace Demo.Engine.Core.Features.StaThread;
 
 internal abstract record StaThreadRequests
 {
-    public static DoEventsOkRequest DoEventsOk(
-        IRenderingEngine renderingEngine,
-        IOSMessageHandler osMessageHandler,
-        RenderingSurfaceId renderingSurfaceId,
-        bool blockingCall)
-        => new(renderingEngine, osMessageHandler, renderingSurfaceId, blockingCall);
-
     public static CreateSurfaceRequest CreateSurface(
         IRenderingEngine renderingEngine)
         => new(renderingEngine);
@@ -108,81 +99,5 @@ internal abstract record StaThreadRequests
         protected override async ValueTask<RenderingSurfaceId> InvokeFuncInternalAsync(
             CancellationToken cancellationToken = default)
             => await RenderingEngine.CreateSurfaceAsync(cancellationToken);
-    }
-
-    internal sealed record DoEventsOkRequest
-        : StaThreadWorkInner<bool>,
-          IResettable
-    {
-        private IRenderingEngine _renderingEngine;
-        private IOSMessageHandler _osMessageHandler;
-        private RenderingSurfaceId _renderingSurfaceId;
-        private bool _blockingCall;
-
-        public DoEventsOkRequest()
-            : this(
-                  null!,
-                  null!,
-                  RenderingSurfaceId.Empty, blockingCall: false)
-        {
-        }
-
-        internal DoEventsOkRequest(
-            IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler,
-            RenderingSurfaceId renderingSurfaceId,
-            bool blockingCall)
-            : base(false)
-            => (_renderingEngine, _osMessageHandler, _renderingSurfaceId, _blockingCall)
-            = (renderingEngine, osMessageHandler, renderingSurfaceId, blockingCall);
-
-        protected override ValueTask<bool> InvokeFuncInternalAsync(
-            CancellationToken cancellationToken = default)
-            => _renderingEngine.TryGetRenderingSurface(
-                _renderingSurfaceId,
-                out var renderingSurface)
-            ? _blockingCall
-                ? ValueTask.FromResult(_osMessageHandler.BlockingDoEvents(
-                    renderingSurface.RenderingControl,
-                    cancellationToken))
-                : ValueTask.FromResult(_osMessageHandler.DoEvents(
-                    renderingSurface.RenderingControl))
-            : throw new InvalidOperationException("No RenderingSurface provided!");
-
-        public void Reset(
-            IRenderingEngine renderingEngine,
-            IOSMessageHandler osMessageHandler,
-            RenderingSurfaceId renderingSurfaceId,
-            bool blockingCall,
-            CancellationToken cancellationToken)
-        {
-            if (renderingSurfaceId == RenderingSurfaceId.Empty)
-            {
-                ResetCompleted();
-            }
-            else
-            {
-                Reset(cancellationToken);
-            }
-            _renderingEngine = renderingEngine;
-            _osMessageHandler = osMessageHandler;
-            _renderingSurfaceId = renderingSurfaceId;
-            _blockingCall = blockingCall;
-        }
-
-        public bool TryReset()
-        {
-            if (Invoked.IsCompleted == false)
-            {
-                return false;
-            }
-
-            Reset(
-                renderingEngine: null!,
-                osMessageHandler: null!,
-                RenderingSurfaceId.Empty, blockingCall: false, CancellationToken.None);
-
-            return true;
-        }
     }
 }
