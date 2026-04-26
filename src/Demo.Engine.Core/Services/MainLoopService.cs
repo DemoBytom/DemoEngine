@@ -86,6 +86,12 @@ internal sealed class MainLoopService
         var msPerUpdate = TimeSpan.FromSeconds(1) / 60;
 
         var cnt = 0;
+        var activityConuter = 0;
+
+        var loopActivity = Instrumentation.ActivitySource.StartActivity(
+                "MainLoop",
+                ActivityKind.Internal);
+
         while (
             //&& IsRunning
             !_disposedValue
@@ -101,6 +107,19 @@ internal sealed class MainLoopService
 
             while (lag >= msPerUpdate)
             {
+                if (++activityConuter >= 60)
+                {
+                    loopActivity?.Dispose();
+                    loopActivity = Instrumentation.ActivitySource.StartActivity(
+                        "MainLoop",
+                        ActivityKind.Internal);
+
+                    activityConuter = 0;
+                }
+                using var updateActivity = Instrumentation.ActivitySource.StartActivity(
+                    "Update",
+                    ActivityKind.Internal);
+
                 //Update
                 // TODO - fix the UPS timer.. somehow :D
                 _fpsTimer.StopUpdateTimer();
@@ -144,6 +163,9 @@ internal sealed class MainLoopService
             //Render
             foreach (var renderingSurfaceId in surfaces)
             {
+                //using var renderActivity = Instrumentation.ActivitySource.StartActivity(
+                //    "Render",
+                //    ActivityKind.Internal);
                 using var scope = _fpsTimer.StartRenderingTimerScope(
                     renderingSurfaceId);
 
@@ -152,6 +174,7 @@ internal sealed class MainLoopService
                     renderingSurfaceId);
             }
         }
+        loopActivity?.Dispose();
         _mainLoopLifetime.Cancel();
     }
 

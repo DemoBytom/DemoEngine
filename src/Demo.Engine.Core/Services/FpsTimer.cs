@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,11 @@ internal sealed class FpsTimer(
     ILogger<FpsTimer> logger)
     : IFpsTimer
 {
+    private static readonly Gauge<int> _upsGauge = Instrumentation.Meter.CreateGauge<int>(
+        "demo.engine.ups.gauge",
+        "ups",
+        "Updates per second");
+
     internal sealed class SurfaceFpsCounter(
         ILogger logger,
         RenderingSurfaceId surfaceId)
@@ -24,6 +30,11 @@ internal sealed class FpsTimer(
         private ulong _fpsCounter { get; set; } = 1;
         private long _start;
         private long _seconds = Stopwatch.GetTimestamp();
+
+        private static readonly Gauge<int> _fpsGauge = Instrumentation.Meter.CreateGauge<int>(
+            "demo.engine.fps.gauge",
+            "fps",
+            "Frames per second");
 
         public void Start()
             => _start = Stopwatch.GetTimestamp();
@@ -41,6 +52,9 @@ internal sealed class FpsTimer(
                     _surfaceId,
                     _averageMs,
                     _fpsCounter);
+
+                _fpsGauge.Record((int)_fpsCounter,
+                    new KeyValuePair<string, object?>("surfaceId", _surfaceId));
 
                 _averageMs = 0.0f;
                 _fpsCounter = 1;
@@ -122,6 +136,8 @@ internal sealed class FpsTimer(
             _logger.LogAverageUps(
                 _averageMs,
                 _upsCounter);
+
+            _upsGauge.Record((int)_upsCounter);
 
             _averageMs = 0.0f;
             _upsCounter = 1;

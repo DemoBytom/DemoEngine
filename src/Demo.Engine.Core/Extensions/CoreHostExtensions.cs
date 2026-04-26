@@ -5,6 +5,7 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Demo.Engine.Core.Extensions;
 
@@ -28,8 +29,11 @@ public static class CoreHostExtensions
         {
             _ = configHost
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddEnvironmentVariables("DEMOENGINE_");
-
+                .AddEnvironmentVariables("DEMOENGINE_")
+                //.AddEnvironmentVariables("DOTNET_")
+                //.AddEnvironmentVariables("OTEL_")
+                .AddEnvironmentVariables()
+                ;
             if (args is not null)
             {
                 _ = configHost.AddCommandLine(args);
@@ -43,7 +47,7 @@ public static class CoreHostExtensions
 
             if (env.IsDevelopment())
             {
-                var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
+                var appAssembly = Assembly.GetExecutingAssembly(); //Assembly.Load(new AssemblyName(env.ApplicationName));
                 if (appAssembly is not null)
                 {
                     _ = configApp.AddUserSecrets(appAssembly, optional: true);
@@ -55,9 +59,12 @@ public static class CoreHostExtensions
                 _ = configApp.AddCommandLine(args);
             }
         })
-        .ConfigureServices(services =>
-            //supresses the default "Application started. Press Ctrl+C to shut down." etc. log messages, that ConsoleLifetime produces
-            services.Configure<ConsoleLifetimeOptions>(options => options.SuppressStatusMessages = true))
+        .ConfigureServices((hostContext, services) => services
+            .Configure<ConsoleLifetimeOptions>(options
+                //supresses the default "Application started. Press Ctrl+C to shut down." etc. log messages, that ConsoleLifetime produces
+                => options.SuppressStatusMessages = true)
+            .AddLogging(logging => logging
+                .AddConfiguration(hostContext.Configuration.GetSection("Logging"))))
         .UseDefaultServiceProvider((context, options) =>
         {
             var isDev = context.HostingEnvironment.IsDevelopment();

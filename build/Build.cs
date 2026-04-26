@@ -131,7 +131,7 @@ internal sealed partial class Build : NukeBuild
         .Executes(() => DotNet(
             /* `--exclude **\Program.cs` 
              * to work around the fact that it still doesn't handle top level statements properly */
-            @"format -v n --verify-no-changes --exclude **\Program.cs"));
+            @"format -v n --verify-no-changes --exclude **\Program.cs **\AppHost.cs"));
 
 #pragma warning restore CA1822 // Mark members as static
 

@@ -8,6 +8,7 @@ using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Extensions;
 using Demo.Engine.Platform.DirectX12;
 using Demo.Engine.Platform.Windows;
+using DemoEngine.ServiceDefaults;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -16,6 +17,7 @@ try
 {
     var hostBuilder = new HostBuilder()
         .CreateDefault(args)
+        .AddServiceDefaults()
         .WithSerilog()
         .ConfigureServices((hostContext, services)
         =>

@@ -7,6 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Platforms>x64;ARM64</Platforms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>fc3db141-03a9-4ec1-bcaf-7a8ca1d5df84</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -39,6 +40,7 @@
     <ProjectReference Include="..\Demo.Engine.Core\Demo.Engine.Core.csproj" />
     <ProjectReference Include="..\Demo.Engine.Platform.DirectX12\Demo.Engine.Platform.DirectX12.csproj" />
     <ProjectReference Include="..\Demo.Engine.Platform.Windows\Demo.Engine.Platform.Windows.csproj" />
+    <ProjectReference Include="..\DemoEngine.ServiceDefaults\DemoEngine.ServiceDefaults.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">
