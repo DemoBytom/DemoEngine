@@ -48,8 +48,8 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
     <Project Path="src/Demo.Tools.SourceGenerators/Demo.Tools.SourceGenerators.csproj" />
-    <Project Path="src/DemoEngine.AppHost/DemoEngine.AppHost.csproj" Id="ff378cf4-d4e0-4496-bb13-4f31cf47ee8c" />
-    <Project Path="src/DemoEngine.ServiceDefaults/DemoEngine.ServiceDefaults.csproj" />
+    <Project Path="src/Demo.Engine.AppHost/Demo.Engine.AppHost.csproj" Id="ff378cf4-d4e0-4496-bb13-4f31cf47ee8c" />
+    <Project Path="src/Demo.Engine.ServiceDefaults/Demo.Engine.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/test/">
     <File Path="test/.editorconfig" />

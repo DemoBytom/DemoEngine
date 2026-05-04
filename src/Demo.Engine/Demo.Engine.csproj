@@ -40,7 +40,7 @@
     <ProjectReference Include="..\Demo.Engine.Core\Demo.Engine.Core.csproj" />
     <ProjectReference Include="..\Demo.Engine.Platform.DirectX12\Demo.Engine.Platform.DirectX12.csproj" />
     <ProjectReference Include="..\Demo.Engine.Platform.Windows\Demo.Engine.Platform.Windows.csproj" />
-    <ProjectReference Include="..\DemoEngine.ServiceDefaults\DemoEngine.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Demo.Engine.ServiceDefaults\Demo.Engine.ServiceDefaults.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">

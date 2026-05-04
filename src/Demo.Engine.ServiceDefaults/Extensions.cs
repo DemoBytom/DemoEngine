@@ -9,7 +9,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using static Demo.Engine.Observability.Abstractions.InstrumentationExtensions;
 
-namespace DemoEngine.ServiceDefaults;
+namespace Demo.Engine.ServiceDefaults;
 
 public static class Extensions
 {

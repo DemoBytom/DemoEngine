@@ -8,7 +8,7 @@ using Demo.Engine.Core.Models.Options;
 using Demo.Engine.Extensions;
 using Demo.Engine.Platform.DirectX12;
 using Demo.Engine.Platform.Windows;
-using DemoEngine.ServiceDefaults;
+using Demo.Engine.ServiceDefaults;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
