@@ -30,6 +30,7 @@
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
     </Project>
+    <Project Path="src/Demo.Engine.Observability.Abstractions/Demo.Engine.Observability.Abstractions.csproj" Id="56df6aec-84f0-43b0-8b77-0072e36f61bf" />
     <Project Path="src/Demo.Engine.Platform.DirectX12/Demo.Engine.Platform.DirectX12.csproj">
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />

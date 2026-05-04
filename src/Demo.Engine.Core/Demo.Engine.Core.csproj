@@ -38,6 +38,7 @@
     <PackageReference Include="Vortice.Mathematics" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Demo.Engine.Observability.Abstractions\Demo.Engine.Observability.Abstractions.csproj" />
     <ProjectReference Include="..\Demo.Tools.Common\Demo.Tools.Common.csproj" />
   </ItemGroup>
 </Project>

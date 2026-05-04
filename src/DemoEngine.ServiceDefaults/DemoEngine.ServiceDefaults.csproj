@@ -19,4 +19,8 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Demo.Engine.Observability.Abstractions\Demo.Engine.Observability.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>

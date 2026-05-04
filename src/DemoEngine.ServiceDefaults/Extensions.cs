@@ -1,24 +1,35 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using Demo.Engine.Observability.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using static Demo.Engine.Observability.Abstractions.InstrumentationExtensions;
 
 namespace DemoEngine.ServiceDefaults;
 
 public static class Extensions
 {
     public static TBuilder AddServiceDefaults<TBuilder>(
-        this TBuilder builder)
+        this TBuilder builder,
+        TelemetryBuilderFunc? instrumentations = null)
         where TBuilder : IHostBuilder
         => builder
-            .ConfigureOpenTelemetry()
+            .ConfigureOpenTelemetry(
+                instrumentations)
         ;
+    public static ref readonly TelemetryBuilder WithInstrumentation<TInstrumentation>(
+        ref readonly this TelemetryBuilder builder)
+        where TInstrumentation : IInstrumentation
+        => ref InstrumentationExtensions.WithMetricsAndTracing<TInstrumentation>(
+            in builder);
 
-    public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder)
+    public static TBuilder ConfigureOpenTelemetry<TBuilder>(
+        this TBuilder builder,
+        TelemetryBuilderFunc? instrumentations = null)
         where TBuilder : IHostBuilder
         => (TBuilder)builder
             .ConfigureLogging(logging => logging
@@ -30,11 +41,9 @@ public static class Extensions
             .ConfigureServices((hostContext, services) => services
                 .AddOpenTelemetry()
                 .WithMetrics(metrics => metrics
-                    .AddRuntimeInstrumentation()
-                    .AddMeter("Demo.Engine"))
-                .WithTracing(tracing => tracing
-                    .AddSource(hostContext.HostingEnvironment.ApplicationName))
+                    .AddRuntimeInstrumentation())
                 .WithLogging())
+            .AddInstrumentations(instrumentations)
             .AddOpenTelemetryExporters()
             ;
 

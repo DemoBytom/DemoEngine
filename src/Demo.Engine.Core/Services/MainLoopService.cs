@@ -144,9 +144,9 @@ internal sealed class MainLoopService
 
                     if (cnt == 10 * 60)
                     {
-                        sId = await _staThreadWriter.CreateSurface(
-                            renderingEngine,
-                            _mainLoopLifetime.Token);
+                        //sId = await _staThreadWriter.CreateSurface(
+                        //    renderingEngine,
+                        //    _mainLoopLifetime.Token);
 
                         cnt = 0;
                     }

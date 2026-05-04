@@ -18,6 +18,11 @@ internal sealed class FpsTimer(
         "ups",
         "Updates per second");
 
+    private static readonly Histogram<int> _upsHistogram = Instrumentation.Meter.CreateHistogram<int>(
+        "demo.engine.ups.histogram",
+        "ups",
+        "Updates per second");
+
     internal sealed class SurfaceFpsCounter(
         ILogger logger,
         RenderingSurfaceId surfaceId)
@@ -33,6 +38,11 @@ internal sealed class FpsTimer(
 
         private static readonly Gauge<int> _fpsGauge = Instrumentation.Meter.CreateGauge<int>(
             "demo.engine.fps.gauge",
+            "fps",
+            "Frames per second");
+
+        private static readonly Histogram<int> _fpsHistogram = Instrumentation.Meter.CreateHistogram<int>(
+            "demo.engine.fps.histogram",
             "fps",
             "Frames per second");
 
@@ -54,6 +64,8 @@ internal sealed class FpsTimer(
                     _fpsCounter);
 
                 _fpsGauge.Record((int)_fpsCounter,
+                    new KeyValuePair<string, object?>("surfaceId", _surfaceId));
+                _fpsHistogram.Record((int)_fpsCounter,
                     new KeyValuePair<string, object?>("surfaceId", _surfaceId));
 
                 _averageMs = 0.0f;
@@ -138,6 +150,7 @@ internal sealed class FpsTimer(
                 _upsCounter);
 
             _upsGauge.Record((int)_upsCounter);
+            _upsHistogram.Record((int)_upsCounter);
 
             _averageMs = 0.0f;
             _upsCounter = 1;

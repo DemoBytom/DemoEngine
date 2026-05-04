@@ -4,24 +4,26 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Reflection;
+using Demo.Engine.Observability.Abstractions;
 
 namespace Demo.Engine.Core;
 
-public static class Instrumentation
+public sealed class Instrumentation
+    : IInstrumentation
 {
-    public const string APPLICATION_NAME = "Demo.Engine";
+    public static string INSTRUMENTATION_SOURCE_NAME => "Demo.Engine";
 
-    public static readonly string VERSION = Assembly
+    public static string VERSION { get; } = Assembly
         .GetExecutingAssembly()?
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
         .InformationalVersion
         ?? "0.0.0";
 
-    public static readonly Meter Meter = new(
-        name: APPLICATION_NAME,
+    public static Meter Meter { get; } = new(
+        name: INSTRUMENTATION_SOURCE_NAME,
         version: VERSION);
 
-    public static readonly ActivitySource ActivitySource = new(
-        name: APPLICATION_NAME,
+    public static ActivitySource ActivitySource { get; } = new(
+        name: INSTRUMENTATION_SOURCE_NAME,
         version: VERSION);
 }
