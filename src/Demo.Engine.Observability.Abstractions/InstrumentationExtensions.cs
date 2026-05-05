@@ -48,4 +48,9 @@ public static class InstrumentationExtensions
 
     public delegate ref readonly TelemetryBuilder TelemetryBuilderFunc(
         ref readonly TelemetryBuilder builder);
+
+    public delegate ref readonly TTelemetryBuilder TelemetryBuilderFunc<TTelemetryBuilder, TInnerBuilder>(
+        ref readonly TTelemetryBuilder builder)
+        where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, TInnerBuilder>, allows ref struct
+        ;
 }

@@ -17,8 +17,11 @@ try
 {
     var hostBuilder = new HostBuilder()
         .CreateDefault(args)
-        .AddServiceDefaults(
-            (ref readonly instrumentation) => ref instrumentation
+        //.AddServiceDefaults(
+        //    static (ref readonly instrumentation) => ref instrumentation
+        //        .WithInstrumentation<Instrumentation>())
+        .AddServiceDefaults2(
+            static (ref readonly instrumentation) => ref instrumentation
                 .WithInstrumentation<Instrumentation>())
         .WithSerilog()
         .ConfigureServices((hostContext, services)

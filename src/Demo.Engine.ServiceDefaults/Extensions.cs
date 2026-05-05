@@ -21,13 +21,14 @@ public static class Extensions
             .ConfigureOpenTelemetry(
                 instrumentations)
         ;
+
     public static ref readonly TelemetryBuilder WithInstrumentation<TInstrumentation>(
         ref readonly this TelemetryBuilder builder)
         where TInstrumentation : IInstrumentation
         => ref InstrumentationExtensions.WithMetricsAndTracing<TInstrumentation>(
             in builder);
 
-    public static TBuilder ConfigureOpenTelemetry<TBuilder>(
+    private static TBuilder ConfigureOpenTelemetry<TBuilder>(
         this TBuilder builder,
         TelemetryBuilderFunc? instrumentations = null)
         where TBuilder : IHostBuilder
@@ -62,4 +63,93 @@ public static class Extensions
                     ;
             }
         });
+
+    public static NewTelemetryBuilder WithInstrumentation<TInstrumentation>(
+        this OpenTelemetryBuilder builder)
+        => new(builder);
+
+    extension<TBuilder>(TBuilder builder)
+        where TBuilder : IHostBuilder
+    {
+        public TBuilder AddServiceDefaults2(
+            TelemetryBuilderFunc<NewTelemetryBuilder, OpenTelemetryBuilder> instrumentations)
+        {
+
+            return builder
+                .ConfigureOpenTelemetry2(
+                    instrumentations)
+                ;
+        }
+
+        private TBuilder ConfigureOpenTelemetry2<TTelemetryBuilder>(
+            TelemetryBuilderFunc<TTelemetryBuilder, OpenTelemetryBuilder>? instrumentations = null)
+            where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, OpenTelemetryBuilder>, allows ref struct
+            => (TBuilder)builder
+                .ConfigureLogging(logging => logging
+                    .AddOpenTelemetry(options =>
+                    {
+                        options.IncludeFormattedMessage = true;
+                        options.IncludeScopes = true;
+                    }))
+                .ConfigureServices((hostContext, services) => services
+                    .AddOpenTelemetry()
+                    .RegisterInstrumentation2(instrumentations)
+                    .WithMetrics(metrics => metrics
+                        .AddRuntimeInstrumentation())
+                    .WithLogging())
+                .AddOpenTelemetryExporters()
+                ;
+    }
+
+    extension<TInnerBuilder>(TInnerBuilder innerBuilder)
+    {
+        public TInnerBuilder RegisterInstrumentation2<TTelemetryBuilder>(
+            TelemetryBuilderFunc<TTelemetryBuilder, TInnerBuilder>? instrumentations = null)
+            where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, TInnerBuilder>, allows ref struct
+        {
+            if (instrumentations is not null)
+            {
+                var telemetryBuilder = TTelemetryBuilder.Create(innerBuilder);
+                return instrumentations(in telemetryBuilder).Builder;
+            }
+            return innerBuilder;
+        }
+    }
+
+    public static ref readonly NewTelemetryBuilder WithInstrumentation<TInstrumentation>(
+        ref readonly this NewTelemetryBuilder builder)
+        where TInstrumentation : IInstrumentation
+    {
+        builder.Build<TInstrumentation>();
+        return ref builder;
+    }
+}
+
+public readonly ref struct NewTelemetryBuilder
+    : ITelemetryBuilder<NewTelemetryBuilder, OpenTelemetryBuilder>
+{
+    public NewTelemetryBuilder()
+        => throw new NotSupportedException(
+            "Parameterless construction is not supported!");
+
+    internal NewTelemetryBuilder(
+        OpenTelemetryBuilder builder)
+        => Builder = builder;
+
+    public OpenTelemetryBuilder Builder { get; }
+
+    static NewTelemetryBuilder ITelemetryBuilder<NewTelemetryBuilder, OpenTelemetryBuilder>.Create(
+        OpenTelemetryBuilder builder)
+        => new NewTelemetryBuilder(builder);
+
+    public void Build<TInstrumentation>()
+        where TInstrumentation : IInstrumentation
+    {
+        Builder
+            .WithMetrics(metrics => metrics
+                .AddMeter(TInstrumentation.INSTRUMENTATION_SOURCE_NAME))
+            .WithTracing(tracing => tracing
+                .AddSource(TInstrumentation.INSTRUMENTATION_SOURCE_NAME))
+            ;
+    }
 }

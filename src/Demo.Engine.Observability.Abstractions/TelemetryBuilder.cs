@@ -17,3 +17,15 @@ public readonly ref struct TelemetryBuilder
 
     internal OpenTelemetryBuilder Builder { get; }
 }
+
+public interface ITelemetryBuilder<TTelemetryBuilder, TInnerBuilder>
+    where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, TInnerBuilder>, allows ref struct
+{
+    abstract void Build<TInstrumentation>()
+        where TInstrumentation : IInstrumentation
+        ;
+
+    abstract static TTelemetryBuilder Create(TInnerBuilder builder);
+
+    public TInnerBuilder Builder { get; }
+}
