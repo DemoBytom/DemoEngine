@@ -7,81 +7,22 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
-using static Demo.Engine.Observability.Abstractions.InstrumentationExtensions;
 
 namespace Demo.Engine.ServiceDefaults;
 
 public static class Extensions
 {
-    public static TBuilder AddServiceDefaults<TBuilder>(
-        this TBuilder builder,
-        TelemetryBuilderFunc? instrumentations = null)
-        where TBuilder : IHostBuilder
-        => builder
-            .ConfigureOpenTelemetry(
-                instrumentations)
-        ;
-
-    public static ref readonly TelemetryBuilder WithInstrumentation<TInstrumentation>(
-        ref readonly this TelemetryBuilder builder)
-        where TInstrumentation : IInstrumentation
-        => ref InstrumentationExtensions.WithMetricsAndTracing<TInstrumentation>(
-            in builder);
-
-    private static TBuilder ConfigureOpenTelemetry<TBuilder>(
-        this TBuilder builder,
-        TelemetryBuilderFunc? instrumentations = null)
-        where TBuilder : IHostBuilder
-        => (TBuilder)builder
-            .ConfigureLogging(logging => logging
-                .AddOpenTelemetry(options =>
-                {
-                    options.IncludeFormattedMessage = true;
-                    options.IncludeScopes = true;
-                }))
-            .ConfigureServices((hostContext, services) => services
-                .AddOpenTelemetry()
-                .WithMetrics(metrics => metrics
-                    .AddRuntimeInstrumentation())
-                .WithLogging())
-            .AddInstrumentations(instrumentations)
-            .AddOpenTelemetryExporters()
-            ;
-
-    private static TBuilder AddOpenTelemetryExporters<TBuilder>(
-        this TBuilder builder)
-        where TBuilder : IHostBuilder
-        => (TBuilder)builder.ConfigureServices((hostContext, services) =>
-        {
-            var useOtlpExporter = !string.IsNullOrWhiteSpace(
-                hostContext.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
-            if (useOtlpExporter)
-            {
-                _ = services
-                    .AddOpenTelemetry()
-                    .UseOtlpExporter()
-                    ;
-            }
-        });
-
-    public static NewTelemetryBuilder WithInstrumentation<TInstrumentation>(
-        this OpenTelemetryBuilder builder)
-        => new(builder);
-
     extension<TBuilder>(TBuilder builder)
         where TBuilder : IHostBuilder
     {
-        public TBuilder AddServiceDefaults2(
-            TelemetryBuilderFunc<NewTelemetryBuilder, OpenTelemetryBuilder> instrumentations)
-        {
-
-            return builder
-                .ConfigureOpenTelemetry2(
+        public TBuilder AddServiceDefaults(
+            TelemetryBuilderFunc<TelemetryBuilder, OpenTelemetryBuilder> instrumentations)
+            => builder
+                .ConfigureOpenTelemetry(
                     instrumentations)
                 ;
-        }
 
-        private TBuilder ConfigureOpenTelemetry2<TTelemetryBuilder>(
+        private TBuilder ConfigureOpenTelemetry<TTelemetryBuilder>(
             TelemetryBuilderFunc<TTelemetryBuilder, OpenTelemetryBuilder>? instrumentations = null)
             where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, OpenTelemetryBuilder>, allows ref struct
             => (TBuilder)builder
@@ -93,63 +34,76 @@ public static class Extensions
                     }))
                 .ConfigureServices((hostContext, services) => services
                     .AddOpenTelemetry()
-                    .RegisterInstrumentation2(instrumentations)
+                    .RegisterInstrumentation(instrumentations)
                     .WithMetrics(metrics => metrics
                         .AddRuntimeInstrumentation())
                     .WithLogging())
                 .AddOpenTelemetryExporters()
                 ;
+
+        private TBuilder AddOpenTelemetryExporters()
+            => (TBuilder)builder.ConfigureServices((hostContext, services) =>
+            {
+                var useOtlpExporter = !string.IsNullOrWhiteSpace(
+                    hostContext.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
+
+                if (useOtlpExporter)
+                {
+                    _ = services
+                        .AddOpenTelemetry()
+                        .UseOtlpExporter()
+                        ;
+                }
+            });
     }
+
+    public delegate TTelemetryBuilder TelemetryBuilderFunc<TTelemetryBuilder, TInnerBuilder>(
+        TTelemetryBuilder builder)
+        where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, TInnerBuilder>, allows ref struct;
 
     extension<TInnerBuilder>(TInnerBuilder innerBuilder)
     {
-        public TInnerBuilder RegisterInstrumentation2<TTelemetryBuilder>(
+        private TInnerBuilder RegisterInstrumentation<TTelemetryBuilder>(
             TelemetryBuilderFunc<TTelemetryBuilder, TInnerBuilder>? instrumentations = null)
             where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, TInnerBuilder>, allows ref struct
         {
             if (instrumentations is not null)
             {
                 var telemetryBuilder = TTelemetryBuilder.Create(innerBuilder);
-                return instrumentations(in telemetryBuilder).Builder;
+                return instrumentations(telemetryBuilder).Builder;
             }
             return innerBuilder;
         }
     }
-
-    public static ref readonly NewTelemetryBuilder WithInstrumentation<TInstrumentation>(
-        ref readonly this NewTelemetryBuilder builder)
-        where TInstrumentation : IInstrumentation
-    {
-        builder.Build<TInstrumentation>();
-        return ref builder;
-    }
 }
 
-public readonly ref struct NewTelemetryBuilder
-    : ITelemetryBuilder<NewTelemetryBuilder, OpenTelemetryBuilder>
+public readonly ref struct TelemetryBuilder
+    : ITelemetryBuilder<TelemetryBuilder, OpenTelemetryBuilder>
 {
-    public NewTelemetryBuilder()
+    public TelemetryBuilder()
         => throw new NotSupportedException(
             "Parameterless construction is not supported!");
 
-    internal NewTelemetryBuilder(
+    internal TelemetryBuilder(
         OpenTelemetryBuilder builder)
         => Builder = builder;
 
     public OpenTelemetryBuilder Builder { get; }
 
-    static NewTelemetryBuilder ITelemetryBuilder<NewTelemetryBuilder, OpenTelemetryBuilder>.Create(
+    static TelemetryBuilder ITelemetryBuilder<TelemetryBuilder, OpenTelemetryBuilder>.Create(
         OpenTelemetryBuilder builder)
-        => new NewTelemetryBuilder(builder);
+        => new(builder);
 
-    public void Build<TInstrumentation>()
+    public TelemetryBuilder WithInstrumentation<TInstrumentation>()
         where TInstrumentation : IInstrumentation
     {
-        Builder
+        _ = Builder
             .WithMetrics(metrics => metrics
                 .AddMeter(TInstrumentation.INSTRUMENTATION_SOURCE_NAME))
             .WithTracing(tracing => tracing
                 .AddSource(TInstrumentation.INSTRUMENTATION_SOURCE_NAME))
             ;
+
+        return this;
     }
 }

@@ -336,6 +336,7 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
         IEnumerable<IDrawable> drawables,
         uint upsFrame)
     {
+        using var activity = InstrumentationDX12.ActivitySource.StartActivity("Draw Frame");
         InitCommandList();
 
         var frameIndex = CurrentFrameIndex();

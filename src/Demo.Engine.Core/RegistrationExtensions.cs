@@ -9,6 +9,7 @@ using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.Services;
+using Demo.Engine.Observability.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Demo.Engine.Core;
@@ -39,4 +40,9 @@ public static class RegistrationExtensions
             .AddSingleton(sp
                 => sp.GetRequiredService<Channel<T>>().Writer)
         ;
+
+    public static TTelemetryBuilder WithCoreInstrumentation<TTelemetryBuilder>(
+        this TTelemetryBuilder telemetryBuilder)
+        where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder>, allows ref struct
+        => telemetryBuilder.WithInstrumentation<Instrumentation>();
 }

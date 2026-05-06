@@ -4,6 +4,7 @@
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Interfaces.Rendering.Shaders;
+using Demo.Engine.Observability.Abstractions;
 using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,4 +28,9 @@ public static class RegistrationExtensions
             //Cube
             .AddScoped<ICube, Cube>()
         ;
+
+    public static TTelemetryBuilder WithDirectX12Instrumentation<TTelemetryBuilder>(
+        this TTelemetryBuilder instrumentationBuilder)
+        where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder>, allows ref struct
+        => instrumentationBuilder.WithInstrumentation<InstrumentationDX12>();
 }
