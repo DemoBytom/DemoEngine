@@ -16,14 +16,14 @@ public static class Extensions
         where TBuilder : IHostBuilder
     {
         public TBuilder AddServiceDefaults(
-            TelemetryBuilderFunc<TelemetryBuilder, OpenTelemetryBuilder> instrumentations)
+            TelemetryBuilderFunc<TelemetryBuilder> instrumentations)
             => builder
                 .ConfigureOpenTelemetry(
                     instrumentations)
                 ;
 
         private TBuilder ConfigureOpenTelemetry<TTelemetryBuilder>(
-            TelemetryBuilderFunc<TTelemetryBuilder, OpenTelemetryBuilder>? instrumentations = null)
+            TelemetryBuilderFunc<TTelemetryBuilder>? instrumentations = null)
             where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, OpenTelemetryBuilder>, allows ref struct
             => (TBuilder)builder
                 .ConfigureLogging(logging => logging
@@ -57,53 +57,22 @@ public static class Extensions
             });
     }
 
-    public delegate TTelemetryBuilder TelemetryBuilderFunc<TTelemetryBuilder, TInnerBuilder>(
-        TTelemetryBuilder builder)
-        where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, TInnerBuilder>, allows ref struct;
+    public delegate ref TTelemetryBuilder TelemetryBuilderFunc<TTelemetryBuilder>(
+        ref TTelemetryBuilder builder)
+        where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder>, allows ref struct;
 
     extension<TInnerBuilder>(TInnerBuilder innerBuilder)
     {
         private TInnerBuilder RegisterInstrumentation<TTelemetryBuilder>(
-            TelemetryBuilderFunc<TTelemetryBuilder, TInnerBuilder>? instrumentations = null)
+            TelemetryBuilderFunc<TTelemetryBuilder>? instrumentations = null)
             where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, TInnerBuilder>, allows ref struct
         {
             if (instrumentations is not null)
             {
                 var telemetryBuilder = TTelemetryBuilder.Create(innerBuilder);
-                return instrumentations(telemetryBuilder).Builder;
+                return instrumentations(ref telemetryBuilder).Builder;
             }
             return innerBuilder;
         }
-    }
-}
-
-public readonly ref struct TelemetryBuilder
-    : ITelemetryBuilder<TelemetryBuilder, OpenTelemetryBuilder>
-{
-    public TelemetryBuilder()
-        => throw new NotSupportedException(
-            "Parameterless construction is not supported!");
-
-    internal TelemetryBuilder(
-        OpenTelemetryBuilder builder)
-        => Builder = builder;
-
-    public OpenTelemetryBuilder Builder { get; }
-
-    static TelemetryBuilder ITelemetryBuilder<TelemetryBuilder, OpenTelemetryBuilder>.Create(
-        OpenTelemetryBuilder builder)
-        => new(builder);
-
-    public TelemetryBuilder WithInstrumentation<TInstrumentation>()
-        where TInstrumentation : IInstrumentation
-    {
-        _ = Builder
-            .WithMetrics(metrics => metrics
-                .AddMeter(TInstrumentation.INSTRUMENTATION_SOURCE_NAME))
-            .WithTracing(tracing => tracing
-                .AddSource(TInstrumentation.INSTRUMENTATION_SOURCE_NAME))
-            ;
-
-        return this;
     }
 }

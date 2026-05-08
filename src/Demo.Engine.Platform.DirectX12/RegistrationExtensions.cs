@@ -29,8 +29,12 @@ public static class RegistrationExtensions
             .AddScoped<ICube, Cube>()
         ;
 
-    public static TTelemetryBuilder WithDirectX12Instrumentation<TTelemetryBuilder>(
-        this TTelemetryBuilder instrumentationBuilder)
-        where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder>, allows ref struct
-        => instrumentationBuilder.WithInstrumentation<InstrumentationDX12>();
+    public static ref TTelemetryBuilder WithDirectX12Instrumentation<TTelemetryBuilder>(
+        ref this TTelemetryBuilder instrumentationBuilder)
+        where TTelemetryBuilder : struct, ITelemetryBuilder<TTelemetryBuilder>, allows ref struct
+    {
+        instrumentationBuilder.WithInstrumentation<InstrumentationDX12>();
+
+        return ref instrumentationBuilder;
+    }
 }

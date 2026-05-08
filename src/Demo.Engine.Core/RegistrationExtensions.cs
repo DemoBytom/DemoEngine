@@ -1,7 +1,6 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using System.Threading.Channels;
 using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
@@ -28,21 +27,11 @@ public static class RegistrationExtensions
                 .AddStaThreadFeature()
                 ;
 
-    internal static IServiceCollection AddSingletonBoundedChannel<T>(
-        this IServiceCollection services,
-            BoundedChannelOptions options)
-        => services
-            .AddSingleton(_
-                => Channel.CreateBounded<T>(
-                    options))
-            .AddSingleton(sp
-                => sp.GetRequiredService<Channel<T>>().Reader)
-            .AddSingleton(sp
-                => sp.GetRequiredService<Channel<T>>().Writer)
-        ;
-
-    public static TTelemetryBuilder WithCoreInstrumentation<TTelemetryBuilder>(
-        this TTelemetryBuilder telemetryBuilder)
-        where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder>, allows ref struct
-        => telemetryBuilder.WithInstrumentation<Instrumentation>();
+    public static ref TTelemetryBuilder WithCoreInstrumentation<TTelemetryBuilder>(
+        ref this TTelemetryBuilder telemetryBuilder)
+        where TTelemetryBuilder : struct, ITelemetryBuilder<TTelemetryBuilder>, allows ref struct
+    {
+        telemetryBuilder.WithInstrumentation<Instrumentation>();
+        return ref telemetryBuilder;
+    }
 }

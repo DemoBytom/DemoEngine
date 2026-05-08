@@ -6,7 +6,7 @@ namespace Demo.Engine.Observability.Abstractions;
 public interface ITelemetryBuilder<TTelemetryBuilder>
     where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder>, allows ref struct
 {
-    abstract TTelemetryBuilder WithInstrumentation<TInstrumentation>()
+    abstract void WithInstrumentation<TInstrumentation>()
         where TInstrumentation : IInstrumentation;
 }
 

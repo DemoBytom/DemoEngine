@@ -18,10 +18,9 @@ try
     var hostBuilder = new HostBuilder()
         .CreateDefault(args)
         .AddServiceDefaults(
-            static (instrumentation) => instrumentation
+            static (ref instrumentation) => ref instrumentation
                 .WithCoreInstrumentation()
-                .WithDirectX12Instrumentation()
-                )
+                .WithDirectX12Instrumentation())
         .WithSerilog()
         .ConfigureServices((hostContext, services)
         =>

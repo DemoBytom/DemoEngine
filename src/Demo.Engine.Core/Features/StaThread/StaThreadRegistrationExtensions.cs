@@ -8,22 +8,32 @@ namespace Demo.Engine.Core.Features.StaThread;
 
 internal static class StaThreadRegistrationExtensions
 {
-    public static IServiceCollection AddStaThreadFeature(
-        this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        _ = services
-            .AddSingletonBoundedChannel<StaThreadRequests>(
-                new BoundedChannelOptions(10)
-                {
-                    AllowSynchronousContinuations = false,
-                    FullMode = BoundedChannelFullMode.Wait,
-                    SingleReader = true,
-                    SingleWriter = false,
-                })
-            .AddSingleton<IStaThreadWriter, StaThreadWriter>()
-            .AddSingleton<IStaThreadReader, StaThreadReader>()
-            ;
+        internal IServiceCollection AddStaThreadFeature()
+            => services
+                .AddSingletonBoundedChannel<StaThreadRequests>(
+                    new BoundedChannelOptions(10)
+                    {
+                        AllowSynchronousContinuations = false,
+                        FullMode = BoundedChannelFullMode.Wait,
+                        SingleReader = true,
+                        SingleWriter = false,
+                    })
+                .AddSingleton<IStaThreadWriter, StaThreadWriter>()
+                .AddSingleton<IStaThreadReader, StaThreadReader>()
+                ;
 
-        return services;
+        private IServiceCollection AddSingletonBoundedChannel<T>(
+            BoundedChannelOptions options)
+            => services
+                .AddSingleton(_
+                    => Channel.CreateBounded<T>(
+                        options))
+                .AddSingleton(sp
+                    => sp.GetRequiredService<Channel<T>>().Reader)
+                .AddSingleton(sp
+                    => sp.GetRequiredService<Channel<T>>().Writer)
+            ;
     }
 }
