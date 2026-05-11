@@ -26,6 +26,7 @@
     <File Path="version.json" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Demo.Engine.AppHost/Demo.Engine.AppHost.csproj" Id="ff378cf4-d4e0-4496-bb13-4f31cf47ee8c" />
     <Project Path="src/Demo.Engine.Core/Demo.Engine.Core.csproj">
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
@@ -39,6 +40,7 @@
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
     </Project>
+    <Project Path="src/Demo.Engine.ServiceDefaults/Demo.Engine.ServiceDefaults.csproj" />
     <Project Path="src/Demo.Engine/Demo.Engine.csproj">
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
@@ -47,13 +49,18 @@
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
     </Project>
+  </Folder>
+  <Folder Name="/src/source generators/">
+    <Project Path="src/Demo.Engine.Observability.SourceGenerators/Demo.Engine.Observability.SourceGenerators.csproj" Id="b94e1e8d-c8d4-4096-8f8a-03fbd4bcaefa" />
     <Project Path="src/Demo.Tools.SourceGenerators/Demo.Tools.SourceGenerators.csproj" />
-    <Project Path="src/Demo.Engine.AppHost/Demo.Engine.AppHost.csproj" Id="ff378cf4-d4e0-4496-bb13-4f31cf47ee8c" />
-    <Project Path="src/Demo.Engine.ServiceDefaults/Demo.Engine.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/test/">
     <File Path="test/.editorconfig" />
     <Project Path="test/Demo.Engine.Core.UTs/Demo.Engine.Core.UTs.csproj">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="test/Demo.Engine.Observability.SourceGenerators.UTs/Demo.Engine.Observability.SourceGenerators.UTs.csproj">
       <Platform Solution="*|ARM64" Project="ARM64" />
       <Platform Solution="*|x64" Project="x64" />
     </Project>

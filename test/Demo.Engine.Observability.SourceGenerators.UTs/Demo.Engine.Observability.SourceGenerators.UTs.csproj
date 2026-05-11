@@ -23,6 +23,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Demo.Tools.SourceGenerators\Demo.Tools.SourceGenerators.csproj" />
+    <ProjectReference Include="..\..\src\Demo.Engine.Observability.Abstractions\Demo.Engine.Observability.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\Demo.Engine.Observability.SourceGenerators\Demo.Engine.Observability.SourceGenerators.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="TestInstrumentationGenerator.ValueResultSourceGenerator_BindExtensions_Success#InstrumentationAttribute.g.received.cs">
+      <DependentUpon>TestInstrumentationGenerator.cs</DependentUpon>
+    </None>
+  </ItemGroup>
+
 </Project>

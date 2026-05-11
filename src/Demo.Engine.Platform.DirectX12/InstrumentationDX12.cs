@@ -8,7 +8,10 @@ using Demo.Engine.Observability.Abstractions;
 
 namespace Demo.Engine.Platform.DirectX12;
 
-internal sealed class InstrumentationDX12
+[Instrumentation<InstrumentationDX12>(
+    name: "DirectX12",
+    sourceName: "Demo.Engine.Platform.DirectX12")]
+internal sealed partial class InstrumentationDX12
     : IInstrumentation
 {
     public static string INSTRUMENTATION_SOURCE_NAME => "Demo.Engine.Platform.DirectX12";
