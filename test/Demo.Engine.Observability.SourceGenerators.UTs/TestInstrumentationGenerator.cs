@@ -17,7 +17,7 @@ public class TestInstrumentationGenerator
             [Instrumentation<InstrumentationDX12>(
                 name: "DirectX12",
                 sourceName: "Demo.Engine.Platform.DirectX12")]
-            public sealed partial class InstrumentationDX12 : IInstrumentation
+            public sealed partial class InstrumentationDX12
             {
 
             }

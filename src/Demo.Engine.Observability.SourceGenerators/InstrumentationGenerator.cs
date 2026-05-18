@@ -12,17 +12,39 @@ namespace Demo.Engine.Observability.SourceGenerators;
 public sealed class InstrumentationGenerator
     : IIncrementalGenerator
 {
+    internal const string GENERIC_INSTRUMENTATION_ATTRIBUTE_NAME = "Demo.Engine.Observability.Abstractions.InstrumentationAttribute`1";
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var instrumentationsToGenerate = context.SyntaxProvider
             .ForAttributeWithMetadataName(
-                "Demo.Engine.Observability.Abstractions.InstrumentationAttribute`1",
+                GENERIC_INSTRUMENTATION_ATTRIBUTE_NAME,
                 predicate: (node, _) => node is ClassDeclarationSyntax,
                 transform: static (ctx, _) =>
                 {
                     //todo
-                    return new InstrumentationInfo("className", "name", "sourceName");
-                });
+                    var typeSymbol = (INamedTypeSymbol)ctx.TargetSymbol;
+
+                    var containingNamespace = typeSymbol.ContainingNamespace;
+
+                    var className = typeSymbol.Name;
+
+                    var attributeData = ctx.Attributes[0];
+                    var attributeClass = (INamedTypeSymbol)attributeData.AttributeClass!;
+                    var genericArgument = attributeClass.TypeArguments[0];
+                    var genericParam = ctx.SemanticModel.Compilation
+                        .GetTypeByMetadataName(genericArgument.ToDisplayString());
+                    var genericParamName = genericParam is not null
+                        ? $"global::{genericParam.ContainingNamespace}.{genericParam.Name}"
+                        : null;
+
+                    return new InstrumentationInfo(
+                        className: className,
+                        containingNamespace: containingNamespace.ToString(),
+                        name: "name",
+                        sourceName: "sourceName",
+                        genericParamName: genericParamName);
+                })
         ;
 
         context.RegisterSourceOutput(
@@ -37,23 +59,47 @@ public sealed class InstrumentationGenerator
     {
         context.AddSource(
             $"InstrumentationDX12.g.cs",
-            SourceText.From("//todo", Encoding.UTF8));
+            SourceText.From(GenerateSource(info), Encoding.UTF8));
     }
 
     public readonly record struct InstrumentationInfo
     {
         public string ClassName { get; }
-        public readonly string Name;
-        public readonly string? SourceName;
+        public string ContainingNamespace { get; }
+        public string Name { get; }
+        public string? SourceName { get; }
+        public string? GenericParamName { get; }
 
         public InstrumentationInfo(
             string className,
+            string containingNamespace,
             string name,
-            string? sourceName)
+            string? sourceName,
+            string? genericParamName)
         {
             ClassName = className;
+            ContainingNamespace = containingNamespace;
             Name = name;
             SourceName = sourceName;
+            GenericParamName = genericParamName;
         }
+    }
+
+    private static string GenerateSource(InstrumentationInfo info)
+    {
+        return
+            $$"""
+            namespace global::{{info.ContainingNamespace}};
+
+            public partial class {{info.ClassName}}
+                : global::Demo.Engine.Observability.Abstractions.IInstrumentation
+            {
+                public static string VERSION => typeof({{info.GenericParamName}})
+                    .Assembly
+                    .GetCustomAttribute<global::System.Reflection.AssemblyInformationalVersionAttribute>()?
+                    .InformationalVersion
+                    ?? "0.0.0";
+            }
+            """;
     }
 }
