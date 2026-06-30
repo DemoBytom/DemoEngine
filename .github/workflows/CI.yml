@@ -9,7 +9,7 @@
 #
 #     - To trigger manual generation invoke:
 #
-#         nuke --generate-configuration GitHubActions_CI --host GitHubActions
+#         fallout --generate-configuration GitHubActions_CI --host GitHubActions
 #
 # </auto-generated>
 # ------------------------------------------------------------------------------
@@ -27,11 +27,11 @@ jobs:
         with:
           lfs: true
           fetch-depth: 0
-      - name: 'Cache: .nuke/temp, ~/.nuget/packages'
+      - name: 'Cache: .fallout/temp, ~/.nuget/packages'
         uses: actions/cache@v4
         with:
           path: |
-            .nuke/temp
+            .fallout/temp
             ~/.nuget/packages
           key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
       - name: 'Run: Clean, Compile, Test, Publish'

@@ -15,6 +15,13 @@
         "nbgv"
       ],
       "rollForward": false
+    },
+    "fallout.globaltool": {
+      "version": "10.3.49",
+      "commands": [
+        "fallout"
+      ],
+      "rollForward": false
     }
   }
 }

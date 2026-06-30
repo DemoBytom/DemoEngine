@@ -5,28 +5,28 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.IO.Pipelines;
 using System.Text.Json;
-using Nuke.Common;
-using Nuke.Common.CI.GitHubActions;
-using Nuke.Common.Execution;
-using Nuke.Common.Git;
-using Nuke.Common.IO;
-using Nuke.Common.ProjectModel;
-using Nuke.Common.Tooling;
-using Nuke.Common.Tools.CoverallsNet;
-using Nuke.Common.Tools.Coverlet;
-using Nuke.Common.Tools.DotCover;
-using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Tools.GitVersion;
-using Nuke.Common.Tools.NerdbankGitVersioning;
-using Nuke.Common.Tools.ReportGenerator;
-using Nuke.Common.Utilities;
-using Nuke.Common.Utilities.Collections;
+using Fallout.Common;
+using Fallout.Common.CI.GitHubActions;
+using Fallout.Common.Execution;
+using Fallout.Common.Git;
+using Fallout.Common.IO;
+using Fallout.Common.ProjectModel;
+using Fallout.Common.Tooling;
+using Fallout.Common.Tools.CoverallsNet;
+using Fallout.Common.Tools.Coverlet;
+using Fallout.Common.Tools.DotCover;
+using Fallout.Common.Tools.DotNet;
+using Fallout.Common.Tools.GitVersion;
+using Fallout.Common.Tools.NerdbankGitVersioning;
+using Fallout.Common.Tools.ReportGenerator;
+using Fallout.Common.Utilities;
+using Fallout.Common.Utilities.Collections;
 using Serilog;
-using static Nuke.Common.IO.PathConstruction;
-using static Nuke.Common.Tools.CoverallsNet.CoverallsNetTasks;
-using static Nuke.Common.Tools.DotNet.DotNetTasks;
-using static Nuke.Common.Tools.Git.GitTasks;
-using static Nuke.Common.Tools.ReportGenerator.ReportGeneratorTasks;
+using static Fallout.Common.IO.PathConstruction;
+using static Fallout.Common.Tools.CoverallsNet.CoverallsNetTasks;
+using static Fallout.Common.Tools.DotNet.DotNetTasks;
+using static Fallout.Common.Tools.Git.GitTasks;
+using static Fallout.Common.Tools.ReportGenerator.ReportGeneratorTasks;
 
 namespace BuildScript;
 
@@ -52,10 +52,10 @@ namespace BuildScript;
     ],
     FetchDepth = 0,
     Lfs = true)]
-internal sealed partial class Build : NukeBuild
+internal sealed partial class Build : FalloutBuild
 {
     /* Install Global Tool
-     * - $ dotnet tool install Nuke.GlobalTool --global
+     * - $ dotnet tool install Fallout.GlobalTool --global
      *
      * To run the build using Global Tool
      * - $ nuke Full
