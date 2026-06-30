@@ -12,10 +12,10 @@ Project is using [Vortice.Windows](https://github.com/amerkoleci/Vortice.Windows
 ## Build
 In order to compile, you need **Visual Studio 2026, or newer** setup for C# development, and [.NET Core 10.0.102 SDK](https://github.com/dotnet/core/blob/main/release-notes/10.0/10.0.2/10.0.2.md).  
 
-**Command line** build can be done using [Nuke](https://nuke.build/) using the following commands:
+**Command line** build can be done using [Fallout](https://github.com/Fallout-build/Fallout) using the following commands:
 ```
 dotnet tool restore
-dotnet nuke
+dotnet fallout
 ```
 
 ## Credits
