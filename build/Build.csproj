@@ -7,15 +7,15 @@
     <RootNamespace></RootNamespace>
     <IsPackable>False</IsPackable>
     <NoWarn>CS0649;CS0169</NoWarn>
-    <NukeRootDirectory>..</NukeRootDirectory>
-    <NukeScriptDirectory>..</NukeScriptDirectory>
-    <NukeTelemetryVersion>1</NukeTelemetryVersion>
+    <FalloutRootDirectory>..</FalloutRootDirectory>
+    <FalloutScriptDirectory>..</FalloutScriptDirectory>
+    <FalloutTelemetryVersion>1</FalloutTelemetryVersion>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;ARM64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nuke.Common" />
+    <PackageReference Include="Fallout.Common" />
     <PackageReference Include="ReportGenerator" />
     <PackageReference Include="coveralls.net" ExcludeAssets="all" />
   </ItemGroup>

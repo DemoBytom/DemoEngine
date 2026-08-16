@@ -1,8 +1,8 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using Nuke.Common;
-using static Nuke.Common.ChangeLog.ChangelogTasks;
+using Fallout.Common;
+using static Fallout.Common.ChangeLog.ChangelogTasks;
 
 namespace BuildScript;
 

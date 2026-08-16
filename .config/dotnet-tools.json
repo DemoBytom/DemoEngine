@@ -2,22 +2,22 @@
   "version": 1,
   "isRoot": true,
   "tools": {
-    "nuke.globaltool": {
-      "version": "10.1.0",
-      "commands": [
-        "nuke"
-      ],
-      "rollForward": false
-    },
     "nbgv": {
-      "version": "3.9.50",
+      "version": "3.10.91",
       "commands": [
         "nbgv"
       ],
       "rollForward": false
     },
+    "fallout.globaltool": {
+      "version": "10.4.0",
+      "commands": [
+        "fallout"
+      ],
+      "rollForward": false
+    },
     "aspire.cli": {
-      "version": "13.3.1",
+      "version": "13.4.6",
       "commands": [
         "aspire"
       ],
