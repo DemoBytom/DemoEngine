@@ -116,6 +116,10 @@
   "allOf": [
     {
       "properties": {
+        "BuildArchitecture": {
+          "type": "string",
+          "description": "Build architecture"
+        },
         "Configuration": {
           "type": "string",
           "enum": [

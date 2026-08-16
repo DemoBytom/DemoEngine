@@ -18,6 +18,9 @@ name: CI
 
 on: [push]
 
+env:
+  DEMO_ENGINE_BUILD_ARCH: x64
+
 jobs:
   windows-latest:
     name: windows-latest

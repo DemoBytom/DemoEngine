@@ -18,6 +18,9 @@ name: CI-arm
 
 on: [push]
 
+env:
+  DEMO_ENGINE_BUILD_ARCH: arm64
+
 jobs:
   windows-latest:
     name: windows-latest

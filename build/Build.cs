@@ -55,7 +55,10 @@ namespace BuildScript;
         nameof(CoverallsToken)
     ],
     FetchDepth = 0,
-    Lfs = true)]
+    Lfs = true,
+    Env = [
+        "DEMO_ENGINE_BUILD_ARCH: x64",
+        ])]
 [GitHubActions(
     "CI-arm",
     GitHubActionsImage.WindowsLatest,
@@ -79,7 +82,10 @@ namespace BuildScript;
         nameof(CoverallsToken)
     ],
     FetchDepth = 0,
-    Lfs = true)]
+    Lfs = true,
+    Env = [
+        "DEMO_ENGINE_BUILD_ARCH: arm64",
+        ])]
 internal sealed partial class Build : FalloutBuild
 {
     /* Install Global Tool
@@ -115,6 +121,13 @@ internal sealed partial class Build : FalloutBuild
         var gh when gh.TryGetValue("GITHUB_RUN_ID", out var ghid) => ghid,
         var nuke when nuke.TryGetValue("NUKE_RUN_ID", out var nukeid) => nukeid,
         _ => null
+    };
+
+    [Parameter("Build architecture")]
+    public readonly string BuildArchitecture = EnvironmentInfo.Variables switch
+    {
+        var gh when gh.TryGetValue("DEMO_ENGINE_BUILD_ARCH", out var arch) => arch,
+        _ => "x64",
     };
 
     [Solution(GenerateProjects = true)] public readonly Solution Solution = default!;
@@ -181,8 +194,9 @@ internal sealed partial class Build : FalloutBuild
         {
             ReadOnlySpan<(string os, string arch)> rids =
             [
-                ("win", "x64"),
+                //("win", "x64"),
                 //("win", "arm64"),
+                ("win", BuildArchitecture)
             ];
 
             foreach (var testProj in TestProjects)
