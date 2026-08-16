@@ -10,7 +10,6 @@ using Fallout.Common.CI.GitHubActions;
 using Fallout.Common.Execution;
 using Fallout.Common.Git;
 using Fallout.Common.IO;
-using Fallout.Common.ProjectModel;
 using Fallout.Common.Tooling;
 using Fallout.Common.Tools.CoverallsNet;
 using Fallout.Common.Tools.Coverlet;
@@ -21,6 +20,7 @@ using Fallout.Common.Tools.NerdbankGitVersioning;
 using Fallout.Common.Tools.ReportGenerator;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
+using Fallout.Solutions;
 using Serilog;
 using static Fallout.Common.IO.PathConstruction;
 using static Fallout.Common.Tools.CoverallsNet.CoverallsNetTasks;
@@ -34,6 +34,34 @@ namespace BuildScript;
 [GitHubActions(
     "CI",
     GitHubActionsImage.WindowsLatest,
+    //RunsOnLabels = [
+    //    "windows-latest",
+    //    "windows-11-arm",
+    //],
+    On =
+    [
+        GitHubActionsTrigger.Push
+    ],
+    InvokedTargets =
+    [
+        nameof(Clean),
+        nameof(Compile),
+        nameof(Test),
+        nameof(Publish)
+    ],
+    EnableGitHubToken = true,
+    ImportSecrets =
+    [
+        nameof(CoverallsToken)
+    ],
+    FetchDepth = 0,
+    Lfs = true)]
+[GitHubActions(
+    "CI-arm",
+    GitHubActionsImage.WindowsLatest,
+    RunsOnLabels = [
+        "windows-11-arm",
+    ],
     On =
     [
         GitHubActionsTrigger.Push

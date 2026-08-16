@@ -9,19 +9,19 @@
 #
 #     - To trigger manual generation invoke:
 #
-#         fallout --generate-configuration GitHubActions_CI --host GitHubActions
+#         fallout --generate-configuration GitHubActions_CI-arm --host GitHubActions
 #
 # </auto-generated>
 # ------------------------------------------------------------------------------
 
-name: CI
+name: CI-arm
 
 on: [push]
 
 jobs:
   windows-latest:
     name: windows-latest
-    runs-on: windows-latest
+    runs-on: [windows-11-arm]
     steps:
       - uses: actions/checkout@v7
         with:
