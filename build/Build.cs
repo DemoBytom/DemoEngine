@@ -10,7 +10,6 @@ using Fallout.Common.CI.GitHubActions;
 using Fallout.Common.Execution;
 using Fallout.Common.Git;
 using Fallout.Common.IO;
-using Fallout.Common.ProjectModel;
 using Fallout.Common.Tooling;
 using Fallout.Common.Tools.CoverallsNet;
 using Fallout.Common.Tools.Coverlet;
@@ -21,6 +20,7 @@ using Fallout.Common.Tools.NerdbankGitVersioning;
 using Fallout.Common.Tools.ReportGenerator;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
+using Fallout.Solutions;
 using Serilog;
 using static Fallout.Common.IO.PathConstruction;
 using static Fallout.Common.Tools.CoverallsNet.CoverallsNetTasks;
@@ -34,6 +34,10 @@ namespace BuildScript;
 [GitHubActions(
     "CI",
     GitHubActionsImage.WindowsLatest,
+    //RunsOnLabels = [
+    //    "windows-latest",
+    //    "windows-11-arm",
+    //],
     On =
     [
         GitHubActionsTrigger.Push
@@ -51,7 +55,37 @@ namespace BuildScript;
         nameof(CoverallsToken)
     ],
     FetchDepth = 0,
-    Lfs = true)]
+    Lfs = true,
+    Env = [
+        "DEMO_ENGINE_BUILD_ARCH: x64",
+        ])]
+[GitHubActions(
+    "CI-arm",
+    GitHubActionsImage.WindowsLatest,
+    RunsOnLabels = [
+        "windows-11-arm",
+    ],
+    On =
+    [
+        GitHubActionsTrigger.Push
+    ],
+    InvokedTargets =
+    [
+        nameof(Clean),
+        nameof(Compile),
+        nameof(Test),
+        nameof(Publish)
+    ],
+    EnableGitHubToken = true,
+    ImportSecrets =
+    [
+        nameof(CoverallsToken)
+    ],
+    FetchDepth = 0,
+    Lfs = true,
+    Env = [
+        "DEMO_ENGINE_BUILD_ARCH: arm64",
+        ])]
 internal sealed partial class Build : FalloutBuild
 {
     /* Install Global Tool
@@ -87,6 +121,13 @@ internal sealed partial class Build : FalloutBuild
         var gh when gh.TryGetValue("GITHUB_RUN_ID", out var ghid) => ghid,
         var nuke when nuke.TryGetValue("NUKE_RUN_ID", out var nukeid) => nukeid,
         _ => null
+    };
+
+    [Parameter("Build architecture")]
+    public readonly string BuildArchitecture = EnvironmentInfo.Variables switch
+    {
+        var gh when gh.TryGetValue("DEMO_ENGINE_BUILD_ARCH", out var arch) => arch,
+        _ => "x64",
     };
 
     [Solution(GenerateProjects = true)] public readonly Solution Solution = default!;
@@ -153,8 +194,9 @@ internal sealed partial class Build : FalloutBuild
         {
             ReadOnlySpan<(string os, string arch)> rids =
             [
-                ("win", "x64"),
+                //("win", "x64"),
                 //("win", "arm64"),
+                ("win", BuildArchitecture)
             ];
 
             foreach (var testProj in TestProjects)

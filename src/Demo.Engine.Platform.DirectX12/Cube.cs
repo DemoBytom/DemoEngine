@@ -135,7 +135,7 @@ internal sealed class Cube
         _pipelineState = _renderingEngine.Device.CreateGraphicsPipelineState(gfxPipelineStateDesc);
     }
 
-    public GraphicsPipelineStateDescription PrepareRenderingPipeline()
+    public unsafe GraphicsPipelineStateDescription PrepareRenderingPipeline()
     {
         const RootSignatureFlags ROOT_SIGNATURE_FLAGS =
             RootSignatureFlags.AllowInputAssemblerInputLayout
