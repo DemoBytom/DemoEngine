@@ -40,5 +40,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Demo.Engine.Observability.Abstractions\Demo.Engine.Observability.Abstractions.csproj" />
     <ProjectReference Include="..\Demo.Tools.Common\Demo.Tools.Common.csproj" />
+    <ProjectReference Include="..\Demo.Engine.Observability.SourceGenerators\Demo.Engine.Observability.SourceGenerators.csproj"
+                  OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
   </ItemGroup>
 </Project>

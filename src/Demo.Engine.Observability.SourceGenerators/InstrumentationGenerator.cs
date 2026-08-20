@@ -3,6 +3,7 @@
 
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -28,6 +29,7 @@ public sealed class InstrumentationGenerator
                     var containingNamespace = typeSymbol.ContainingNamespace;
 
                     var className = typeSymbol.Name;
+                    var accessibility = typeSymbol.DeclaredAccessibility;
 
                     var attributeData = ctx.Attributes[0];
                     var attributeClass = (INamedTypeSymbol)attributeData.AttributeClass!;
@@ -38,11 +40,31 @@ public sealed class InstrumentationGenerator
                         ? $"global::{genericParam.ContainingNamespace}.{genericParam.Name}"
                         : null;
 
+                    var classDeclaration = ctx.TargetNode as ClassDeclarationSyntax;
+
+                    var name = "empty!";
+                    string? sourceName = null;
+
+                    var firstArgument = attributeData.ConstructorArguments.ElementAtOrDefault(0);
+                    if (firstArgument.Kind == TypedConstantKind.Primitive
+                        && firstArgument.Value is string value1)
+                    {
+                        name = value1;
+                    }
+
+                    var secondArgument = attributeData.ConstructorArguments.ElementAtOrDefault(1);
+                    if (secondArgument.Kind == TypedConstantKind.Primitive
+                        && secondArgument.Value is string value2)
+                    {
+                        sourceName = value2;
+                    }
+
                     return new InstrumentationInfo(
+                        accessibility: accessibility,
                         className: className,
                         containingNamespace: containingNamespace.ToString(),
-                        name: "name",
-                        sourceName: "sourceName",
+                        name: name,
+                        sourceName: sourceName,
                         genericParamName: genericParamName);
                 })
         ;
@@ -64,6 +86,7 @@ public sealed class InstrumentationGenerator
 
     public readonly record struct InstrumentationInfo
     {
+        public Accessibility Accessibility { get; }
         public string ClassName { get; }
         public string ContainingNamespace { get; }
         public string Name { get; }
@@ -71,12 +94,14 @@ public sealed class InstrumentationGenerator
         public string? GenericParamName { get; }
 
         public InstrumentationInfo(
+            Accessibility accessibility,
             string className,
             string containingNamespace,
             string name,
             string? sourceName,
             string? genericParamName)
         {
+            Accessibility = accessibility;
             ClassName = className;
             ContainingNamespace = containingNamespace;
             Name = name;
@@ -89,16 +114,27 @@ public sealed class InstrumentationGenerator
     {
         return
             $$"""
-            namespace global::{{info.ContainingNamespace}};
+            namespace {{info.ContainingNamespace}};
 
-            public partial class {{info.ClassName}}
+            {{SyntaxFacts.GetText(info.Accessibility)}} partial class {{info.ClassName}}
                 : global::Demo.Engine.Observability.Abstractions.IInstrumentation
             {
-                public static string VERSION => typeof({{info.GenericParamName}})
-                    .Assembly
-                    .GetCustomAttribute<global::System.Reflection.AssemblyInformationalVersionAttribute>()?
+                public static string INSTRUMENTATION_SOURCE_NAME => "{{info.SourceName ?? info.ContainingNamespace}}";
+                
+                public static string VERSION
+                    => global::System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::System.Reflection.AssemblyInformationalVersionAttribute>(
+                        typeof({{info.GenericParamName}})
+                            .Assembly)?
                     .InformationalVersion
                     ?? "0.0.0";
+
+                public static global::System.Diagnostics.Metrics.Meter Meter { get; } = new global::System.Diagnostics.Metrics.Meter(
+                    name: INSTRUMENTATION_SOURCE_NAME,
+                    version: VERSION);
+
+                public static global::System.Diagnostics.ActivitySource ActivitySource { get; } = new global::System.Diagnostics.ActivitySource(
+                    name: INSTRUMENTATION_SOURCE_NAME,
+                    version: VERSION);
             }
             """;
     }

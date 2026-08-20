@@ -38,6 +38,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Demo.Engine.Observability.SourceGenerators\Demo.Engine.Observability.SourceGenerators.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Shaders\ShaderFiles\FillColor.hlsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
