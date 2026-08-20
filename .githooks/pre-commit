@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-echo "Formatting code!"
+export PATH="c/Program Files/dotnet/:$PATH"
+
+echo "Formatting code!!"
 
 files=`git diff --cached --name-only --diff-filter ACMR | xargs`
 if [ -n "$files" ]; then
-    dotnet format -v n --include $files
+    dotnet.exe format -v n --include $files
 
     git add $files
 fi
