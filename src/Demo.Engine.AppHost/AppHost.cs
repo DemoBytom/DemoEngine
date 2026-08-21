@@ -5,6 +5,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 builder
     .AddProject<Projects.Demo_Engine>("demo-engine", "Demo.Engine")
+    .WithIconName("Games")
     ;
 
-builder.Build().Run();
+await using var app = builder.Build();
+
+await app.RunAsync();
