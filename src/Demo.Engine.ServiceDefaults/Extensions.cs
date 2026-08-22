@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 namespace Demo.Engine.ServiceDefaults;
 
@@ -16,14 +17,20 @@ public static class Extensions
         where TBuilder : IHostBuilder
     {
         public TBuilder AddServiceDefaults(
-            TelemetryBuilderFunc<TelemetryBuilder> instrumentations)
+            TelemetryBuilderFunc<TelemetryBuilder> instrumentations,
+            string? serviceName = null,
+            string? version = null)
             => builder
                 .ConfigureOpenTelemetry(
-                    instrumentations)
+                    instrumentations,
+                    serviceName,
+                    version)
                 ;
 
         private TBuilder ConfigureOpenTelemetry<TTelemetryBuilder>(
-            TelemetryBuilderFunc<TTelemetryBuilder>? instrumentations = null)
+            TelemetryBuilderFunc<TTelemetryBuilder>? instrumentations = null,
+            string? serviceName = null,
+            string? version = null)
             where TTelemetryBuilder : ITelemetryBuilder<TTelemetryBuilder, OpenTelemetryBuilder>, allows ref struct
             => (TBuilder)builder
                 .ConfigureLogging(logging => logging
@@ -39,10 +46,12 @@ public static class Extensions
                     .WithMetrics(metrics => metrics
                         .AddRuntimeInstrumentation())
                     .WithLogging())
-                .AddOpenTelemetryExporters()
+                .AddOpenTelemetryExporters(serviceName, version)
                 ;
 
-        private TBuilder AddOpenTelemetryExporters()
+        private TBuilder AddOpenTelemetryExporters(
+            string? serviceName,
+            string? version)
             => (TBuilder)builder.ConfigureServices((hostContext, services) =>
             {
                 var useOtlpExporter = !string.IsNullOrWhiteSpace(
@@ -52,6 +61,12 @@ public static class Extensions
                 {
                     _ = services
                         .AddOpenTelemetry()
+                        .ConfigureResource(c => c
+                            .AddService(
+                                serviceName ?? "Demo.Engine",
+                                serviceVersion: version ?? "0.0.0",
+                                autoGenerateServiceInstanceId: false,
+                                serviceInstanceId: Guid.CreateVersion7().ToString()))
                         .UseOtlpExporter()
                         ;
                 }

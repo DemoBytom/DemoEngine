@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.5.1">
+﻿<Project Sdk="Aspire.AppHost.Sdk/13.5.1">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -10,6 +10,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Demo.Engine\Demo.Engine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\grafana\**" LinkBase="grafana" />
+    <None Include="..\..\prometheus\**" LinkBase="prometheus" />
+    <None Include="..\..\otelcollector\**" LinkBase="otelcollector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="OpenTelemetryCollector\" />
   </ItemGroup>
 
 </Project>

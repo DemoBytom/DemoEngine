@@ -20,7 +20,9 @@ try
         .AddServiceDefaults(
             static (ref instrumentation) => ref instrumentation
                 .WithCoreInstrumentation()
-                .WithDirectX12Instrumentation())
+                .WithDirectX12Instrumentation(),
+            serviceName: Instrumentation.INSTRUMENTATION_SOURCE_NAME,
+            version: Instrumentation.VERSION)
         .WithSerilog()
         .ConfigureServices((hostContext, services)
         =>

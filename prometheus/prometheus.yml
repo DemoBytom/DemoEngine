@@ -1,0 +1,10 @@
+storage:
+  tsdb:
+    out_of_order_time_window: 30m
+
+otlp:
+  promote_resource_attributes:
+    - service.instance.id
+    - service.name
+    - service.namespace
+  translation_strategy: NoUTF8EscapingWithSuffixes
