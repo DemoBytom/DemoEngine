@@ -33,6 +33,7 @@ public static class Extensions
                         options.IncludeScopes = true;
                     }))
                 .ConfigureServices((hostContext, services) => services
+                    .AddResourceMonitoring()
                     .AddOpenTelemetry()
                     .RegisterInstrumentation(instrumentations)
                     .WithMetrics(metrics => metrics
