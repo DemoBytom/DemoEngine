@@ -2,6 +2,7 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Numerics;
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces;
@@ -21,6 +22,26 @@ internal sealed class LoopJob
     private readonly ILogger<LoopJob> _logger;
     private readonly IMainLoopLifetime _mainLoopLifetime;
     private readonly IServiceProvider _serviceProvider;
+
+    private readonly Gauge<double> _updateTime = Instrumentation.Meter.CreateGauge<double>(
+        "demo.engine.update.time.gauge",
+        "μs",
+        "Update time in microseconds");
+
+    private readonly Histogram<double> _updateTimeHistogram = Instrumentation.Meter.CreateHistogram<double>(
+        "demo.engine.update.time.histogram",
+        "μs",
+        "Update time in microseconds");
+
+    private readonly Gauge<double> _drawTime = Instrumentation.Meter.CreateGauge<double>(
+        "demo.engine.draw.time.gauge",
+        "μs",
+        "Draw time in microseconds");
+
+    private readonly Histogram<double> _drawTimeHistogram = Instrumentation.Meter.CreateHistogram<double>(
+        "demo.engine.draw.time.histogram",
+        "μs",
+        "Draw time in microseconds");
 
     private ICube[] _drawables = [];
     private bool _disposedValue;
@@ -53,6 +74,7 @@ internal sealed class LoopJob
         KeyboardCharCache keyboardCharCache)
     {
         _upsFrame += 1;
+        var updateTimeStart = Stopwatch.GetTimestamp();
         if (keyboardHandle.GetKeyPressed(VirtualKeys.OemOpenBrackets))
         {
             keyboardCharCache.Clear();
@@ -112,8 +134,8 @@ internal sealed class LoopJob
             Debug.WriteLine("Adding new Cube!");
             _drawables = new List<ICube>(_drawables)
             {
-                    _serviceProvider.GetRequiredService<ICube>()
-                }.ToArray();
+                _serviceProvider.GetRequiredService<ICube>()
+            }.ToArray();
             Debug.WriteLine("Cube added!!");
         }
 
@@ -152,6 +174,10 @@ internal sealed class LoopJob
         _drawables.ElementAtOrDefault(1)
             ?.Update(renderingSurface, new Vector3(0.5f, 0.0f, -0.5f), -_angleInRadians * 1.5f);
 
+        var updateTime = Stopwatch.GetElapsedTime(updateTimeStart);
+        _updateTime.Record(updateTime.TotalMicroseconds);
+        _updateTimeHistogram.Record(updateTime.TotalMicroseconds);
+
         return ValueTask.CompletedTask;
     }
 
@@ -167,11 +193,23 @@ internal sealed class LoopJob
     public void Render(
         IRenderingEngine renderingEngine,
         RenderingSurfaceId renderingSurfaceId)
-        => renderingEngine.Draw(
-            color: new Color4(_r, _g, _b, 1.0f),
-            renderingSurfaceId: renderingSurfaceId,
-            drawables: _drawables,
-            _upsFrame);
+    {
+        var drawTimeStart = Stopwatch.GetTimestamp();
+
+        renderingEngine.Draw(
+                color: new Color4(_r, _g, _b, 1.0f),
+                renderingSurfaceId: renderingSurfaceId,
+                drawables: _drawables,
+                _upsFrame);
+
+        var drawTime = Stopwatch.GetElapsedTime(drawTimeStart);
+        _drawTime.Record(
+            drawTime.TotalMicroseconds,
+            new KeyValuePair<string, object?>("surfaceId", renderingSurfaceId));
+        _drawTimeHistogram.Record(
+            drawTime.TotalMicroseconds,
+            new KeyValuePair<string, object?>("surfaceId", renderingSurfaceId));
+    }
 
     private void Dispose(bool disposing)
     {
