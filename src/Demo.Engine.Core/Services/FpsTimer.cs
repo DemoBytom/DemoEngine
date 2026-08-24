@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Demo.Engine.Core.Extensions;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.ValueObjects;
 using Microsoft.Extensions.Logging;
@@ -13,15 +14,9 @@ internal sealed class FpsTimer(
     ILogger<FpsTimer> logger)
     : IFpsTimer
 {
-    private static readonly Gauge<int> _upsGauge = Instrumentation.Meter.CreateGauge<int>(
-        "demo.engine.ups.gauge",
-        "ups",
-        "Updates per second");
+    private static readonly Gauge<int> _upsGauge = Instrumentation.CreateUpsGauge();
 
-    private static readonly Histogram<int> _upsHistogram = Instrumentation.Meter.CreateHistogram<int>(
-        "demo.engine.ups.histogram",
-        "ups",
-        "Updates per second");
+    private static readonly Histogram<int> _upsHistogram = Instrumentation.CreateUpsHistogram();
 
     internal sealed class SurfaceFpsCounter(
         ILogger logger,
@@ -36,15 +31,9 @@ internal sealed class FpsTimer(
         private long _start;
         private long _seconds = Stopwatch.GetTimestamp();
 
-        private static readonly Gauge<int> _fpsGauge = Instrumentation.Meter.CreateGauge<int>(
-            "demo.engine.fps.gauge",
-            "fps",
-            "Frames per second");
+        private static readonly Gauge<int> _fpsGauge = Instrumentation.CreateFpsGauge();
 
-        private static readonly Histogram<int> _fpsHistogram = Instrumentation.Meter.CreateHistogram<int>(
-            "demo.engine.fps.histogram",
-            "fps",
-            "Frames per second");
+        private static readonly Histogram<int> _fpsHistogram = Instrumentation.CreateFpsHistogram();
 
         public void Start()
             => _start = Stopwatch.GetTimestamp();
@@ -64,9 +53,9 @@ internal sealed class FpsTimer(
                     _fpsCounter);
 
                 _fpsGauge.Record((int)_fpsCounter,
-                    new KeyValuePair<string, object?>("surfaceId", _surfaceId));
+                    _surfaceId.ToOTelTag());
                 _fpsHistogram.Record((int)_fpsCounter,
-                    new KeyValuePair<string, object?>("surfaceId", _surfaceId));
+                    _surfaceId.ToOTelTag());
 
                 _averageMs = 0.0f;
                 _fpsCounter = 1;

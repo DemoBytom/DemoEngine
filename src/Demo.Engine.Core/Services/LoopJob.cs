@@ -5,10 +5,12 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Numerics;
 using Demo.Engine.Core.Components.Keyboard;
+using Demo.Engine.Core.Extensions;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.ValueObjects;
+using Demo.Engine.Observability.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Vortice.Mathematics;
@@ -25,22 +27,22 @@ internal sealed class LoopJob
 
     private readonly Gauge<double> _updateTime = Instrumentation.Meter.CreateGauge<double>(
         "demo.engine.update.time.gauge",
-        "μs",
+        Units.Microseconds,
         "Update time in microseconds");
 
     private readonly Histogram<double> _updateTimeHistogram = Instrumentation.Meter.CreateHistogram<double>(
         "demo.engine.update.time.histogram",
-        "μs",
+        Units.Microseconds,
         "Update time in microseconds");
 
     private readonly Gauge<double> _drawTime = Instrumentation.Meter.CreateGauge<double>(
         "demo.engine.draw.time.gauge",
-        "μs",
+        Units.Microseconds,
         "Draw time in microseconds");
 
     private readonly Histogram<double> _drawTimeHistogram = Instrumentation.Meter.CreateHistogram<double>(
         "demo.engine.draw.time.histogram",
-        "μs",
+        Units.Microseconds,
         "Draw time in microseconds");
 
     private ICube[] _drawables = [];
@@ -205,10 +207,10 @@ internal sealed class LoopJob
         var drawTime = Stopwatch.GetElapsedTime(drawTimeStart);
         _drawTime.Record(
             drawTime.TotalMicroseconds,
-            new KeyValuePair<string, object?>("surfaceId", renderingSurfaceId));
+            renderingSurfaceId.ToOTelTag());
         _drawTimeHistogram.Record(
             drawTime.TotalMicroseconds,
-            new KeyValuePair<string, object?>("surfaceId", renderingSurfaceId));
+            renderingSurfaceId.ToOTelTag());
     }
 
     private void Dispose(bool disposing)

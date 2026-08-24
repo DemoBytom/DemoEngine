@@ -820,7 +820,7 @@
                       "spec": {
                         "editorMode": "builder",
                         "exemplar": false,
-                        "expr": "{\"demo.engine.draw.time.gauge_μs\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}",
+                        "expr": "{\"demo.engine.draw.time.gauge_µs\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}",
                         "instant": false,
                         "legendFormat": "__auto",
                         "range": true
@@ -913,7 +913,7 @@
                       "options": {
                         "mode": "exclude",
                         "names": [
-                          "{__name__=\"demo.engine.draw.time.gauge_μs\", instance=\"01a03058-8e72-71fd-851b-ebfcccfc8aa9\", job=\"Demo.Engine\", service.instance.id=\"01a03058-8e72-71fd-851b-ebfcccfc8aa9\", service.name=\"Demo.Engine\", surfaceId=\"01a03058-9348-705a-86a1-a066210e4f3f\"}"
+                          "{__name__=\"demo.engine.draw.time.gauge_µs\", instance=\"01a03058-8e72-71fd-851b-ebfcccfc8aa9\", job=\"Demo.Engine\", service.instance.id=\"01a03058-8e72-71fd-851b-ebfcccfc8aa9\", service.name=\"Demo.Engine\", surfaceId=\"01a03058-9348-705a-86a1-a066210e4f3f\"}"
                         ],
                         "prefix": "All except:",
                         "readOnly": true
@@ -924,8 +924,8 @@
                         "id": "custom.hideFrom",
                         "value": {
                           "legend": false,
-                          "tooltip": true,
-                          "viz": true
+                          "tooltip": false,
+                          "viz": false
                         }
                       }
                     ]
@@ -970,7 +970,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "builder",
-                        "expr": "{\"demo.engine.draw.time.gauge_μs\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}",
+                        "expr": "{\"demo.engine.draw.time.gauge_µs\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}",
                         "legendFormat": "__auto",
                         "range": true
                       },
@@ -1074,7 +1074,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "builder",
-                        "expr": "{\"demo.engine.update.time.gauge_μs\", job=~\"$job\", instance=~\"$instance\"}",
+                        "expr": "{\"demo.engine.update.time.gauge_µs\", job=~\"$job\", instance=~\"$instance\"}",
                         "legendFormat": "__auto",
                         "range": true
                       },
@@ -1095,14 +1095,13 @@
           "links": [],
           "title": "Update total time",
           "vizConfig": {
-            "group": "barchart",
+            "group": "timeseries",
             "kind": "VizConfig",
             "spec": {
               "fieldConfig": {
                 "defaults": {
                   "color": {
-                    "fixedColor": "#ad46ff",
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "custom": {
                     "axisBorderShow": false,
@@ -1110,19 +1109,32 @@
                     "axisColorMode": "text",
                     "axisLabel": "",
                     "axisPlacement": "auto",
-                    "fillOpacity": 100,
-                    "gradientMode": "hue",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
                     "hideFrom": {
                       "legend": false,
                       "tooltip": false,
                       "viz": false
                     },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
                     "lineWidth": 1,
+                    "pointSize": 5,
                     "scaleDistribution": {
                       "type": "linear"
                     },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
                     "thresholdsStyle": {
-                      "mode": "line+area"
+                      "mode": "off"
                     }
                   },
                   "thresholds": {
@@ -1143,27 +1155,17 @@
                 "overrides": []
               },
               "options": {
-                "barRadius": 0,
-                "barWidth": 0.9,
-                "fullHighlight": false,
-                "groupWidth": 0.8,
                 "legend": {
                   "calcs": [],
                   "displayMode": "list",
                   "placement": "bottom",
-                  "showLegend": true
+                  "showLegend": false
                 },
-                "orientation": "auto",
-                "showValue": "auto",
-                "stacking": "none",
                 "tooltip": {
                   "hideZeros": false,
                   "mode": "single",
                   "sort": "none"
-                },
-                "xField": "time",
-                "xTickLabelRotation": 0,
-                "xTickLabelSpacing": 100
+                }
               }
             },
             "version": "13.2.0"
@@ -1189,7 +1191,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "builder",
-                        "expr": "{\"demo.engine.update.time.gauge_μs\", job=~\"$job\", instance=~\"$instance\"}",
+                        "expr": "{\"demo.engine.update.time.gauge_µs\", job=~\"$job\", instance=~\"$instance\"}",
                         "legendFormat": "__auto",
                         "range": true
                       },
@@ -1290,7 +1292,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.50, sum(rate({\"demo.engine.draw.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.50, sum(rate({\"demo.engine.draw.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p50",
                         "range": true
                       },
@@ -1308,7 +1310,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.75, sum(rate({\"demo.engine.draw.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.75, sum(rate({\"demo.engine.draw.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p75",
                         "range": true
                       },
@@ -1326,7 +1328,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.90, sum(rate({\"demo.engine.draw.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.90, sum(rate({\"demo.engine.draw.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p90",
                         "range": true
                       },
@@ -1344,7 +1346,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.95, sum(rate({\"demo.engine.draw.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.95, sum(rate({\"demo.engine.draw.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p95",
                         "range": true
                       },
@@ -1362,7 +1364,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.98, sum(rate({\"demo.engine.draw.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.98, sum(rate({\"demo.engine.draw.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p98",
                         "range": true
                       },
@@ -1380,7 +1382,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.99, sum(rate({\"demo.engine.draw.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.99, sum(rate({\"demo.engine.draw.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p99",
                         "range": true
                       },
@@ -1398,7 +1400,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.999, sum(rate({\"demo.engine.draw.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.999, sum(rate({\"demo.engine.draw.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p99.9",
                         "range": true
                       },
@@ -1485,7 +1487,7 @@
                       }
                     ]
                   },
-                  "unit": "FPS"
+                  "unit": "µs"
                 },
                 "overrides": []
               },
@@ -1527,7 +1529,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.50, sum(rate({\"demo.engine.update.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.50, sum(rate({\"demo.engine.update.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p50",
                         "range": true
                       },
@@ -1545,7 +1547,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.75, sum(rate({\"demo.engine.update.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.75, sum(rate({\"demo.engine.update.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p75",
                         "range": true
                       },
@@ -1563,7 +1565,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.90, sum(rate({\"demo.engine.update.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.90, sum(rate({\"demo.engine.update.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p90",
                         "range": true
                       },
@@ -1581,7 +1583,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.95, sum(rate({\"demo.engine.update.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.95, sum(rate({\"demo.engine.update.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p95",
                         "range": true
                       },
@@ -1599,7 +1601,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.98, sum(rate({\"demo.engine.update.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.98, sum(rate({\"demo.engine.update.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p98",
                         "range": true
                       },
@@ -1617,7 +1619,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.99, sum(rate({\"demo.engine.update.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.99, sum(rate({\"demo.engine.update.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p99",
                         "range": true
                       },
@@ -1635,7 +1637,7 @@
                       "kind": "DataQuery",
                       "spec": {
                         "editorMode": "code",
-                        "expr": "histogram_quantile(0.999, sum(rate({\"demo.engine.update.time.histogram_μs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
+                        "expr": "histogram_quantile(0.999, sum(rate({\"demo.engine.update.time.histogram_µs_bucket\", job=~\"$job\", instance=~\"$instance\", surfaceId=~\"$SurfaceID\"}[$__rate_interval])) by (le))",
                         "legendFormat": "p99.9",
                         "range": true
                       },
