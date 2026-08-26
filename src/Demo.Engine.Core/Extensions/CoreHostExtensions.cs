@@ -24,11 +24,11 @@ public static class CoreHostExtensions
         string[] args,
         string appsettingsFile = "appsettings.json")
         => hostBuilder
-        .UseContentRoot(Directory.GetCurrentDirectory())
+        .UseContentRoot(AppContext.BaseDirectory)
         .ConfigureHostConfiguration((configHost) =>
         {
             _ = configHost
-                .SetBasePath(Directory.GetCurrentDirectory())
+                .SetBasePath(AppContext.BaseDirectory)
                 .AddEnvironmentVariables("DEMOENGINE_")
                 //.AddEnvironmentVariables("DOTNET_")
                 //.AddEnvironmentVariables("OTEL_")

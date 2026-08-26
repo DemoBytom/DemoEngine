@@ -14,14 +14,14 @@ internal sealed class ContentFileProvider(
 
     public string GetAbsolutePath(string path)
         => Path.Combine(
-            _environment.ContentRootPath,
+                _environment.ContentRootPath,
             path);
 
     public Stream CreateFile(
         string fileSubPath)
     {
         var path = Path.Combine(
-            _environment.ContentRootPath,
+                _environment.ContentRootPath,
             fileSubPath);
         var dirPath = Path.GetDirectoryName(path);
 
