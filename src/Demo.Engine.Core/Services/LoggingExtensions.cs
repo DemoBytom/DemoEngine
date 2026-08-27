@@ -66,7 +66,7 @@ internal static partial class LoggingExtensions
     internal static partial void LogAverageSurfaceFps(
         this ILogger logger,
         RenderingSurfaceId surfaceId,
-        float millisecond,
+        double millisecond,
         ulong fps);
 
     [LoggerMessage(
@@ -74,7 +74,7 @@ internal static partial class LoggingExtensions
         Message = AVERAGE_UPS)]
     internal static partial void LogAverageUps(
         this ILogger logger,
-        float millisecond,
+        double millisecond,
         ulong ups);
 
     internal static void LogMainLoopFailedWithError(

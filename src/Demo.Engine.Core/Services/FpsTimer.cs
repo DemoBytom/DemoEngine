@@ -26,7 +26,7 @@ internal sealed class FpsTimer(
         private readonly ILogger _logger = logger;
         private readonly RenderingSurfaceId _surfaceId = surfaceId;
 
-        private float _averageMs { get; set; } = 0.0f;
+        private double _averageMs { get; set; } = 0.0f;
         private ulong _fpsCounter { get; set; } = 1;
         private long _start;
         private long _seconds = Stopwatch.GetTimestamp();
@@ -42,7 +42,7 @@ internal sealed class FpsTimer(
         {
             var dt = Stopwatch.GetElapsedTime(_start);
 
-            _averageMs += (dt.Milliseconds - _averageMs) / _fpsCounter;
+            _averageMs += (dt.TotalMilliseconds - _averageMs) / _fpsCounter;
             ++_fpsCounter;
 
             if (Stopwatch.GetElapsedTime(_seconds).TotalSeconds >= 1)
@@ -117,7 +117,7 @@ internal sealed class FpsTimer(
         }
     }
 
-    private float _averageMs { get; set; } = 0.0f;
+    private double _averageMs { get; set; } = 0.0f;
     private ulong _upsCounter { get; set; } = 1;
     private long _start;
     private long _seconds = Stopwatch.GetTimestamp();
@@ -129,7 +129,7 @@ internal sealed class FpsTimer(
     {
         var dt = Stopwatch.GetElapsedTime(_start);
 
-        _averageMs += (dt.Milliseconds - _averageMs) / _upsCounter;
+        _averageMs += (dt.TotalMilliseconds - _averageMs) / _upsCounter;
         ++_upsCounter;
 
         if (Stopwatch.GetElapsedTime(_seconds).TotalSeconds >= 1)
