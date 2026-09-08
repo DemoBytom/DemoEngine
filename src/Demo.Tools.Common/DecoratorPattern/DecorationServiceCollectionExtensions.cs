@@ -23,12 +23,12 @@ public static class DecorationServiceCollectionExtensions
         out DecoratedService<TService> decorated)
         where TDecorator : TService
     {
-        services = services.Decorate(typeof(TService), typeof(TDecorator), out var decoratedObj);
-        decorated = decoratedObj.Downcast<TService>();
+        services = services.Decorate(typeof(TService), typeof(TDecorator), out decorated);
+        //decorated = decoratedObj.Downcast<TService>();
         return services;
     }
 
-    public static IServiceCollection Decorate(this IServiceCollection services, Type serviceType, Type decoratorType, out DecoratedService<object> decorated)
+    public static IServiceCollection Decorate<TService>(this IServiceCollection services, Type serviceType, Type decoratorType, out DecoratedService<TService> decorated)
     {
         return services.Decorate(
             DecorationStrategy.WithType(
@@ -38,7 +38,7 @@ public static class DecorationServiceCollectionExtensions
             out decorated);
     }
 
-    public static IServiceCollection Decorate(this IServiceCollection services, DecorationStrategy strategy, out DecoratedService<object> decorated)
+    public static IServiceCollection Decorate<TService>(this IServiceCollection services, DecorationStrategy strategy, out DecoratedService<TService> decorated)
     {
         if (services.TryDecorate(strategy, out decorated!))
         {
@@ -49,10 +49,10 @@ public static class DecorationServiceCollectionExtensions
         throw new Exception("TODO exception!");
     }
 
-    public static bool TryDecorate(
+    public static bool TryDecorate<TService>(
         this IServiceCollection services,
         DecorationStrategy decorationStrategy,
-        [NotNullWhen(true)] out DecoratedService<object>? decoratedService)
+        [NotNullWhen(true)] out DecoratedService<TService>? decoratedService)
     {
         var decoratedKeys = new List<string>();
 
@@ -84,7 +84,7 @@ public static class DecorationServiceCollectionExtensions
                     serviceKey));
         }
 
-        decoratedService = new DecoratedService<object>(
+        decoratedService = new DecoratedService<TService>(
             decorationStrategy.ServiceType,
             decoratedKeys);
 
