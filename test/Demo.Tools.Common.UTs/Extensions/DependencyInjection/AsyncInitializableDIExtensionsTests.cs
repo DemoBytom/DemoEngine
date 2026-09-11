@@ -4,7 +4,8 @@
 using Demo.Tools.Common.Extensions.DependencyInjection;
 using Demo.Tools.Common.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Tools.Common.UTs.Extensions.DependencyInjection;
 
@@ -39,7 +40,7 @@ public class AsyncInitializableDIExtensionsTests
         var asyncInitializable = await scope.ServiceProvider.GetServiceFunc<IAsyncFoo>(required, serviceKey);
 
         // Assert
-        asyncInitializable.Initialized.ShouldBeTrue();
+        await asyncInitializable.Initialized.Should().BeTrue();
     }
 
     [Test]
@@ -62,7 +63,7 @@ public class AsyncInitializableDIExtensionsTests
         var asyncInitializable2 = await scope.ServiceProvider.GetServiceFunc<IAsyncFoo>(required, serviceKey);
 
         // Assert
-        asyncInitializable1.ID.ShouldNotBe(asyncInitializable2.ID);
+        await asyncInitializable1.ID.Should().NotBeEqualTo(asyncInitializable2.ID);
     }
 
     [Test]
@@ -91,7 +92,7 @@ public class AsyncInitializableDIExtensionsTests
         var asyncInitializable2 = await scope.ServiceProvider.GetServiceFunc<IAsyncFoo>(required, serviceKey);
 
         // Assert
-        asyncInitializable1.ID.ShouldBe(asyncInitializable2.ID);
+        await asyncInitializable1.ID.Should().BeEqualTo(asyncInitializable2.ID);
     }
 
     private sealed class AsyncFoo

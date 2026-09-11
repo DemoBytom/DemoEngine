@@ -3,7 +3,8 @@
 
 using Demo.Tools.Common.DecoratorPattern;
 using Microsoft.Extensions.DependencyInjection;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Tools.Common.UTs.DecoratorPattern;
 
@@ -22,13 +23,13 @@ public class DecoratorPatternTests
         {
             var fooService = serviceProvider.GetRequiredService<IFoo>();
 
-            fooService.ShouldNotBeNull();
-            fooService.GetName().ShouldBe("FooDecoratorDecorator2");
-            fooDecorator = fooService.ShouldBeOfType<FooDecorator2>();
+            await fooService.Should().NotBeNull();
+            await fooService.GetName().Should().BeEqualTo("FooDecoratorDecorator2");
+            fooDecorator = (await fooService.Should().BeOfType(typeof(FooDecorator2))) as FooDecorator2;
         }
 
-        fooDecorator.ShouldNotBeNull();
-        fooDecorator.Disposed.ShouldBeTrue();
+        await fooDecorator.Should().NotBeNull();
+        await fooDecorator.Disposed.Should().BeTrue();
     }
 
     public interface IFoo

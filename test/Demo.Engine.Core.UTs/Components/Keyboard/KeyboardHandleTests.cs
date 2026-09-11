@@ -5,7 +5,8 @@ using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Platform;
 using NSubstitute;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Engine.Core.UTs.Components.Keyboard;
 
@@ -25,7 +26,7 @@ public class KeyboardHandleTests
         => new(_mockKeyboardCache);
 
     [Test]
-    public void GetKeyPressed_Only_One_Pressed()
+    public async Task GetKeyPressed_Only_One_Pressed()
     {
         // Arrange
         var keyboardHandle = CreateKeyboardHandle();
@@ -37,7 +38,7 @@ public class KeyboardHandleTests
         foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
         {
             var result = keyboardHandle.GetKeyPressed(key);
-            result.ShouldBe(key == TESTKEY, $"{key} is {result}");
+            await result.Should().BeEqualTo(key == TESTKEY, $"{key} is {result}");
         }
 
         // Assert
@@ -45,7 +46,7 @@ public class KeyboardHandleTests
     }
 
     [Test]
-    public void GetKeyPressed_Multiple_Keys_Pressed()
+    public async Task GetKeyPressed_Multiple_Keys_PressedAsync()
     {
         // Arrange
         var keyboardHandle = CreateKeyboardHandle();
@@ -64,7 +65,7 @@ public class KeyboardHandleTests
         foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
         {
             var result = keyboardHandle.GetKeyPressed(key);
-            result.ShouldBe(testKeys.Contains(key), $"{key} is {result}");
+            await result.Should().BeEqualTo(testKeys.Contains(key), $"{key} is {result}");
         }
 
         // Assert

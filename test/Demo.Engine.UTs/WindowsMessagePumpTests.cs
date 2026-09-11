@@ -6,7 +6,8 @@ using Demo.Engine.Platform.Windows;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Engine.UTs;
 
@@ -37,14 +38,16 @@ public class WindowsMessagePumpTests
         // Act
         await windowsMessagePump.StartAsync(timeoutToken);
         await windowsMessagePump.ExecuteTask
-            .ShouldNotBeNull()
+            .Should().NotBeNull();
+
+        await windowsMessagePump.ExecuteTask
             .WaitAsync(timeoutToken);
         await windowsMessagePump.StopAsync(timeoutToken);
 
         // Assert
-        staThreadReader.Invoked.ShouldBeTrue();
-        staThreadReader.InvokedThreadName.ShouldBe("Main STA thread");
-        staThreadReader.ApartmentState.ShouldBe(ApartmentState.STA);
+        await staThreadReader.Invoked.Should().BeTrue();
+        await staThreadReader.InvokedThreadName.Should().BeEqualTo("Main STA thread");
+        await staThreadReader.ApartmentState.Should().BeEqualTo(ApartmentState.STA);
     }
 
     [Test]
@@ -69,17 +72,19 @@ public class WindowsMessagePumpTests
             staThreadReader);
 
         await windowsMessagePump.StartAsync(timeoutToken);
+        await windowsMessagePump.ExecuteTask
+                .Should().NotBeNull();
+
         await Task.WhenAll(
             windowsMessagePump.ExecuteTask
-                .ShouldNotBeNull()
                 .WaitAsync(timeoutToken),
             CancelAfterDelyingStarted());
         await windowsMessagePump.StopAsync(timeoutToken);
 
         // Assert
-        staThreadReader.Delying.ShouldBeTrue();
-        staThreadReader.Cancelled.ShouldBeFalse();
-        timeoutToken.IsCancellationRequested.ShouldBeFalse();
+        await staThreadReader.Delying.Should().BeTrue();
+        await staThreadReader.Cancelled.Should().BeFalse();
+        await timeoutToken.IsCancellationRequested.Should().BeFalse();
 
         // local functions
         async Task CancelAfterDelyingStarted()

@@ -2,7 +2,8 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Microsoft.Extensions.DependencyInjection;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Engine.UTs;
 
@@ -22,9 +23,9 @@ public class ScopeTests
         var innerSingleton = scope.ServiceProvider.GetRequiredService<SingletonService>();
         var innerSingleton2 = scope.ServiceProvider.GetRequiredService<SingletonService>();
 
-        outerSingleton.ID.ShouldNotBe(innerSingleton.ID);
+        await outerSingleton.ID.Should().NotBeEqualTo(innerSingleton.ID);
 
-        innerSingleton2.ID.ShouldBe(innerSingleton2.ID);
+        await innerSingleton2.ID.Should().BeEqualTo(innerSingleton2.ID);
     }
 
     private sealed class SingletonService

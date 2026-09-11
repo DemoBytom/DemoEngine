@@ -26,8 +26,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-    <PackageReference Include="Shouldly" />
     <PackageReference Include="TUnit" />
+    <PackageReference Include="TUnit.Assertions.Should" />
   </ItemGroup>
 
   <ItemGroup>

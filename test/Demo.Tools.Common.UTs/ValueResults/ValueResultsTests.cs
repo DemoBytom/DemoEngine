@@ -2,25 +2,31 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using Demo.Tools.Common.ValueResults;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Tools.Common.UTs.ValueResults;
 
 public class ValueResultsTests
 {
     [Test]
-    public void TestGeneralTypedError()
+    public async Task TestGeneralTypedError()
     {
         var result = TypedValueError.General<int>("General Error");
 
-        result.Error.ErrorType.ShouldBe(TypedValueError.ErrorTypes.General);
-        result.Error.Message.ShouldBe("General Error");
-        result.Error.InnerError.ShouldBeOfType<GeneralError>();
-        result.Error.InnerError.Message.ShouldBe("General Error");
+        var errorType = result.Error.ErrorType;
+        var message = result.Error.Message;
+        var innerError = result.Error.InnerError;
+        var innerErrorMessage = result.Error.InnerError.Message;
+
+        await errorType.Should().BeEqualTo(TypedValueError.ErrorTypes.General);
+        await message.Should().BeEqualTo("General Error");
+        await innerError.Should().BeOfType(typeof(GeneralError));
+        await innerErrorMessage.Should().BeEqualTo("General Error");
     }
 
     [Test]
-    public void OutOfRangeError()
+    public async Task OutOfRangeErrorAsync()
     {
         var error = new TypedValueError(
                 TypedValueError.ErrorTypes.OutOfRange,
@@ -28,22 +34,32 @@ public class ValueResultsTests
                     "PARAM_NAME",
                     "Error Message"));
 
-        error.ErrorType.ShouldBe(TypedValueError.ErrorTypes.OutOfRange);
-        error.Message.ShouldBe("Error Message");
-        error.InnerError.ShouldBeOfType<ArgumentOutOfRangeError>();
-        error.InnerError.Message.ShouldBe("Error Message");
+        var errorType = error.ErrorType;
+        var message = error.Message;
+        var innerError = error.InnerError;
+        var innerErrorMessage = error.InnerError.Message;
+
+        await errorType.Should().BeEqualTo(TypedValueError.ErrorTypes.OutOfRange);
+        await message.Should().BeEqualTo("Error Message");
+        await innerError.Should().BeOfType(typeof(ArgumentOutOfRangeError));
+        await innerErrorMessage.Should().BeEqualTo("Error Message");
     }
 
     [Test]
-    public void OutOfRangeError_Generic()
+    public async Task OutOfRangeError_GenericAsync()
     {
         var error = TypedValueError.OutOfRange<int>(
             "PARAM_NAME",
             "Error Message");
 
-        error.Error.ErrorType.ShouldBe(TypedValueError.ErrorTypes.OutOfRange);
-        error.Error.Message.ShouldBe("Error Message");
-        error.Error.InnerError.ShouldBeOfType<ArgumentOutOfRangeError>();
-        error.Error.InnerError.Message.ShouldBe("Error Message");
+        var errorType = error.Error.ErrorType;
+        var message = error.Error.Message;
+        var innerError = error.Error.InnerError;
+        var innerErrorMessage = error.Error.InnerError.Message;
+
+        await errorType.Should().BeEqualTo(TypedValueError.ErrorTypes.OutOfRange);
+        await message.Should().BeEqualTo("Error Message");
+        await innerError.Should().BeOfType(typeof(ArgumentOutOfRangeError));
+        await innerErrorMessage.Should().BeEqualTo("Error Message");
     }
 }
