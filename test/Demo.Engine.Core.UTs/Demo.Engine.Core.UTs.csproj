@@ -26,13 +26,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
-    <PackageReference Include="NSubstitute" />
-    <PackageReference Include="NSubstitute.Analyzers.CSharp">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="TUnit" />
     <PackageReference Include="TUnit.Assertions.Should" />
+    <PackageReference Include="TUnit.Mocks" />
+    <PackageReference Include="TUnit.Mocks.Assertions" />
+    <PackageReference Include="TUnit.Mocks.Logging" />
   </ItemGroup>
 
   <ItemGroup>

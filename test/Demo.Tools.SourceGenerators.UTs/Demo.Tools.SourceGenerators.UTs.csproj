@@ -22,6 +22,9 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
     <PackageReference Include="TUnit" />
     <PackageReference Include="TUnit.Assertions.Should" />
+    <PackageReference Include="TUnit.Mocks" />
+    <PackageReference Include="TUnit.Mocks.Assertions" />
+    <PackageReference Include="TUnit.Mocks.Logging" />
     <PackageReference Include="Verify.SourceGenerators" />
     <PackageReference Include="Verify.TUnit" />
     <!--<PackageReference Include="coverlet.collector">

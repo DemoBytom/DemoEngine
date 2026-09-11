@@ -4,7 +4,6 @@
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Platform;
-using NSubstitute;
 using TUnit.Assertions.Should;
 using TUnit.Assertions.Should.Extensions;
 
@@ -12,18 +11,18 @@ namespace Demo.Engine.Core.UTs.Components.Keyboard;
 
 public class KeyboardHandleTests
 {
-    private readonly IKeyboardCache _mockKeyboardCache;
+    private readonly Mock<IKeyboardCache> _mockKeyboardCache;
     private readonly Memory<bool> _keyboardCache;
 
     public KeyboardHandleTests()
     {
-        _mockKeyboardCache = Substitute.For<IKeyboardCache>();
+        _mockKeyboardCache = IKeyboardCache.Mock(MockBehavior.Strict);
         _keyboardCache = Enumerable.Repeat(false, 256).ToArray().AsMemory();
         _ = _mockKeyboardCache.KeysPressed.Returns(_keyboardCache);
     }
 
     private KeyboardHandle CreateKeyboardHandle()
-        => new(_mockKeyboardCache);
+        => new(_mockKeyboardCache.Object);
 
     [Test]
     public async Task GetKeyPressed_Only_One_Pressed()
@@ -35,14 +34,14 @@ public class KeyboardHandleTests
         _keyboardCache.Span[(char)TESTKEY] = true;
 
         // Act
-        foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
+        foreach (var key in Enum.GetValues<VirtualKeys>().Cast<VirtualKeys>())
         {
             var result = keyboardHandle.GetKeyPressed(key);
             await result.Should().BeEqualTo(key == TESTKEY, $"{key} is {result}");
         }
 
         // Assert
-        _ = _mockKeyboardCache.Received().KeysPressed;
+        _mockKeyboardCache.KeysPressed.WasCalled(Times.Exactly(189));
     }
 
     [Test]
@@ -62,13 +61,13 @@ public class KeyboardHandleTests
         }
 
         // Act
-        foreach (var key in Enum.GetValues(typeof(VirtualKeys)).Cast<VirtualKeys>())
+        foreach (var key in Enum.GetValues<VirtualKeys>().Cast<VirtualKeys>())
         {
             var result = keyboardHandle.GetKeyPressed(key);
             await result.Should().BeEqualTo(testKeys.Contains(key), $"{key} is {result}");
         }
 
         // Assert
-        _ = _mockKeyboardCache.Received().KeysPressed;
+        _mockKeyboardCache.KeysPressed.WasCalled(Times.Exactly(189));
     }
 }

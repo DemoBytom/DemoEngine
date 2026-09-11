@@ -4,7 +4,6 @@
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Platform.DirectX12.Shaders;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
 using TUnit.Assertions.Should;
 using TUnit.Assertions.Should.Extensions;
 
@@ -16,9 +15,9 @@ public class ShaderCompilationTests
     public async Task TestShaderDiscSaveAsync()
     {
         // Arrange
-        var loggerMock = Substitute.For<ILogger<ShaderCompiler>>();
-        var loggerMock2 = Substitute.For<ILogger<EngineShaderManager>>();
-        var contentFileProvider = Substitute.For<IContentFileProvider>();
+        var loggerMock = ILogger<ShaderCompiler>.Mock(MockBehavior.Loose);
+        var loggerMock2 = ILogger<EngineShaderManager>.Mock(MockBehavior.Loose);
+        var contentFileProvider = IContentFileProvider.Mock(MockBehavior.Strict);
         //I expect a 34 byte file
         var fileBuffer = new byte[34];
 
@@ -35,8 +34,8 @@ public class ShaderCompilationTests
                 => new MemoryStream(fileBuffer));
 
         var engineShaderManager = new EngineShaderManager(
-            loggerMock2,
-            contentFileProvider);
+            loggerMock2.Object,
+            contentFileProvider.Object);
 
         // Act
         var shaders = GetShaders();

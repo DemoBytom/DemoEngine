@@ -10,7 +10,6 @@ using Demo.Engine.Core.Interfaces.Rendering;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
-using NSubstitute;
 using TUnit.Assertions.Should;
 using TUnit.Assertions.Should.Extensions;
 using static Demo.Engine.Core.Features.StaThread.StaThreadRequests;
@@ -243,20 +242,18 @@ public class StaThreadServiceTests
         CancellationTokenSource cancellationTokenSource,
         out Channel<StaThreadRequests> channel)
     {
-        var loggerMock = Substitute.For<ILogger<StaThreadService>>();
-        var hostApplicationLifetimeMock = Substitute.For<IHostApplicationLifetime>();
-        var renderingEngineMock = Substitute.For<IRenderingEngine>();
-        var osMessageHandlerMock = Substitute.For<IOSMessageHandler>();
-        var mainLoopLifetimeMock = Substitute.For<IMainLoopLifetime>();
+        var loggerMock = ILogger<StaThreadService>.Mock();
+        var hostApplicationLifetimeMock = IHostApplicationLifetime.Mock(MockBehavior.Strict);
+        var renderingEngineMock = IRenderingEngine.Mock();
+        var osMessageHandlerMock = IOSMessageHandler.Mock();
+        var mainLoopLifetimeMock = IMainLoopLifetime.Mock();
 
         mainLoopLifetimeMock.Token
             .Returns(cancellationTokenSource.Token);
 
-        mainLoopLifetimeMock
-            .When(
-                mock => mock.Cancel())
-            .Do(
-                call => cancellationTokenSource.Cancel());
+        mainLoopLifetimeMock.Cancel()
+            .Callback(()
+                => cancellationTokenSource.Cancel());
 
         hostApplicationLifetimeMock.ApplicationStopping.Returns(cancellationTokenSource.Token);
 
@@ -275,7 +272,7 @@ public class StaThreadServiceTests
             : null;
 
         return new StaThreadService(
-                loggerMock,
+                loggerMock.Object,
                 hostApplicationLifetimeMock,
                 renderingEngineMock,
                 osMessageHandlerMock,
