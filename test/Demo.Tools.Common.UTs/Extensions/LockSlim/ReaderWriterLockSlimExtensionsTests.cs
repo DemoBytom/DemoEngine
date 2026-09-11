@@ -3,7 +3,8 @@
 
 using System.Text;
 using Demo.Tools.Common.Extensions.LockSlim;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Tools.Common.UTs.Extensions.LockSlim;
 
@@ -66,8 +67,8 @@ public class ReaderWriterLockSlimExtensionsTests
                 tw2.Start()
         });
 
-        sb.ToString().ShouldContain("T1 startT1 end");
-        sb.ToString().ShouldContain("T2 startT2 end");
+        await sb.ToString().Should().Contain("T1 startT1 end");
+        await sb.ToString().Should().Contain("T2 startT2 end");
     }
 
     [Test]
@@ -135,7 +136,7 @@ public class ReaderWriterLockSlimExtensionsTests
             tw2.Start(),
             tw3.Start());
 
-        sb.ToString().ShouldBe(
+        await sb.ToString().Should().BeEqualTo(
             "T1 start" +
             "T2 attempt" +
             "T1 end" +

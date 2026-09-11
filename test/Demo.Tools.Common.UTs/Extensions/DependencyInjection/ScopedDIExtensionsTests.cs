@@ -3,14 +3,15 @@
 
 using Demo.Tools.Common.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Tools.Common.UTs.Extensions.DependencyInjection;
 
 public class ScopedDIExtensionsTests
 {
     [Test]
-    public void AddScoped_Multiple_Interfaces_Control_Sample()
+    public async Task AddScoped_Multiple_Interfaces_Control_SampleAsync()
     {
         // Arrange
         IServiceCollection services = new ServiceCollection();
@@ -28,15 +29,15 @@ public class ScopedDIExtensionsTests
         var foo2 = serviceProvider.GetRequiredService<Foo2>();
         var bar = serviceProvider.GetRequiredService<Bar>();
 
-        foo1.ShouldNotBeSameAs(bar);
-        foo2.ShouldNotBeSameAs(bar);
-        foo2.ShouldNotBeSameAs(foo1);
+        await foo1.Should().NotBeSameReferenceAs(bar);
+        await foo2.Should().NotBeSameReferenceAs(bar);
+        await foo2.Should().NotBeSameReferenceAs(foo1);// .ShouldNotBeSameAs(foo1);
 
-        counter.ConstructedNo.ShouldBe(3);
+        await counter.ConstructedNo.Should().BeEqualTo(3);
     }
 
     [Test]
-    public void AddScoped_2_Interfaces_ExpectedBehavior()
+    public async Task AddScoped_2_Interfaces_ExpectedBehavior()
     {
         // Arrange
         IServiceCollection services = new ServiceCollection();
@@ -51,9 +52,9 @@ public class ScopedDIExtensionsTests
         var foo2 = serviceProvider.GetRequiredService<Foo2>();
         var bar = serviceProvider.GetRequiredService<Bar>();
 
-        foo1.ShouldBeSameAs(bar);
-        foo2.ShouldBeSameAs(bar);
-        counter.ConstructedNo.ShouldBe(1);
+        await foo1.Should().BeSameReferenceAs(bar);
+        await foo2.Should().BeSameReferenceAs(bar);
+        await counter.ConstructedNo.Should().BeEqualTo(1);
     }
 
     public interface Foo1

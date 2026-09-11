@@ -14,7 +14,8 @@ using Demo.Engine.Core.ValueObjects;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Engine.Core.UTs.Services;
 
@@ -102,7 +103,7 @@ public class MainLoopServiceTests
             return true;
         });
 
-        _ = renderingSurface.ShouldNotBeNull();
+        await renderingSurface.Should().NotBeNull();
 
         _ = _subLoopJob
             .Update(
@@ -130,8 +131,8 @@ public class MainLoopServiceTests
             mainLoopService = CreateMainLoopService();
 
             // Assert
-            mainLoopService.ExecutingTask.IsCompleted
-                .ShouldBeFalse();
+            await mainLoopService.ExecutingTask.IsCompleted
+                .Should().BeFalse();
 
             await Task.Delay(100);
         }
@@ -143,8 +144,8 @@ public class MainLoopServiceTests
             }
         }
 
-        mainLoopService.ExecutingTask.IsCompleted
-            .ShouldBeTrue();
+        await mainLoopService.ExecutingTask.IsCompleted
+            .Should().BeTrue();
 
         _ = _subLoopJob.Received().Update(
             renderingSurface!,

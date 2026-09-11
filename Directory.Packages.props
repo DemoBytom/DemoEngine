@@ -31,6 +31,7 @@
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
     <PackageVersion Include="System.Text.Json" Version="9.0.9" />
     <PackageVersion Include="TUnit" Version="1.66.27" />
+    <PackageVersion Include="TUnit.Assertions.Should" Version="1.66.27-beta" />
     <PackageVersion Include="Verify.SourceGenerators" Version="2.5.0" />
     <PackageVersion Include="Verify.TUnit" Version="32.0.0" />
     <PackageVersion Include="Vortice.Dxc" Version="3.8.3" />
@@ -41,7 +42,6 @@
     <PackageVersion Include="coverlet.msbuild" Version="6.0.4" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
-    <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Nuke.Common" Version="10.1.0" />
     <PackageVersion Include="ReportGenerator" Version="5.5.11" />

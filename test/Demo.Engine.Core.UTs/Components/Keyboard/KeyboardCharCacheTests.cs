@@ -3,7 +3,8 @@
 using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Components.Keyboard.Internal;
 using Demo.Engine.Core.Interfaces.Components;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Engine.Core.UTs.Components.Keyboard;
 
@@ -18,7 +19,7 @@ public sealed class KeyboardCharCacheTests : IDisposable
     }
 
     [Test]
-    public void ReadChars_StateUnderTest_ExpectedBehavior()
+    public async Task ReadChars_StateUnderTest_ExpectedBehavior()
     {
         // Arrange
         _keyboardCache.Char('a');
@@ -35,36 +36,36 @@ public sealed class KeyboardCharCacheTests : IDisposable
         // Act
         var result = _charResponse.ReadCache();
         // Assert
-        result.ShouldBe("ala ma kota");
+        await result.Should().BeEqualTo("ala ma kota");
     }
 
     [Test]
-    public void ReadChars_Dequeues_Properly()
+    public async Task ReadChars_Dequeues_ProperlyAsync()
     {
         _keyboardCache.Char('a');
         _keyboardCache.Char('b');
         _keyboardCache.Char('c');
         var result1 = _charResponse.ReadCache();
         var result2 = _charResponse.ReadCache();
-        result1.ShouldBe("abc");
-        result2.ShouldBeEmpty();
+        await result1.Should().BeEqualTo("abc");
+        await result2.Should().BeEmpty();
     }
 
     [Test]
-    public void ReadChars_From_Multiple_Handlers()
+    public async Task ReadChars_From_Multiple_HandlersAsync()
     {
         var charResponse1 = new KeyboardCharCache(_keyboardCache);
         var charResponse2 = new KeyboardCharCache(_keyboardCache);
         _keyboardCache.Char('a');
         _keyboardCache.Char('b');
         _keyboardCache.Char('c');
-        _charResponse.ReadCache().ShouldBe("abc");
-        charResponse1.ReadCache().ShouldBe("abc");
-        charResponse2.ReadCache().ShouldBe("abc");
+        await _charResponse.ReadCache().Should().BeEqualTo("abc");
+        await charResponse1.ReadCache().Should().BeEqualTo("abc");
+        await charResponse2.ReadCache().Should().BeEqualTo("abc");
     }
 
     [Test]
-    public void ReadChars_Multiple_Handlers_Mixed_Reads()
+    public async Task ReadChars_Multiple_Handlers_Mixed_ReadsAsync()
     {
         var charResponse1 = new KeyboardCharCache(_keyboardCache);
         var charResponse2 = new KeyboardCharCache(_keyboardCache);
@@ -77,12 +78,12 @@ public sealed class KeyboardCharCacheTests : IDisposable
         var charResponse1Read2 = charResponse1.ReadCache();
         var charResponse2Read2 = charResponse2.ReadCache();
         var charResponse3Read2 = _charResponse.ReadCache();
-        charResponse1Read1.ShouldBe("a");
-        charResponse2Read1.ShouldBe("ab");
-        charResponse3Read1.ShouldBe("abc");
-        charResponse1Read2.ShouldBe("bc");
-        charResponse2Read2.ShouldBe("c");
-        charResponse3Read2.ShouldBeEmpty();
+        await charResponse1Read1.Should().BeEqualTo("a");
+        await charResponse2Read1.Should().BeEqualTo("ab");
+        await charResponse3Read1.Should().BeEqualTo("abc");
+        await charResponse1Read2.Should().BeEqualTo("bc");
+        await charResponse2Read2.Should().BeEqualTo("c");
+        await charResponse3Read2.Should().BeEqualTo(string.Empty);
     }
 
     public void Dispose()

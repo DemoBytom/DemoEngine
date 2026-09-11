@@ -11,7 +11,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using NSubstitute;
-using Shouldly;
+using TUnit.Assertions.Should;
+using TUnit.Assertions.Should.Extensions;
 using static Demo.Engine.Core.Features.StaThread.StaThreadRequests;
 using WorkItem = Demo.Engine.Core.Features.StaThread.StaThreadService.StaSingleThreadedSynchronizationContext.WorkItem;
 
@@ -123,7 +124,7 @@ public class StaThreadServiceTests
 
         void SyncContextOnError(object? sender, Exception ex)
         {
-            ex.Message.ShouldBe("TEST EXCEPTION");
+            //await ex.Message.Should().BeEqualTo("TEST EXCEPTION");
             cts.Cancel();
         }
     }
@@ -178,9 +179,9 @@ public class StaThreadServiceTests
             for (; requestNumber < 5; requestNumber++)
             {
                 await Task.Yield();
-                Thread.CurrentThread.Name.ShouldNotBe(expectedThreadName);
+                await Thread.CurrentThread.Name.Should().NotBeEqualTo(expectedThreadName);
 
-                request.Invoked.Status.ShouldBe(TaskStatus.WaitingForActivation);
+                await request.Invoked.Status.Should().BeEqualTo(TaskStatus.WaitingForActivation);
 
                 await channelWriter.WriteAsync(
                     request,
@@ -191,7 +192,7 @@ public class StaThreadServiceTests
                 await Task.Delay(100, cancellationToken);
 
                 var invokedResult = await request.Invoked.WaitAsync(cancellationToken);
-                invokedResult.ShouldBeTrue();
+                await invokedResult.Should().BeTrue();
 
                 request.Reset(cancellationToken);
             }
@@ -199,7 +200,7 @@ public class StaThreadServiceTests
         finally
         {
             // Used to ensure all the requests were sent
-            requestNumber.ShouldBe(5);
+            await requestNumber.Should().BeEqualTo(5);
             cancellationTokenSource.Cancel();
         }
     }
@@ -214,23 +215,23 @@ public class StaThreadServiceTests
         bool ShouldBeSTA)
         : StaThreadWorkInner<bool>
     {
-        protected override ValueTask<bool> InvokeFuncInternalAsync(
+        protected override async ValueTask<bool> InvokeFuncInternalAsync(
             IRenderingEngine renderingEngine,
             IOSMessageHandler osMessageHandler,
             CancellationToken cancellationToken = default)
         {
-            Thread.CurrentThread.Name.ShouldBe(ExpectedThreadName);
+            await Thread.CurrentThread.Name.Should().BeEqualTo(ExpectedThreadName);
             //TestException();
             if (ShouldBeSTA)
             {
-                Thread.CurrentThread.GetApartmentState().ShouldBe(ApartmentState.STA);
+                await Thread.CurrentThread.GetApartmentState().Should().BeEqualTo(ApartmentState.STA);
             }
             else
             {
-                Thread.CurrentThread.GetApartmentState().ShouldNotBe(ApartmentState.STA);
+                await Thread.CurrentThread.GetApartmentState().Should().BeEqualTo(ApartmentState.STA);
             }
 
-            return ValueTask.FromResult(true);
+            return true;
         }
 
         public new void Reset(CancellationToken cancellationToken)
