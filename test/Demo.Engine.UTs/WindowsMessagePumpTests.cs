@@ -5,7 +5,6 @@ using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Platform.Windows;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using NSubstitute;
 using TUnit.Assertions.Should;
 using TUnit.Assertions.Should.Extensions;
 
@@ -24,15 +23,15 @@ public class WindowsMessagePumpTests
         // Arrange
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(timeoutToken);
 
-        var logger = Substitute.For<ILogger<WindowsMessagePump>>();
-        var hostApplicationLifetime = Substitute.For<IHostApplicationLifetime>();
+        var logger = ILogger<WindowsMessagePump>.Mock(MockBehavior.Loose);
+        var hostApplicationLifetime = Mock.Of<IHostApplicationLifetime>(MockBehavior.Strict);
         var staThreadReader = new TestStaThreadReader(cts);
 
         hostApplicationLifetime.ApplicationStopping.Returns(cts.Token);
 
         using var windowsMessagePump = new WindowsMessagePump(
-            logger,
-            hostApplicationLifetime,
+            logger.Object,
+            hostApplicationLifetime.Object,
             staThreadReader);
 
         // Act
@@ -61,14 +60,14 @@ public class WindowsMessagePumpTests
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(
             timeoutToken);
 
-        var logger = Substitute.For<ILogger<WindowsMessagePump>>();
-        var hostApplicationLifetime = Substitute.For<IHostApplicationLifetime>();
+        var logger = Mock.Of<ILogger<WindowsMessagePump>>(MockBehavior.Loose);
+        var hostApplicationLifetime = Mock.Of<IHostApplicationLifetime>(MockBehavior.Strict);
         var staThreadReader = new TestStaThreadReaderWithDelay(cts, TimeSpan.FromSeconds(5));
 
         hostApplicationLifetime.ApplicationStopping.Returns(cts.Token);
         using var windowsMessagePump = new WindowsMessagePump(
-            logger,
-            hostApplicationLifetime,
+            logger.Object,
+            hostApplicationLifetime.Object,
             staThreadReader);
 
         await windowsMessagePump.StartAsync(timeoutToken);
