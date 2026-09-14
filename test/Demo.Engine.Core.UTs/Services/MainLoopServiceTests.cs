@@ -7,53 +7,48 @@ using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
 using Demo.Engine.Core.Interfaces.Rendering;
+using Demo.Engine.Core.Requests.Keyboard;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Core.ValueObjects;
 using Mediator;
 using Microsoft.Extensions.Logging;
+using NSubstitute;
 using TUnit.Assertions.Should;
 using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Engine.Core.UTs.Services;
 
-public sealed class MainLoopServiceTests
+public class MainLoopServiceTests
 {
-    private readonly MockRepository _mockRepository;
-    private readonly Mock<ILogger<MainLoopService>> _subLogger;
-    private readonly Mock<IStaThreadWriter> _subStaThreadWriter;
-    private readonly Mock<IMediator> _subMediator;
+    private readonly ILogger<MainLoopService> _subLogger;
+    private readonly IStaThreadWriter _subStaThreadWriter;
+    private readonly IMediator _subMediator;
     private readonly IFpsTimer _subFpsTimer;
-    private readonly Mock<IRenderingEngine> _subRenderingEngine;
-    private readonly Mock<IMainLoopLifetime> _subMainLoopLifetime;
-    private readonly Mock<ILoopJob> _subLoopJob;
+    private readonly IRenderingEngine _subRenderingEngine;
+    private readonly IMainLoopLifetime _subMainLoopLifetime;
+    private readonly ILoopJob _subLoopJob;
 
     public MainLoopServiceTests()
     {
-        _mockRepository = new MockRepository(MockBehavior.Strict);
-
-        _subLogger = _mockRepository.Of<ILogger<MainLoopService>>(MockBehavior.Loose);
-        _subStaThreadWriter = _mockRepository.Of<IStaThreadWriter>();
-        _subMediator = _mockRepository.Of<IMediator>();
-
+        _subLogger = Substitute.For<ILogger<MainLoopService>>();
+        _subStaThreadWriter = Substitute.For<IStaThreadWriter>();
+        _subMediator = Substitute.For<IMediator>();
         _subFpsTimer = new FpsTimer(
-            _mockRepository
-                .Of<ILogger<FpsTimer>>(MockBehavior.Loose)
-                .Object);
-
-        _subRenderingEngine = _mockRepository.Of<IRenderingEngine>();
-        _subMainLoopLifetime = _mockRepository.Of<IMainLoopLifetime>();
-        _subLoopJob = _mockRepository.Of<ILoopJob>();
+            Substitute.For<ILogger<FpsTimer>>());
+        _subRenderingEngine = Substitute.For<IRenderingEngine>();
+        _subMainLoopLifetime = Substitute.For<IMainLoopLifetime>();
+        _subLoopJob = Substitute.For<ILoopJob>();
     }
 
     private MainLoopService CreateMainLoopService()
         => new(
-            _subLogger.Object,
-            _subStaThreadWriter.Object,
-            _subMediator.Object,
+            _subLogger,
+            _subStaThreadWriter,
+            _subMediator,
             _subFpsTimer,
-            _subRenderingEngine.Object,
-            _subMainLoopLifetime.Object,
-            _subLoopJob.Object);
+            _subRenderingEngine,
+            _subMainLoopLifetime,
+            _subLoopJob);
 
     [Test]
     [Timeout(10_000)]
@@ -65,59 +60,60 @@ public sealed class MainLoopServiceTests
         CancellationToken cancellationToken)
     {
         // Arrange
-        var keyboardCacheSub = IKeyboardCache.Mock(MockBehavior.Strict);
-        var keyboardCharCache = new KeyboardCharCache(keyboardCacheSub.Object);
-        var keyboardHandle = new KeyboardHandle(keyboardCacheSub.Object);
+        var keyboardCacheSub = Substitute.For<IKeyboardCache>();
+        var keyboardCharCache = new KeyboardCharCache(keyboardCacheSub);
+        var keyboardHandle = new KeyboardHandle(keyboardCacheSub);
 
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _ = _subMainLoopLifetime.Token.Returns(cts.Token);
-        _subMainLoopLifetime.Cancel().Callback(cts.Cancel);
 
         _ = _subMediator
             .Send(
-                Any<IRequest<KeyboardCharCache>>(),
-                Any<CancellationToken>())
+                NSubstitute.Arg.Any<KeyboardCharCacheRequest>(),
+                NSubstitute.Arg.Any<CancellationToken>())
             .Returns(
                 keyboardCharCache);
 
         _ = _subMediator
             .Send(
-                Any<IRequest<KeyboardHandle>>(),
-                Any<CancellationToken>())
+                NSubstitute.Arg.Any<KeyboardHandleRequest>(),
+                NSubstitute.Arg.Any<CancellationToken>())
             .Returns(
                 keyboardHandle);
 
         var renderingSurfaceId = RenderingSurfaceId.NewId();
         _ = _subStaThreadWriter.CreateSurface(
-            Is(_subRenderingEngine.Object),
+            _subRenderingEngine,
             cts.Token)
-            .ReturnsAsync(
+            .Returns(
                 Task.FromResult(
                     renderingSurfaceId));
 
-        var renderingSurface = IRenderingSurface.Mock(MockBehavior.Strict);
+        var renderingSurface = Substitute.For<IRenderingSurface>();
 
-        _ = _subRenderingEngine
-            .TryGetRenderingSurface(
-                renderingSurfaceId)
-            .SetsOutRenderingSurface(
-                renderingSurface)
-            .Returns(true);
+        _ = _subRenderingEngine.TryGetRenderingSurface(
+            renderingSurfaceId,
+            out NSubstitute.Arg.Any<IRenderingSurface>()!)
+            .Returns(parameters
+            =>
+        {
+            parameters[1] = renderingSurface;
+            return true;
+        });
 
         await renderingSurface.Should().NotBeNull();
 
         _ = _subLoopJob
             .Update(
-                renderingSurface: renderingSurface,
+                renderingSurface: renderingSurface!,
                 keyboardHandle: keyboardHandle,
                 keyboardCharCache: keyboardCharCache)
-            .ReturnsAsync(
+            .Returns(
                 new ValueTask());
 
-        _subLoopJob
-            .Render(
-                Is(_subRenderingEngine.Object),
-                renderingSurfaceId);
+        _subLoopJob.Render(
+            _subRenderingEngine,
+            renderingSurfaceId);
 
         // Act
         MainLoopService? mainLoopService = null;
@@ -142,20 +138,14 @@ public sealed class MainLoopServiceTests
         await mainLoopService.ExecutingTask.IsCompleted
             .Should().BeTrue();
 
-        _mockRepository.VerifyAll();
+        _ = _subLoopJob.Received().Update(
+            renderingSurface!,
+            keyboardHandle,
+            keyboardCharCache);
 
-        _subLoopJob
-            .Update(
-                renderingSurface,
-                keyboardHandle,
-                keyboardCharCache)
-            .WasCalled(Times.AtLeastOnce);
-
-        _subLoopJob
+        _subLoopJob.Received()
             .Render(
-                Is(_subRenderingEngine.Object),
-                renderingSurfaceId)
-            .WasCalled(Times.AtLeastOnce);
-
+                _subRenderingEngine,
+                renderingSurfaceId);
     }
 }
