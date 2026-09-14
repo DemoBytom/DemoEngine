@@ -2,6 +2,10 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <!-- Verify exemption for Open Source projects
+      https://github.com/VerifyTests/Verify/blob/main/docs/maintenance-fee.md#exempt -->
+    <Verify_SponsorshipExemption>OpenSource</Verify_SponsorshipExemption>
+    <Verify_SponsorshipExemptionUntil>$([System.DateTime]::UtcNow.AddMonths(12).ToString("yyyy-MM"))</Verify_SponsorshipExemptionUntil>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
@@ -31,10 +35,10 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
     <PackageVersion Include="System.Text.Json" Version="9.0.9" />
-    <PackageVersion Include="TUnit" Version="1.66.27" />
-    <PackageVersion Include="TUnit.Assertions.Should" Version="1.66.27-beta" />
+    <PackageVersion Include="TUnit" Version="1.67.0" />
+    <PackageVersion Include="TUnit.Assertions.Should" Version="1.67.0-beta" />
     <PackageVersion Include="Verify.SourceGenerators" Version="2.5.0" />
-    <PackageVersion Include="Verify.TUnit" Version="32.0.0" />
+    <PackageVersion Include="Verify.TUnit" Version="33.0.2" />
     <PackageVersion Include="Vortice.Dxc" Version="3.8.3" />
     <PackageVersion Include="Vortice.Mathematics" Version="2.1.1" />
     <PackageVersion Include="Vortice.D3DCompiler" Version="3.8.3" />
