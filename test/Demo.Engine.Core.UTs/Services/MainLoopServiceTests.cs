@@ -17,8 +17,9 @@ using TUnit.Assertions.Should.Extensions;
 
 namespace Demo.Engine.Core.UTs.Services;
 
-public class MainLoopServiceTests
+public sealed class MainLoopServiceTests
 {
+    private readonly MockRepository _mockRepository;
     private readonly Mock<ILogger<MainLoopService>> _subLogger;
     private readonly Mock<IStaThreadWriter> _subStaThreadWriter;
     private readonly Mock<IMediator> _subMediator;
@@ -30,17 +31,21 @@ public class MainLoopServiceTests
 
     public MainLoopServiceTests()
     {
-        _subLogger = ILogger<MainLoopService>.Mock(MockBehavior.Loose);
-        _subStaThreadWriter = IStaThreadWriter.Mock(MockBehavior.Strict);
-        _subMediator = IMediator.Mock(MockBehavior.Strict);
-        _subShaderAsyncCompiler = IShaderAsyncCompiler.Mock(MockBehavior.Strict);
+        _mockRepository = new MockRepository(MockBehavior.Strict);
+
+        _subLogger = _mockRepository.Of<ILogger<MainLoopService>>(MockBehavior.Loose);
+        _subStaThreadWriter = _mockRepository.Of<IStaThreadWriter>();
+        _subMediator = _mockRepository.Of<IMediator>();
+        _subShaderAsyncCompiler = _mockRepository.Of<IShaderAsyncCompiler>();
+
         _subFpsTimer = new FpsTimer(
-            ILogger<FpsTimer>
-                .Mock(MockBehavior.Loose)
+            _mockRepository
+                .Of<ILogger<FpsTimer>>(MockBehavior.Loose)
                 .Object);
-        _subRenderingEngine = IRenderingEngine.Mock(MockBehavior.Strict);
-        _subMainLoopLifetime = IMainLoopLifetime.Mock(MockBehavior.Strict);
-        _subLoopJob = ILoopJob.Mock(MockBehavior.Strict);
+
+        _subRenderingEngine = _mockRepository.Of<IRenderingEngine>();
+        _subMainLoopLifetime = _mockRepository.Of<IMainLoopLifetime>();
+        _subLoopJob = _mockRepository.Of<ILoopJob>();
     }
 
     private MainLoopService CreateMainLoopService()
@@ -122,9 +127,10 @@ public class MainLoopServiceTests
             .ReturnsAsync(
                 ValueTask.FromResult(true));
 
-        _subLoopJob.Render(
-            Is(_subRenderingEngine.Object),
-            renderingSurfaceId);
+        _subLoopJob
+            .Render(
+                Is(_subRenderingEngine.Object),
+                renderingSurfaceId);
 
         // Act
         MainLoopService? mainLoopService = null;
@@ -149,17 +155,20 @@ public class MainLoopServiceTests
         await mainLoopService.ExecutingTask.IsCompleted
             .Should().BeTrue();
 
+        _mockRepository.VerifyAll();
+
         _subLoopJob
             .Update(
                 renderingSurface,
                 keyboardHandle,
                 keyboardCharCache)
-            .WasCalled();
+            .WasCalled(Times.AtLeastOnce);
 
         _subLoopJob
             .Render(
-                Is(_subRenderingEngine.Object),
+                Arg.Is(_subRenderingEngine.Object),
                 renderingSurfaceId)
-            .WasCalled();
+            .WasCalled(Times.AtLeastOnce);
+
     }
 }
