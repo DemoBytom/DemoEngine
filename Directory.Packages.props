@@ -2,8 +2,11 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    
+    <!-- Verify exemption for Open Source projects
+      https://github.com/VerifyTests/Verify/blob/main/docs/maintenance-fee.md#exempt -->
     <Verify_SponsorshipExemption>OpenSource</Verify_SponsorshipExemption>
-    <Verify_SponsorshipExemptionUntil>2027-09</Verify_SponsorshipExemptionUntil>
+    <Verify_SponsorshipExemptionUntil>$([System.DateTime]::UtcNow.AddMonths(12).ToString("yyyy-MM"))</Verify_SponsorshipExemptionUntil>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="11.0.2" />
