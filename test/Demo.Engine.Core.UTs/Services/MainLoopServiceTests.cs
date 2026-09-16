@@ -142,8 +142,6 @@ public sealed class MainLoopServiceTests
         await mainLoopService.ExecutingTask.IsCompleted
             .Should().BeTrue();
 
-        _mockRepository.VerifyAll();
-
         _subLoopJob
             .Update(
                 renderingSurface,
@@ -157,5 +155,6 @@ public sealed class MainLoopServiceTests
                 renderingSurfaceId)
             .WasCalled(Times.AtLeastOnce);
 
+        _mockRepository.VerifyAll();
     }
 }
