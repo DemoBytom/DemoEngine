@@ -6,6 +6,7 @@ using Demo.Engine.Core.Components.Keyboard;
 using Demo.Engine.Core.Features.StaThread;
 using Demo.Engine.Core.Interfaces;
 using Demo.Engine.Core.Interfaces.Components;
+using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Services;
 using Demo.Engine.Core.ValueObjects;
@@ -68,6 +69,7 @@ public sealed class MainLoopServiceTests
         var keyboardCacheSub = IKeyboardCache.Mock(MockBehavior.Strict);
         var keyboardCharCache = new KeyboardCharCache(keyboardCacheSub.Object);
         var keyboardHandle = new KeyboardHandle(keyboardCacheSub.Object);
+        var renderingFormMock = IRenderingControl.Mock(MockBehavior.Strict);
 
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _ = _subMainLoopLifetime.Token.Returns(cts.Token);
@@ -105,6 +107,7 @@ public sealed class MainLoopServiceTests
             .Returns(true);
 
         await renderingSurface.Should().NotBeNull();
+        renderingSurface.RenderingControl.Returns(renderingFormMock);
 
         _ = _subLoopJob
             .Update(
@@ -142,6 +145,8 @@ public sealed class MainLoopServiceTests
         await mainLoopService.ExecutingTask.IsCompleted
             .Should().BeTrue();
 
+        _mockRepository.VerifyAll();
+
         _subLoopJob
             .Update(
                 renderingSurface,
@@ -155,6 +160,5 @@ public sealed class MainLoopServiceTests
                 renderingSurfaceId)
             .WasCalled(Times.AtLeastOnce);
 
-        _mockRepository.VerifyAll();
     }
 }
