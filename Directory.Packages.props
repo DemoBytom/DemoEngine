@@ -36,7 +36,7 @@
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
     <PackageVersion Include="System.Text.Json" Version="9.0.9" />
     <PackageVersion Include="TUnit" Version="1.68.4" />
-    <PackageVersion Include="TUnit.Assertions.Should" Version="1.67.0-beta" />
+    <PackageVersion Include="TUnit.Assertions.Should" Version="1.68.4-beta" />
     <PackageVersion Include="TUnit.Mocks" Version="1.68.4" />
     <PackageVersion Include="TUnit.Mocks.Assertions" Version="1.68.4" />
     <PackageVersion Include="TUnit.Mocks.Logging" Version="1.68.4" />
