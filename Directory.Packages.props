@@ -30,14 +30,14 @@
     <PackageVersion Include="MediatR" Version="[12.5.0, 13)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
     <PackageVersion Include="System.Text.Json" Version="9.0.9" />
     <PackageVersion Include="TUnit" Version="1.75.0" />
     <PackageVersion Include="Verify.SourceGenerators" Version="2.5.0" />
-    <PackageVersion Include="Verify.TUnit" Version="33.3.3" />
+    <PackageVersion Include="Verify.TUnit" Version="33.3.4" />
     <PackageVersion Include="Vortice.Dxc" Version="3.8.3" />
     <PackageVersion Include="Vortice.Mathematics" Version="2.1.1" />
     <PackageVersion Include="Vortice.D3DCompiler" Version="3.8.3" />
