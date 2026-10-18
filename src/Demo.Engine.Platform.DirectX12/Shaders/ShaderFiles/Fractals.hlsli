@@ -53,9 +53,9 @@ float3 DrawJuliaSet(float2 uv, uint frame)
         J_RE_START + uv.x * (J_RE_END - J_RE_START),
         J_IM_START + uv.y * (J_IM_END - J_IM_START));
 
-    const float f = frame * 0.005f;
+    const float f = frame * 0.001f;
     const float2 w = float2(cos(f), sin(f));
-    const float c = (2.f * w - ComplexSq(w)) * 0.26f;
+    const float2 c = (2.f * w - ComplexSq(w)) * 0.26f;
 
     for (int i = 0; i < J_MAX_ITERATION; i++)
     {

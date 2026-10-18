@@ -36,6 +36,8 @@ internal static partial class LoggingExtensions
     private const string UNEXPECTED_END_OF_STREAM = "Unexpected end of stream!";
     private const string ERROR_CREATING_GPASS_BUFFERS = "Failed to create GPass buffers with size {Width}x{Height}";
 
+    private const string RESIZED_RENDERING_SURFACE = "Resized Rendering Surface {SurfaceId} to {Width}x{Height}";
+
     [LoggerMessage(
         Level = LogLevel.Debug,
         Message = CREATED_DEVICE_SUPPORTING_FEATURE_LEVEL)]
@@ -176,4 +178,13 @@ internal static partial class LoggingExtensions
         this ILogger<EngineShaderManager> logger,
         ShaderId shaderId,
         int length);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = RESIZED_RENDERING_SURFACE)]
+    internal static partial void LogResizedRenderingSurface(
+        this ILogger<RenderingSurface> logger,
+        RenderingSurfaceId surfaceId,
+        Width width,
+        Height height);
 }

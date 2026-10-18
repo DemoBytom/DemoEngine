@@ -27,7 +27,6 @@ public readonly ref struct TelemetryBuilder
         where TInstrumentation : IInstrumentation
         => _ = Builder
             .WithMetrics(metrics => metrics
-                .AddMeter("Microsoft.Extensions.Diagnostics.ResourceMonitoring")
                 .AddMeter(TInstrumentation.INSTRUMENTATION_SOURCE_NAME))
             .WithTracing(tracing => tracing
                 .AddSource(TInstrumentation.INSTRUMENTATION_SOURCE_NAME))

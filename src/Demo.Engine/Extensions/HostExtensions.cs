@@ -23,6 +23,8 @@ public static class HostExtensions
                 "Demo.Engine.Core.Services.FpsTimer", Serilog.Events.LogEventLevel.Information)
             .MinimumLevel.Override(
                 "Demo.Engine.Windows.Platform.Netstandard.Win32.RenderingForm", Serilog.Events.LogEventLevel.Information)
+            .MinimumLevel.Override(
+                "Microsoft.Extensions.Diagnostics.ResourceMonitoring", Serilog.Events.LogEventLevel.Information)
             .Enrich.FromLogContext()
             .WriteTo.Async(writeTo =>
                 writeTo.Console()

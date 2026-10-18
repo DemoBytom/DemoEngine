@@ -21,7 +21,7 @@ float4 FillColorPS(
         float2(-offset, offset),
         float2(offset, offset),
         float2(offset, -offset),
-        float2(offset, -offset)
+        float2(-offset, -offset)
     };
     
     const float2 invDim = float2(
@@ -31,7 +31,7 @@ float4 FillColorPS(
     for (int i = 0; i < SAMPLES; i++)
     {
         const float2 uv = (Position.xy + offsets[i]) * invDim;
-        //color = DrawMandelbrot(uv);
+        //color += DrawMandelbrot(uv);
         color += DrawJuliaSet(uv, ShaderParams.Frame);
     }
 

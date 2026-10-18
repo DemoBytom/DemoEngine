@@ -44,7 +44,8 @@ public static class Extensions
                     .AddOpenTelemetry()
                     .RegisterInstrumentation(instrumentations)
                     .WithMetrics(metrics => metrics
-                        .AddRuntimeInstrumentation())
+                        .AddRuntimeInstrumentation()
+                        .AddMeter("Microsoft.Extensions.Diagnostics.ResourceMonitoring"))
                     .WithLogging())
                 .AddOpenTelemetryExporters(serviceName, version)
                 ;

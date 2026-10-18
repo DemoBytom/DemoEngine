@@ -35,6 +35,8 @@ internal sealed class DebugLayerLogger
             .Success)
         {
             _d3d12Debug!.EnableDebugLayer();
+            // This has rendering performance impact, so it should be used only for debugging.
+            //_d3d12Debug.SetEnableGPUBasedValidation(true);
 
             if (DXGI.DXGIGetDebugInterface1(out _dxgiDebug)
                 .Success)

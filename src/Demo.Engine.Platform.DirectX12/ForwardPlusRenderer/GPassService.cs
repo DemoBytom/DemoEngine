@@ -110,8 +110,8 @@ internal sealed class GPassService(
 
         var fractalData = new FractalData
         {
-            Width = _currentSize.width.Value,
-            Height = _currentSize.height.Value,
+            Width = frameInfo.Width.Value,
+            Height = frameInfo.Height.Value,
             Frame = frameInfo.UPS_Frame,
         };
         commandList.SetGraphicsRoot32BitConstants(

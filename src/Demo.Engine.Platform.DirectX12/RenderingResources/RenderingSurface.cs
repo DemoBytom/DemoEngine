@@ -1,8 +1,10 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.ValueObjects;
@@ -19,21 +21,40 @@ internal sealed class RenderingSurface
     : IAsyncDisposable,
       IRenderingSurface
 {
+    private readonly EventHandler<RenderingControlSizeEventArgs> _resizeFunc;
+
     public RenderingSurface(
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        Action flushBuffersFunc)
     {
         _scope = serviceProvider.CreateAsyncScope();
         _logger = _scope.ServiceProvider.GetRequiredService<ILogger<RenderingSurface>>();
         RenderingControl = _scope.ServiceProvider.GetRequiredService<IRenderingControl>();
+        _flushBuffers = flushBuffersFunc;
 
-        RenderingControl.UserResized += (sender, eventArgs) =>
+        _resizeFunc = (sender, eventArgs) =>
         {
-            //Resize();
+            if (eventArgs.Width > 0 && eventArgs.Height > 0
+                && (eventArgs.Width != Width || eventArgs.Height != Height))
+            {
+                using var activity = InstrumentationDX12.ActivitySource.StartActivity("RenderingSurface.Resize", ActivityKind.Internal);
+
+                Resize();
+
+                _logger.LogResizedRenderingSurface(
+                    surfaceId: ID,
+                    width: eventArgs.Width,
+                    height: eventArgs.Height);
+            }
         };
+
+        RenderingControl.UserResized += _resizeFunc;
     }
 
     public RenderingSurfaceId ID { get; } = RenderingSurfaceId.NewId();
     public IRenderingControl RenderingControl { get; }
+
+    private readonly Action _flushBuffers;
     private IDXGISwapChain4? _swapChain;
     private uint _currentBackBuffer;
     private Format _format = Common.DEFAULT_BACK_BUFFER_FORMAT;
@@ -43,19 +64,54 @@ internal sealed class RenderingSurface
     private readonly RenderTargetData[] _renderTargetDatas = new RenderTargetData[Common.BACK_BUFFER_COUNT];
     private readonly ILogger<RenderingSurface> _logger;
     private bool _createdSwapChain = false;
+    private Func<ID3D12Device14>? _getDevice;
     private readonly AsyncServiceScope _scope;
 
     public Viewport Viewport { get; private set; }
     public RawRect ScissorRect { get; private set; }
     public Width Width => (int)Viewport.Width;
     public Height Height => (int)Viewport.Height;
-    public ID3D12Resource? BackBuffer => _renderTargetDatas[_currentBackBuffer].Resource;
+    public ID3D12Resource? BackBuffer
+    {
+        get
+        {
+            return _renderTargetDatas[_currentBackBuffer].Resource;
+        }
+    }
+
+    SemaphoreSlim _semaphoreSlim = new(1, 1);
+    public WaitScope EnterLock() => new(_semaphoreSlim);
+
+    public readonly ref struct WaitScope
+        : IDisposable
+    {
+        public WaitScope(
+            SemaphoreSlim semaphoreSlim)
+        {
+            _semaphoreSlim = semaphoreSlim;
+            _semaphoreSlim.Wait();
+        }
+
+#pragma warning disable CA2213 // Disposable fields should be disposed
+        private readonly SemaphoreSlim _semaphoreSlim;
+#pragma warning restore CA2213 // Disposable fields should be disposed
+
+        public void Dispose()
+        {
+            _semaphoreSlim.Release();
+        }
+    }
 
     [MemberNotNullWhen(true, nameof(BackBuffer))]
     [MemberNotNullWhen(true, nameof(RTV))]
     public bool IsValid
-        => _renderTargetDatas[_currentBackBuffer].Resource is not null
-        && _renderTargetDatas[_currentBackBuffer].RTV.IsValid;
+    {
+        get
+        {
+            return _renderTargetDatas[_currentBackBuffer].Resource is not null
+                && _renderTargetDatas[_currentBackBuffer].RTV.IsValid;
+        }
+    }
 
     public CpuDescriptorHandle? RTV => _renderTargetDatas[_currentBackBuffer].RTV.CPU;
 
@@ -76,11 +132,13 @@ internal sealed class RenderingSurface
 
     public async ValueTask CreateSwapChainAsync(
         IDXGIFactory7 factory,
-        ID3D12Device14 device,
+        Func<ID3D12Device14> getDevice,
         ID3D12CommandQueue commandQueue,
         RTVDescriptorHeapAllocator rtvDescriptorHeapAllocator,
         Format format = Common.DEFAULT_BACK_BUFFER_FORMAT)
     {
+        _getDevice = getDevice;
+        var device = getDevice();
         //Release old resources if the method is called 2nd time
         if (_createdSwapChain)
         {
@@ -109,6 +167,7 @@ internal sealed class RenderingSurface
             swapEffect: SwapEffect.FlipDiscard,
             alphaMode: AlphaMode.Unspecified,
             flags: _allowTearing ? SwapChainFlags.AllowTearing : SwapChainFlags.None);
+
         using (var swapChain = factory.CreateSwapChainForHwnd(
             commandQueue,
             RenderingControl.Handle,
@@ -237,10 +296,56 @@ internal sealed class RenderingSurface
 
         _currentBackBuffer = _swapChain.CurrentBackBufferIndex;
         return true;
+
     }
 
     public void Resize()
-        => throw new NotImplementedException();
+    {
+        var lockScope = EnterLock();
+        try
+        {
+            _flushBuffers();
+            if (_swapChain is null)
+            {
+                throw new InvalidOperationException(
+                    "Swap chain does not exist!");
+            }
+
+            for (var i = 0; i < _renderTargetDatas.Length; ++i)
+            {
+                _renderTargetDatas[i].Resource?.Dispose();
+                _renderTargetDatas[i] = _renderTargetDatas[i] with { Resource = null };
+            }
+
+            var flags = _allowTearing ? SwapChainFlags.AllowTearing : SwapChainFlags.None;
+
+            try
+            {
+                _ = _swapChain.ResizeBuffers(
+                    bufferCount: Common.BACK_BUFFER_COUNT,
+                    //width: (uint)RenderingControl.DrawWidth.Value,
+                    //height: (uint)RenderingControl.DrawHeight.Value,
+                    // using 0 for width and height to let the swap chain use the current window size
+                    width: 0,
+                    height: 0,
+                    // unknown format will keep the current format specified when swapchain was created
+                    newFormat: Format.Unknown,
+                    swapChainFlags: flags);
+            }
+            catch (SEHException ex)
+            {
+                _logger.LogError(ex, "Access violation during swap chain resize.");
+                throw;
+            }
+            _currentBackBuffer = _swapChain.CurrentBackBufferIndex;
+
+            GetBuffers(_getDevice!.Invoke());
+        }
+        finally
+        {
+            lockScope.Dispose();
+        }
+    }
 
     private readonly record struct RenderTargetData
     {
@@ -266,6 +371,8 @@ internal sealed class RenderingSurface
         {
             if (disposing)
             {
+                RenderingControl.UserResized -= _resizeFunc;
+
                 _logger.LogDisposingRenderingSurface(ID);
                 for (var rtvId = 0; rtvId < _renderTargetDatas.Length; ++rtvId)
                 {
@@ -291,6 +398,8 @@ internal sealed class RenderingSurface
                  * this will dispose this scope and cause problems
                  * when accessing the rendering form!! */
                 await _scope.DisposeAsync();
+
+                _semaphoreSlim.Dispose();
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override finalizer
