@@ -94,6 +94,16 @@ internal enum WindowMessageTypes
     SysKeyUp = 0x0105,
 
     /// <summary>
+    /// WM_SYSCHAR: Posted to the window with the keyboard focus when a WM_SYSKEYDOWN message is
+    /// translated by the TranslateMessage function. It specifies the character code of a system
+    /// character key that is, a character key that is pressed while the ALT key is down.
+    /// </summary>
+    /// <remarks>
+    /// https://learn.microsoft.com/en-us/windows/win32/menurc/wm-syschar
+    /// </remarks>
+    SysChar = 0x0106,
+
+    /// <summary>
     /// WM_SYSCOMMAND: A window receives this message when the user chooses a command from the
     /// Window menu (formerly known as the system or control menu) or when the user chooses the
     /// maximize button, minimize button, restore button, or close button.

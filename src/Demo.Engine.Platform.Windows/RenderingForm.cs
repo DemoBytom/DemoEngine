@@ -64,6 +64,8 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
 
         SetFullscreen(_formSettings.CurrentValue.Fullscreen);
 
+        FormClosed += (s, e) => OnRenderingFormClosed(e);
+
         ResizeEnd += (sender, args) =>
         {
             if (!IsFullscreen)
@@ -95,47 +97,54 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
 
         if (fullscreen)
         {
+            this.SuspendLayout();
             _currentNonFullscreenPosition = DesktopLocation;
             _currentNonFullScreenSize = ClientSize;
             _currentNonFullscreenState = WindowState;
 
-            TopMost = true;
+            //TopMost = true;
             _allowUserResizing = false;
             Location = new Point(screen.Bounds.X, screen.Bounds.Y);
             //new Point(0, 0);
+
+            WindowState = FormWindowState.Normal;
+            FormBorderStyle = FormBorderStyle.None;
 
             ClientSize = new Size(
                 screenBouds.Width,
                 screenBouds.Height);
 
-            WindowState = FormWindowState.Normal;
-            FormBorderStyle = FormBorderStyle.None;
             _formSettings.CurrentValue.Width = ClientSize.Width;
             _formSettings.CurrentValue.Height = ClientSize.Height;
+            this.ResumeLayout(true);
         }
         else
         {
-            TopMost = false;
+            //TopMost = false;
+            this.SuspendLayout();
             _allowUserResizing = _formSettings.CurrentValue.AllowResizing;
             DesktopLocation = new Point(
                 Math.Max(0, _currentNonFullscreenPosition.X),
                 Math.Max(0, _currentNonFullscreenPosition.Y));
 
-            ClientSize = _currentNonFullScreenSize ?? new Size(
-                Math.Min(screenBouds.Width, _formSettings.CurrentValue.Width),
-                Math.Min(screenBouds.Height, _formSettings.CurrentValue.Height));
             WindowState = _currentNonFullscreenState;
             FormBorderStyle = _allowUserResizing
                 ? FormBorderStyle.Sizable
                 : FormBorderStyle.FixedSingle;
 
+            ClientSize = _currentNonFullScreenSize ?? new Size(
+                Math.Min(screenBouds.Width, _formSettings.CurrentValue.Width),
+                Math.Min(screenBouds.Height, _formSettings.CurrentValue.Height));
+
             _formSettings.CurrentValue.Width = ClientSize.Width;
             _formSettings.CurrentValue.Height = ClientSize.Height;
+
+            this.ResumeLayout(true);
         }
 
         IsFullscreen = fullscreen;
 
-        FormClosed += (s, e) => OnRenderingFormClosed(e);
+        //FormClosed += (s, e) => OnRenderingFormClosed(e);
     }
 
     protected override unsafe void WndProc(ref Message m)
@@ -154,13 +163,30 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
                 case WindowMessageTypes.SysKeyDown:
                 case WindowMessageTypes.KeyDown:
                 {
-                    var lparam = m.LParam.ToInt64();
+                    long lparam = m.LParam.ToInt64();
 
                     //bit 30
-                    if ((lparam & 0x4000_0000) == 0)
+                    if (lparam.IsNotRepeat())
                     {
                         var key = (VirtualKeys)wparam;
-                        _mediator.Publish(new KeyNotification(key, true)).Preserve().GetAwaiter().GetResult();
+                        if (lparam.IsAltDown() && key is VirtualKeys.Enter)
+                        {
+                            SetFullscreen(!IsFullscreen);
+                        }
+                        else
+                        {
+                            _mediator.Publish(new KeyNotification(key, true)).Preserve().GetAwaiter().GetResult();
+                        }
+                    }
+                    break;
+                }
+                case WindowMessageTypes.SysChar:
+                {
+                    long lparam = m.LParam.ToInt64();
+
+                    if (lparam.IsAltDown() && (VirtualKeys)wparam is VirtualKeys.Enter)
+                    {
+                        return;
                     }
                     break;
                 }

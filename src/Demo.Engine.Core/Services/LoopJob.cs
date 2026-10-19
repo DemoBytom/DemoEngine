@@ -11,7 +11,6 @@ using Demo.Engine.Core.Interfaces.Rendering;
 using Demo.Engine.Core.Platform;
 using Demo.Engine.Core.ValueObjects;
 using Demo.Engine.Observability.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Vortice.Mathematics;
 
@@ -116,30 +115,30 @@ internal sealed class LoopJob
             _f11Pressed = false;
         }
 
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.Back)
-            && _drawables.ElementAtOrDefault(0) is IDisposable d)
-        {
-            Debug.WriteLine("Removing cube!");
+        //if (keyboardHandle.GetKeyPressed(VirtualKeys.Back)
+        //    && _drawables.ElementAtOrDefault(0) is IDisposable d)
+        //{
+        //    Debug.WriteLine("Removing cube!");
 
-            _drawables = _drawables.Length > 0
-                ? _drawables[1..]
-                : [];
+        //    _drawables = _drawables.Length > 0
+        //        ? _drawables[1..]
+        //        : [];
 
-            d?.Dispose();
+        //    d?.Dispose();
 
-            Debug.WriteLine("Cube removed!");
-        }
-        if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter)
-            && _drawables.Length < 2
-            && _serviceProvider is not null)
-        {
-            Debug.WriteLine("Adding new Cube!");
-            _drawables = new List<ICube>(_drawables)
-            {
-                _serviceProvider.GetRequiredService<ICube>()
-            }.ToArray();
-            Debug.WriteLine("Cube added!!");
-        }
+        //    Debug.WriteLine("Cube removed!");
+        //}
+        //if (keyboardHandle.GetKeyPressed(VirtualKeys.Enter)
+        //    && _drawables.Length < 2
+        //    && _serviceProvider is not null)
+        //{
+        //    Debug.WriteLine("Adding new Cube!");
+        //    _drawables = new List<ICube>(_drawables)
+        //    {
+        //        _serviceProvider.GetRequiredService<ICube>()
+        //    }.ToArray();
+        //    Debug.WriteLine("Cube added!!");
+        //}
 
         //if (_drawables.Length == 2)
         //{
