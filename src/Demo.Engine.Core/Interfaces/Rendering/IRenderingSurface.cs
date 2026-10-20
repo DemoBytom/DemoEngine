@@ -17,4 +17,5 @@ public interface IRenderingSurface
     /// Temporary untill we have a proper Camera class
     /// </summary>
     Matrix4x4 ViewProjectionMatrix { get; }
+    bool RenderingPaused { get; }
 }

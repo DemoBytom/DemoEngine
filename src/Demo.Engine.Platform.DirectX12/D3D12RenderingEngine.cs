@@ -339,10 +339,6 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
     {
         using var activity = InstrumentationDX12.ActivitySource.StartActivity("Draw Frame");
 
-        InitCommandList();
-
-        var frameIndex = CurrentFrameIndex();
-
         if (!_surfaces
             .TryGetValue(
                 renderingSurfaceId,
@@ -351,6 +347,15 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
             throw new InvalidOperationException(
                 "Rendering surface is not valid!");
         }
+
+        if (renderingSurface.RenderingPaused)
+        {
+            return;
+        }
+
+        InitCommandList();
+
+        var frameIndex = CurrentFrameIndex();
 
         var lockScope = renderingSurface.EnterLock();
 

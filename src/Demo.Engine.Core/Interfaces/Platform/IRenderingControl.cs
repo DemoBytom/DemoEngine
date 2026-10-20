@@ -30,6 +30,9 @@ public interface IRenderingControl : IDisposable
     event EventHandler<RenderingControlSizeEventArgs>? UserResized;
     event EventHandler<EventArgs>? RenderingFormClosed;
 
+    event EventHandler<EventArgs>? PauseRendering;
+    event EventHandler<EventArgs>? ResumeRendering;
+
     /// <summary>
     /// Displays the control to the user.
     /// </summary>

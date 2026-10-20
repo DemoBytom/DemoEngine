@@ -37,6 +37,8 @@ internal static partial class LoggingExtensions
     private const string ERROR_CREATING_GPASS_BUFFERS = "Failed to create GPass buffers with size {Width}x{Height}";
 
     private const string RESIZED_RENDERING_SURFACE = "Resized Rendering Surface {SurfaceId} to {Width}x{Height}";
+    private const string RENDERING_PAUSED = "{SurfaceId} Rendering paused";
+    private const string RENDERING_RESUMED = "{SurfaceId} Rendering resumed";
 
     [LoggerMessage(
         Level = LogLevel.Debug,
@@ -180,11 +182,25 @@ internal static partial class LoggingExtensions
         int length);
 
     [LoggerMessage(
-        Level = LogLevel.Information,
+        Level = LogLevel.Debug,
         Message = RESIZED_RENDERING_SURFACE)]
     internal static partial void LogResizedRenderingSurface(
         this ILogger<RenderingSurface> logger,
         RenderingSurfaceId surfaceId,
         Width width,
         Height height);
+
+    [LoggerMessage(
+        Level = LogLevel.Debug,
+        Message = RENDERING_PAUSED)]
+    internal static partial void LogRenderingPaused(
+        this ILogger<RenderingSurface> logger,
+        RenderingSurfaceId surfaceId);
+
+    [LoggerMessage(
+        Level = LogLevel.Debug,
+        Message = RENDERING_RESUMED)]
+    internal static partial void LogRenderingResumed(
+        this ILogger<RenderingSurface> logger,
+        RenderingSurfaceId surfaceId);
 }

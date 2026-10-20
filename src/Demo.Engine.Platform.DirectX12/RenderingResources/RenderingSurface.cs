@@ -18,10 +18,12 @@ using Vortice.Mathematics;
 namespace Demo.Engine.Platform.DirectX12.RenderingResources;
 
 internal sealed class RenderingSurface
-    : IAsyncDisposable,
-      IRenderingSurface
+    : IAsyncDisposable
+    , IRenderingSurface
 {
     private readonly EventHandler<RenderingControlSizeEventArgs> _resizeFunc;
+    private readonly EventHandler<EventArgs> _pauseRenderingFunc;
+    private readonly EventHandler<EventArgs> _resumeRenderingFunc;
 
     public RenderingSurface(
         IServiceProvider serviceProvider,
@@ -48,7 +50,21 @@ internal sealed class RenderingSurface
             }
         };
 
+        _pauseRenderingFunc = (sender, eventArgs) =>
+        {
+            _logger.LogRenderingPaused(ID);
+            RenderingPaused = true;
+        };
+
+        _resumeRenderingFunc = (sender, eventArgs) =>
+        {
+            _logger.LogRenderingResumed(ID);
+            RenderingPaused = false;
+        };
+
         RenderingControl.UserResized += _resizeFunc;
+        RenderingControl.PauseRendering += _pauseRenderingFunc;
+        RenderingControl.ResumeRendering += _resumeRenderingFunc;
     }
 
     public RenderingSurfaceId ID { get; } = RenderingSurfaceId.NewId();
@@ -71,15 +87,12 @@ internal sealed class RenderingSurface
     public RawRect ScissorRect { get; private set; }
     public Width Width => (int)Viewport.Width;
     public Height Height => (int)Viewport.Height;
-    public ID3D12Resource? BackBuffer
-    {
-        get
-        {
-            return _renderTargetDatas[_currentBackBuffer].Resource;
-        }
-    }
+    public ID3D12Resource? BackBuffer => _renderTargetDatas[_currentBackBuffer].Resource;
 
-    SemaphoreSlim _semaphoreSlim = new(1, 1);
+    private readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
+
+    public bool RenderingPaused { get; private set; }
+
     public WaitScope EnterLock() => new(_semaphoreSlim);
 
     public readonly ref struct WaitScope
@@ -323,12 +336,10 @@ internal sealed class RenderingSurface
             {
                 _ = _swapChain.ResizeBuffers(
                     bufferCount: Common.BACK_BUFFER_COUNT,
-                    //width: (uint)RenderingControl.DrawWidth.Value,
-                    //height: (uint)RenderingControl.DrawHeight.Value,
                     // using 0 for width and height to let the swap chain use the current window size
                     width: 0,
                     height: 0,
-                    // unknown format will keep the current format specified when swapchain was created
+                    // unknown format will keep the current format that was specified when swapchain was created
                     newFormat: Format.Unknown,
                     swapChainFlags: flags);
             }
@@ -372,6 +383,8 @@ internal sealed class RenderingSurface
             if (disposing)
             {
                 RenderingControl.UserResized -= _resizeFunc;
+                RenderingControl.PauseRendering -= _pauseRenderingFunc;
+                RenderingControl.ResumeRendering -= _resumeRenderingFunc;
 
                 _logger.LogDisposingRenderingSurface(ID);
                 for (var rtvId = 0; rtvId < _renderTargetDatas.Length; ++rtvId)

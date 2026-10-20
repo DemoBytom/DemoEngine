@@ -21,7 +21,9 @@ namespace Demo.Engine.Windows.Platform.Netstandard.Win32;
 // As we can't currently design in VS in the runtime solution,
 // mark as "Default" so this opens in code view by default.
 [DesignerCategory("Default")]
-internal sealed partial class RenderingForm : Form, IRenderingControl
+internal sealed partial class RenderingForm
+    : Form
+    , IRenderingControl
 {
     private FormWindowState _previousWindowState;
     private Size _cachedSize;
@@ -65,15 +67,6 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
         SetFullscreen(_formSettings.CurrentValue.Fullscreen);
 
         FormClosed += (s, e) => OnRenderingFormClosed(e);
-
-        ResizeEnd += (sender, args) =>
-        {
-            if (!IsFullscreen)
-            {
-                //_formSettings.CurrentValue.Width = ClientSize.Width;
-                //_formSettings.CurrentValue.Height = ClientSize.Height;
-            }
-        };
     }
 
     /// <summary>
@@ -97,7 +90,6 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
 
         if (fullscreen)
         {
-            this.SuspendLayout();
             _currentNonFullscreenPosition = DesktopLocation;
             _currentNonFullScreenSize = ClientSize;
             _currentNonFullscreenState = WindowState;
@@ -107,44 +99,38 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
             Location = new Point(screen.Bounds.X, screen.Bounds.Y);
             //new Point(0, 0);
 
-            WindowState = FormWindowState.Normal;
-            FormBorderStyle = FormBorderStyle.None;
-
             ClientSize = new Size(
                 screenBouds.Width,
                 screenBouds.Height);
 
+            WindowState = FormWindowState.Normal;
+            FormBorderStyle = FormBorderStyle.None;
+
             _formSettings.CurrentValue.Width = ClientSize.Width;
             _formSettings.CurrentValue.Height = ClientSize.Height;
-            this.ResumeLayout(true);
         }
         else
         {
             //TopMost = false;
-            this.SuspendLayout();
             _allowUserResizing = _formSettings.CurrentValue.AllowResizing;
             DesktopLocation = new Point(
                 Math.Max(0, _currentNonFullscreenPosition.X),
                 Math.Max(0, _currentNonFullscreenPosition.Y));
+
+            ClientSize = _currentNonFullScreenSize ?? new Size(
+                Math.Min(screenBouds.Width, _formSettings.CurrentValue.Width),
+                Math.Min(screenBouds.Height, _formSettings.CurrentValue.Height));
 
             WindowState = _currentNonFullscreenState;
             FormBorderStyle = _allowUserResizing
                 ? FormBorderStyle.Sizable
                 : FormBorderStyle.FixedSingle;
 
-            ClientSize = _currentNonFullScreenSize ?? new Size(
-                Math.Min(screenBouds.Width, _formSettings.CurrentValue.Width),
-                Math.Min(screenBouds.Height, _formSettings.CurrentValue.Height));
-
             _formSettings.CurrentValue.Width = ClientSize.Width;
             _formSettings.CurrentValue.Height = ClientSize.Height;
-
-            this.ResumeLayout(true);
         }
 
         IsFullscreen = fullscreen;
-
-        //FormClosed += (s, e) => OnRenderingFormClosed(e);
     }
 
     protected override unsafe void WndProc(ref Message m)
@@ -171,7 +157,9 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
                         var key = (VirtualKeys)wparam;
                         if (lparam.IsAltDown() && key is VirtualKeys.Enter)
                         {
+                            OnPauseRendering(EventArgs.Empty);
                             SetFullscreen(!IsFullscreen);
+                            OnResumeRendering(EventArgs.Empty);
                         }
                         else
                         {
@@ -259,7 +247,8 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
                                 OnResumeRendering(EventArgs.Empty);
                             }
 
-                            if (!_isUserResizing && (Size != _cachedSize || _previousWindowState == FormWindowState.Maximized))
+                            if (!_isUserResizing
+                                && (Size != _cachedSize || _previousWindowState == FormWindowState.Maximized))
                             {
                                 _previousWindowState = FormWindowState.Normal;
 
@@ -330,19 +319,17 @@ internal sealed partial class RenderingForm : Form, IRenderingControl
     }
 
     public event EventHandler<RenderingControlSizeEventArgs>? UserResized;
+    public event EventHandler<EventArgs>? PauseRendering;
+    public event EventHandler<EventArgs>? ResumeRendering;
 
     private void OnUserResized(scoped in RenderingControlSizeEventArgs e)
         => UserResized?.Invoke(this, e);
 
     private void OnPauseRendering(EventArgs eventArgs)
-    {
-        // TODO
-    }
+        => PauseRendering?.Invoke(this, eventArgs);
 
     private void OnResumeRendering(EventArgs eventArgs)
-    {
-        // TODO
-    }
+        => ResumeRendering?.Invoke(this, eventArgs);
 
     public event EventHandler<EventArgs>? RenderingFormClosed;
 
