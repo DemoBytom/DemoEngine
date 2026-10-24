@@ -2,7 +2,6 @@
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
 using System.ComponentModel;
-using System.Diagnostics;
 using Demo.Engine.Core.Interfaces.Platform;
 using Demo.Engine.Core.Maths.Interop;
 using Demo.Engine.Core.Models.Options;
@@ -94,10 +93,8 @@ internal sealed partial class RenderingForm
             _currentNonFullScreenSize = ClientSize;
             _currentNonFullscreenState = WindowState;
 
-            //TopMost = true;
             _allowUserResizing = false;
             Location = new Point(screen.Bounds.X, screen.Bounds.Y);
-            //new Point(0, 0);
 
             ClientSize = new Size(
                 screenBouds.Width,
@@ -111,7 +108,6 @@ internal sealed partial class RenderingForm
         }
         else
         {
-            //TopMost = false;
             _allowUserResizing = _formSettings.CurrentValue.AllowResizing;
             DesktopLocation = new Point(
                 Math.Max(0, _currentNonFullscreenPosition.X),
@@ -149,13 +145,11 @@ internal sealed partial class RenderingForm
                 case WindowMessageTypes.SysKeyDown:
                 case WindowMessageTypes.KeyDown:
                 {
-                    long lparam = m.LParam.ToInt64();
-
+                    var keyOperation = m.AsKeyOperation();
                     //bit 30
-                    if (lparam.IsNotRepeat())
+                    if (keyOperation.IsNotRepeat)
                     {
-                        var key = (VirtualKeys)wparam;
-                        if (lparam.IsAltDown() && key is VirtualKeys.Enter)
+                        if (keyOperation.IsAltDown && keyOperation.Key is VirtualKeys.Enter)
                         {
                             OnPauseRendering(EventArgs.Empty);
                             SetFullscreen(!IsFullscreen);
@@ -163,16 +157,15 @@ internal sealed partial class RenderingForm
                         }
                         else
                         {
-                            _mediator.Publish(new KeyNotification(key, true)).Preserve().GetAwaiter().GetResult();
+                            _mediator.Publish(new KeyNotification(keyOperation.Key, true)).Preserve().GetAwaiter().GetResult();
                         }
                     }
                     break;
                 }
                 case WindowMessageTypes.SysChar:
                 {
-                    long lparam = m.LParam.ToInt64();
-
-                    if (lparam.IsAltDown() && (VirtualKeys)wparam is VirtualKeys.Enter)
+                    var keyOperation = m.AsKeyOperation();
+                    if (keyOperation.IsAltDown && keyOperation.Key is VirtualKeys.Enter)
                     {
                         return;
                     }
@@ -194,19 +187,13 @@ internal sealed partial class RenderingForm
 
                 case WindowMessageTypes.Size:
                 {
-                    var lparam = m.LParam.ToInt32();
-
                     //LOWORD
-                    var width = new Width(Helpers.LOWORD(lparam));
+                    var width = new Width(Helpers.LOWORD(m.LParam));
 
                     //HIWORD
-                    var height = new Height(Helpers.HIWORD(lparam));
+                    var height = new Height(Helpers.HIWORD(m.LParam));
 
                     var resizingRequest = (SizeValues)m.WParam.ToInt64();
-
-                    if (height != ClientSize.Height || width != ClientSize.Width)
-                    {
-                    }
 
                     /***/
                     if (resizingRequest == SizeValues.SizeMinimized)
@@ -264,8 +251,6 @@ internal sealed partial class RenderingForm
                         }
                     }
                     /***/
-                    Debug.WriteLine(
-                        $"New: {width}x{height} vs {ClientSize.Width}x{ClientSize.Height}, requestType {resizingRequest}");
                     break;
                 }
             }

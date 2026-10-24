@@ -6,38 +6,54 @@ namespace Demo.Engine.Platform.Windows;
 internal static class Helpers
 {
     public static int MAKELONG(int low, int high)
-        => (high << 16) | (low & 0xffff);
+        => unchecked((int)(
+            ((uint)(ushort)low) |
+            ((uint)(ushort)high << 16)));
 
-    public static IntPtr MAKELPARAM(int low, int high)
-        => (high << 16) | (low & 0xffff);
+    public static nint MAKELPARAM(int low, int high)
+        => MAKELONG(low, high);
 
-    public static int HIWORD(int n)
-        => (n >> 16) & 0xffff;
+    /// <summary>
+    /// Extracts usigned high-order 16 bit word (bits 16-31)
+    /// </summary>
+    /// <param name="n"></param>
+    /// <returns>high-order word (bits 16-31 of input)</returns>
+    public static ushort HIWORD(int n)
+        => (ushort)((uint)n >> 16);
 
-    public static int HIWORD(IntPtr n)
-        => HIWORD(unchecked((int)(long)n));
+    /// <summary>
+    /// Extracts usigned high-order 16 bit word (bits 16-31)
+    /// </summary>
+    /// <param name="n"></param>
+    /// <returns>high-order word (bits 16-31 of input)</returns>
+    public static ushort HIWORD(nint n)
+        => (ushort)((nuint)n >> 16);
 
-    public static int LOWORD(int n)
-        => n & 0xffff;
+    /// <summary>
+    /// Extracts usigned low-order 16 bit word (bits 0-15)
+    /// </summary>
+    /// <param name="n"></param>
+    /// <returns>low-order word (bits 0-15 of input)</returns>
+    public static ushort LOWORD(int n)
+        => (ushort)n;
 
-    public static int LOWORD(IntPtr n)
-        => LOWORD(unchecked((int)(long)n));
+    /// <summary>
+    /// Extracts usigned low-order 16 bit word (bits 0-15)
+    /// </summary>
+    /// <param name="n"></param>
+    /// <returns>low-order word (bits 0-15 of input)</returns>
+    public static ushort LOWORD(nint n)
+        => (ushort)(nuint)n;
 
-    public static int SignedHIWORD(IntPtr n)
-        => SignedHIWORD(unchecked((int)(long)n));
+    public static short SignedHIWORD(int n)
+        => (short)((uint)n >> 16);
 
-    public static int SignedLOWORD(IntPtr n)
-        => SignedLOWORD(unchecked((int)(long)n));
+    public static short SignedHIWORD(nint n)
+        => (short)((nuint)n >> 16);
 
-    public static int SignedHIWORD(int n)
-    {
-        var i = (int)(short)((n >> 16) & 0xffff);
-        return i;
-    }
+    public static short SignedLOWORD(int n)
+        => (short)n;
 
-    public static int SignedLOWORD(int n)
-    {
-        var i = (int)(short)(n & 0xFFFF);
-        return i;
-    }
+    public static short SignedLOWORD(nint n)
+        => (short)(nuint)n;
 }

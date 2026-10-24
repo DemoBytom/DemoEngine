@@ -56,5 +56,5 @@ public interface IRenderingControl : IDisposable
 
     RectangleF DrawingArea { get; }
 
-    public void SetFullscreen(bool isFullscreen);
+    void SetFullscreen(bool isFullscreen);
 }

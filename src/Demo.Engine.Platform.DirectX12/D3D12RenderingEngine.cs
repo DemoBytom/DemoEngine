@@ -357,110 +357,104 @@ internal sealed class D3D12RenderingEngine : ID3D12RenderingEngine
 
         var frameIndex = CurrentFrameIndex();
 
-        var lockScope = renderingSurface.EnterLock();
+        using var lockScope = renderingSurface.EnterLock();
 
-        try
+        if (!renderingSurface.IsValid)
         {
-            if (!renderingSurface.IsValid)
-            {
-                throw new InvalidOperationException(
-                    "Rendering surface is not valid!");
-            }
+            throw new InvalidOperationException(
+                "Rendering surface is not valid!");
+        }
 
-            _clearColor = color;
-            if (_deferredReleasesFlag[frameIndex])
-            {
-                ProcessDeferredReleases(frameIndex);
-            }
+        _clearColor = color;
+        if (_deferredReleasesFlag[frameIndex])
+        {
+            ProcessDeferredReleases(frameIndex);
+        }
 
-            var currentBackBuffer = renderingSurface.BackBuffer;
+        var currentBackBuffer = renderingSurface.BackBuffer;
 
-            var frameInfo = new FrameInfo
-            {
-                Width = renderingSurface.Width,
-                Height = renderingSurface.Height,
-                UPS_Frame = upsFrame,
-            };
+        var frameInfo = new FrameInfo
+        {
+            Width = renderingSurface.Width,
+            Height = renderingSurface.Height,
+            UPS_Frame = upsFrame,
+        };
 
-            _gPass.SetSize(
-                frameInfo.Width,
-                frameInfo.Height);
+        _gPass.SetSize(
+            frameInfo.Width,
+            frameInfo.Height);
 
-            //_ = renderingSurface.Present();
+        //_ = renderingSurface.Present();
 
-            //// recrod commands
-            //// TODO remove OLD Begin Frame
-            //BeginFrame(
-            //    renderingSurface.BackBuffer,
-            //    renderingSurface.RTV.Value);
-            //// END OLD Begin Frame
+        //// recrod commands
+        //// TODO remove OLD Begin Frame
+        //BeginFrame(
+        //    renderingSurface.BackBuffer,
+        //    renderingSurface.RTV.Value);
+        //// END OLD Begin Frame
 
-            // New Record commands
-            ReadOnlySpan<ID3D12DescriptorHeap> heaps =
-            [
-                SRVHeapAllocator.DescriptorHeap!,
+        // New Record commands
+        ReadOnlySpan<ID3D12DescriptorHeap> heaps =
+        [
+            SRVHeapAllocator.DescriptorHeap!,
         ];
-            _d3d12Command.CommandList.SetDescriptorHeaps(heaps);
+        _d3d12Command.CommandList.SetDescriptorHeaps(heaps);
 
-            _d3d12Command.CommandList.RSSetViewport(
-                renderingSurface.Viewport);
-            _d3d12Command.CommandList.RSSetScissorRect(
-                renderingSurface.ScissorRect);
+        _d3d12Command.CommandList.RSSetViewport(
+            renderingSurface.Viewport);
+        _d3d12Command.CommandList.RSSetScissorRect(
+            renderingSurface.ScissorRect);
 
-            // Depth prepass
-            _gPass.AddTransitionForDepthPrepass(
-                _barriers);
-            _barriers.Apply(_d3d12Command.CommandList);
-            _gPass.SetRenderTargetsForDepthPrepass(
-                _d3d12Command.CommandList);
-            _gPass.DepthPrepass(
-                _d3d12Command.CommandList,
-                frameInfo);
+        // Depth prepass
+        _gPass.AddTransitionForDepthPrepass(
+            _barriers);
+        _barriers.Apply(_d3d12Command.CommandList);
+        _gPass.SetRenderTargetsForDepthPrepass(
+            _d3d12Command.CommandList);
+        _gPass.DepthPrepass(
+            _d3d12Command.CommandList,
+            frameInfo);
 
-            // Geometry and lightning pass
-            _gPass.AddTransitionForGPass(
-                _barriers);
-            _barriers.Apply(_d3d12Command.CommandList);
-            _gPass.SetRenderTargetsForGPass(
-                _d3d12Command.CommandList);
-            _gPass.Render(
-                _d3d12Command.CommandList,
-                frameInfo);
+        // Geometry and lightning pass
+        _gPass.AddTransitionForGPass(
+            _barriers);
+        _barriers.Apply(_d3d12Command.CommandList);
+        _gPass.SetRenderTargetsForGPass(
+            _d3d12Command.CommandList);
+        _gPass.Render(
+            _d3d12Command.CommandList,
+            frameInfo);
 
-            _d3d12Command.CommandList.ResourceBarrierTransition(
-                resource: currentBackBuffer,
-                stateBefore: ResourceStates.Present,
-                stateAfter: ResourceStates.RenderTarget);
+        _d3d12Command.CommandList.ResourceBarrierTransition(
+            resource: currentBackBuffer,
+            stateBefore: ResourceStates.Present,
+            stateAfter: ResourceStates.RenderTarget);
 
-            // Post processing
-            _gPass.AddTranstionForPostProcess(_barriers);
-            _barriers.Apply(_d3d12Command.CommandList);
-            // Will write to the current back buffer
-            _postProcess.PostProcess(
-                _d3d12Command.CommandList,
-                renderingSurface.RTV.Value);
-            // after post process
-            _d3d12Command.CommandList.ResourceBarrierTransition(
-                currentBackBuffer,
-                ResourceStates.RenderTarget,
-                ResourceStates.Present);
+        // Post processing
+        _gPass.AddTranstionForPostProcess(_barriers);
+        _barriers.Apply(_d3d12Command.CommandList);
+        // Will write to the current back buffer
+        _postProcess.PostProcess(
+            _d3d12Command.CommandList,
+            renderingSurface.RTV.Value);
+        // after post process
+        _d3d12Command.CommandList.ResourceBarrierTransition(
+            currentBackBuffer,
+            ResourceStates.RenderTarget,
+            ResourceStates.Present);
 
-            ////TODO remove OLD drawable.Draw
-            //foreach (var drawable in drawables)
-            //{
-            //    drawable.Draw(renderingSurface);
-            //}
+        ////TODO remove OLD drawable.Draw
+        //foreach (var drawable in drawables)
+        //{
+        //    drawable.Draw(renderingSurface);
+        //}
 
-            //EndFrame(renderingSurface.BackBuffer);
-            //// end remove OLD drawable.Draw
+        //EndFrame(renderingSurface.BackBuffer);
+        //// end remove OLD drawable.Draw
 
-            // This executes the _d3d12Command.EndFrame();
-            ExecuteCommandList(renderingSurface);
-        }
-        finally
-        {
-            lockScope.Dispose();
-        }
+        // This executes the _d3d12Command.EndFrame();
+        ExecuteCommandList(renderingSurface);
+
     }
 
     public bool EndScene(

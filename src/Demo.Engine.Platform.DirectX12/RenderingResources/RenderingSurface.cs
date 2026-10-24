@@ -118,13 +118,8 @@ internal sealed class RenderingSurface
     [MemberNotNullWhen(true, nameof(BackBuffer))]
     [MemberNotNullWhen(true, nameof(RTV))]
     public bool IsValid
-    {
-        get
-        {
-            return _renderTargetDatas[_currentBackBuffer].Resource is not null
-                && _renderTargetDatas[_currentBackBuffer].RTV.IsValid;
-        }
-    }
+        => _renderTargetDatas[_currentBackBuffer].Resource is not null
+        && _renderTargetDatas[_currentBackBuffer].RTV.IsValid;
 
     public CpuDescriptorHandle? RTV => _renderTargetDatas[_currentBackBuffer].RTV.CPU;
 
@@ -314,48 +309,41 @@ internal sealed class RenderingSurface
 
     public void Resize()
     {
-        var lockScope = EnterLock();
+        using var lockScope = EnterLock();
+        _flushBuffers();
+        if (_swapChain is null)
+        {
+            throw new InvalidOperationException(
+                "Swap chain does not exist!");
+        }
+
+        for (var i = 0; i < _renderTargetDatas.Length; ++i)
+        {
+            _renderTargetDatas[i].Resource?.Dispose();
+            _renderTargetDatas[i] = _renderTargetDatas[i] with { Resource = null };
+        }
+
+        var flags = _allowTearing ? SwapChainFlags.AllowTearing : SwapChainFlags.None;
+
         try
         {
-            _flushBuffers();
-            if (_swapChain is null)
-            {
-                throw new InvalidOperationException(
-                    "Swap chain does not exist!");
-            }
-
-            for (var i = 0; i < _renderTargetDatas.Length; ++i)
-            {
-                _renderTargetDatas[i].Resource?.Dispose();
-                _renderTargetDatas[i] = _renderTargetDatas[i] with { Resource = null };
-            }
-
-            var flags = _allowTearing ? SwapChainFlags.AllowTearing : SwapChainFlags.None;
-
-            try
-            {
-                _ = _swapChain.ResizeBuffers(
-                    bufferCount: Common.BACK_BUFFER_COUNT,
-                    // using 0 for width and height to let the swap chain use the current window size
-                    width: 0,
-                    height: 0,
-                    // unknown format will keep the current format that was specified when swapchain was created
-                    newFormat: Format.Unknown,
-                    swapChainFlags: flags);
-            }
-            catch (SEHException ex)
-            {
-                _logger.LogError(ex, "Access violation during swap chain resize.");
-                throw;
-            }
-            _currentBackBuffer = _swapChain.CurrentBackBufferIndex;
-
-            GetBuffers(_getDevice!.Invoke());
+            _ = _swapChain.ResizeBuffers(
+                bufferCount: Common.BACK_BUFFER_COUNT,
+                // using 0 for width and height to let the swap chain use the current window size
+                width: 0,
+                height: 0,
+                // unknown format will keep the current format that was specified when swapchain was created
+                newFormat: Format.Unknown,
+                swapChainFlags: flags);
         }
-        finally
+        catch (SEHException ex)
         {
-            lockScope.Dispose();
+            _logger.LogError(ex, "Access violation during swap chain resize.");
+            throw;
         }
+        _currentBackBuffer = _swapChain.CurrentBackBufferIndex;
+
+        GetBuffers(_getDevice!.Invoke());
     }
 
     private readonly record struct RenderTargetData

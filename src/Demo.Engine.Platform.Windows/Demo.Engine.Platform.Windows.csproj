@@ -32,11 +32,6 @@
 
 
   <ItemGroup>
-    <!--<PackageReference Include="SharpGen.Runtime.COM" />-->
-  </ItemGroup>
-
-
-  <ItemGroup>
     <ProjectReference Include="..\Demo.Engine.Core\Demo.Engine.Core.csproj" />
   </ItemGroup>
 
