@@ -1,7 +1,8 @@
 // Copyright © Michał Dembski and contributors.
 // Distributed under MIT license. See LICENSE file in the root for more information.
 
-using static Demo.Engine.Platform.Windows.Helpers;
+using Demo.Engine.Platform.Windows.MessageOperations;
+using Demo.Engine.Platform.Windows.MessageOperations.Processors;
 
 namespace Demo.Engine.Platform.Windows;
 
@@ -45,54 +46,59 @@ internal static class KeystrokeMessageFlags
     /// </summary>
     internal const long KF_UP = 0x8000;
 
-    extension(nint lparam)
+    extension(KeyOperation keyOperation)
     {
-        /// <inheritdoc cref="KF_EXTENDED"/>
-        internal bool IsExtended()
-            => (HIWORD(lparam) & KF_EXTENDED) != 0;
+        private TReturn Process<TProcessor, TReturn>(
+            TProcessor processor)
+            where TProcessor : struct, IOperationProcessor<TReturn>, allows ref struct
+            => processor.Process(in keyOperation.Message);
 
         /// <inheritdoc cref="KF_EXTENDED"/>
-        internal bool IsNotExtended()
-            => (HIWORD(lparam) & KF_EXTENDED) == 0;
+        internal bool IsExtended
+            => keyOperation.Process<IsExtendedProcessor, bool>(default);
+
+        /// <inheritdoc cref="KF_EXTENDED"/>
+        internal bool IsNotExtended
+            => keyOperation.Process<IsNotExtendedProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_DLGMODE"/>
-        internal bool IsDlgMode()
-            => (HIWORD(lparam) & KF_DLGMODE) != 0;
+        internal bool IsDlgMode
+            => keyOperation.Process<IsDlgModeProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_DLGMODE"/>
-        internal bool IsNotDlgMode()
-            => (HIWORD(lparam) & KF_DLGMODE) == 0;
+        internal bool IsNotDlgMode
+            => keyOperation.Process<IsNotDlgModeProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_MENUMODE"/>
-        internal bool IsMenuMode()
-            => (HIWORD(lparam) & KF_MENUMODE) != 0;
+        internal bool IsMenuMode
+            => keyOperation.Process<IsMenuModeProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_MENUMODE"/>
-        internal bool IsNotMenuMode()
-            => (HIWORD(lparam) & KF_MENUMODE) == 0;
+        internal bool IsNotMenuMode
+            => keyOperation.Process<IsNotMenuModeProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_ALTDOWN"/>
-        internal bool IsAltDown()
-            => (HIWORD(lparam) & KF_ALTDOWN) != 0;
+        internal bool IsAltDown
+            => keyOperation.Process<IsAltDownProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_ALTDOWN"/>
-        internal bool IsNotAltDown()
-            => (HIWORD(lparam) & KF_ALTDOWN) == 0;
+        internal bool IsNotAltDown
+            => keyOperation.Process<IsNotAltDownProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_REPEAT"/>
-        internal bool IsRepeat()
-            => (HIWORD(lparam) & KF_REPEAT) != 0;
+        internal bool IsRepeat
+            => keyOperation.Process<IsRepeatProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_REPEAT"/>
-        internal bool IsNotRepeat()
-            => (HIWORD(lparam) & KF_REPEAT) == 0;
+        internal bool IsNotRepeat
+            => keyOperation.Process<IsNotRepeatProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_UP"/>
-        internal bool IsUp()
-            => (HIWORD(lparam) & KF_UP) != 0;
+        internal bool IsUp
+            => keyOperation.Process<IsUpProcessor, bool>(default);
 
         /// <inheritdoc cref="KF_UP"/>
-        internal bool IsNotUp()
-            => (HIWORD(lparam) & KF_UP) == 0;
+        internal bool IsNotUp
+            => keyOperation.Process<IsNotUpProcessor, bool>(default);
     }
 }
