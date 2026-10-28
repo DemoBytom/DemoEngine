@@ -30,7 +30,7 @@
     <PackageVersion Include="MediatR" Version="[12.5.0, 13)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
@@ -49,7 +49,7 @@
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Nuke.Common" Version="10.1.0" />
-    <PackageVersion Include="ReportGenerator" Version="5.5.11" />
+    <PackageVersion Include="ReportGenerator" Version="5.5.12" />
     <PackageVersion Include="coveralls.net" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup Label="Transitive packages">
