@@ -37,7 +37,7 @@
     <PackageVersion Include="System.Text.Json" Version="9.0.9" />
     <PackageVersion Include="TUnit" Version="1.87.12" />
     <PackageVersion Include="Verify.SourceGenerators" Version="2.5.0" />
-    <PackageVersion Include="Verify.TUnit" Version="33.7.1" />
+    <PackageVersion Include="Verify.TUnit" Version="33.7.2" />
     <PackageVersion Include="Vortice.Dxc" Version="3.8.3" />
     <PackageVersion Include="Vortice.Mathematics" Version="2.1.1" />
     <PackageVersion Include="Vortice.D3DCompiler" Version="3.8.3" />
@@ -49,7 +49,7 @@
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Nuke.Common" Version="10.1.0" />
-    <PackageVersion Include="ReportGenerator" Version="5.6.0" />
+    <PackageVersion Include="ReportGenerator" Version="5.6.1" />
     <PackageVersion Include="coveralls.net" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup Label="Transitive packages">
