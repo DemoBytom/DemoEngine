@@ -190,6 +190,7 @@ internal sealed partial class Build : FalloutBuild
         //.Produces(
         //    ArtifactsDirectory / "*.trx",
         //    ArtifactsDirectory / "*.xml")
+        .Produces(ArtifactsDirectory / "tunit/merged-report.html")
         .Executes(() =>
         {
             ReadOnlySpan<(string os, string arch)> rids =
@@ -216,10 +217,14 @@ internal sealed partial class Build : FalloutBuild
                             "--coverage",
                             "--coverage-output-format", "cobertura",
                             "--disable-logo",
-                            "--coverage-output", coverageOutput)
+                            "--coverage-output", coverageOutput,
+                            $"-- --report-html-filename {ArtifactsDirectory}/tunit/{arch}-{os}-{testProj.Name}-report.html")
                         );
                 }
             }
+
+            _ = DotNet(
+                $"tunit-report merge --directory {ArtifactsDirectory}/tunit --output {ArtifactsDirectory}/tunit/merged-report.html --github-summary");
         });
 
     public Target Coverage => t => t
