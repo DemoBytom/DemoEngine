@@ -224,7 +224,7 @@ internal sealed partial class Build : FalloutBuild
             }
 
             _ = DotNet(
-                $"tunit-report merge --directory {ArtifactsDirectory}/tunit --output {ArtifactsDirectory}/tunit/merged-report.html --github-summary --style full");
+                $"tunit-report merge --directory {ArtifactsDirectory}/tunit --output {ArtifactsDirectory}/tunit/merged-report.html --github-summary");
         });
 
     public Target Coverage => t => t
