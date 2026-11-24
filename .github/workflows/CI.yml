@@ -48,6 +48,11 @@ jobs:
         env:
           CoverallsToken: ${{ secrets.COVERALLS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 'Publish: tunit-aggregate'
+        uses: actions/upload-artifact@v7
+        with:
+          name: tunit-aggregate
+          path: tunit-aggregate
       - name: 'Publish: coverage.zip'
         uses: actions/upload-artifact@v7
         with:

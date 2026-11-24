@@ -190,7 +190,7 @@ internal sealed partial class Build : FalloutBuild
         //.Produces(
         //    ArtifactsDirectory / "*.trx",
         //    ArtifactsDirectory / "*.xml")
-        .Produces("**/*-report.html")
+        .Produces(RootDirectory / "tunit-aggregate/**/merged-report.html")
         .Executes(() =>
         {
             ReadOnlySpan<(string os, string arch)> rids =
