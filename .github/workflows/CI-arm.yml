@@ -48,11 +48,11 @@ jobs:
         env:
           CoverallsToken: ${{ secrets.COVERALLS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: 'Publish: tunit'
+      - name: 'Publish: merged-report.html'
         uses: actions/upload-artifact@v7
         with:
-          name: tunit
-          path: artifacts/tunit
+          name: merged-report.html
+          path: artifacts/tunit/merged-report.html
       - name: 'Publish: coverage.zip'
         uses: actions/upload-artifact@v7
         with:

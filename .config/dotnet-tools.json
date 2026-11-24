@@ -15,6 +15,13 @@
         "fallout"
       ],
       "rollForward": false
+    },
+    "tunit.reporting.tool": {
+      "version": "1.87.12",
+      "commands": [
+        "tunit-report"
+      ],
+      "rollForward": false
     }
   }
 }
