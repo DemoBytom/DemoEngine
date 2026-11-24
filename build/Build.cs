@@ -190,7 +190,7 @@ internal sealed partial class Build : FalloutBuild
         //.Produces(
         //    ArtifactsDirectory / "*.trx",
         //    ArtifactsDirectory / "*.xml")
-        .Produces(RootDirectory / "tunit-aggregate/**/merged-report.html")
+        .Produces(ArtifactsDirectory / "tunit/*.html")
         .Executes(() =>
         {
             ReadOnlySpan<(string os, string arch)> rids =
@@ -217,7 +217,8 @@ internal sealed partial class Build : FalloutBuild
                             "--coverage",
                             "--coverage-output-format", "cobertura",
                             "--disable-logo",
-                            "--coverage-output", coverageOutput)
+                            "--coverage-output", coverageOutput,
+                            $"-- --report-html-filename {ArtifactsDirectory}/tunit/{arch}-{os}-{testProj.Name}-report.html")
                         );
                 }
             }
